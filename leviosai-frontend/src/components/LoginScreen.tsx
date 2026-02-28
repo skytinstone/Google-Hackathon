@@ -190,6 +190,7 @@ function MatrixGrid() {
     let height = 0
 
     function resize() {
+      if (!canvas) return
       width = canvas.offsetWidth
       height = canvas.offsetHeight
       canvas.width = width
@@ -219,6 +220,7 @@ function MatrixGrid() {
     })
 
     function draw() {
+      if (!ctx) return
       ctx.clearRect(0, 0, width, height)
 
       for (let i = 0; i < particles.length; i++) {
