@@ -8,7 +8,7 @@ LeviosAI는 강력한 언어 모델의 접근성을 높이기 위해 기획된 �
 
 ## 🌐 라이브 서비스 안내
 현재 배포되어 라우팅된 공식 웹사이트 주소는 아래와 같습니다.
-👉 **[https://www.leviosai.cloud](https://www.leviosai.cloud)**
+👉 **((https://leviosai.cloud/))**
 
 ## 🛠️ 로컬 실행 방법 (Local Development)
 
