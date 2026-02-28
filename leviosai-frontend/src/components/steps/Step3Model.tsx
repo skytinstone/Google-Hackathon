@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { StepProps, CompatibilityResult } from '../../types'
-import { MODELS } from '../../api/api'
-import { api } from '../../api/api'
+import { MODELS, api, hasApiKey } from '../../api/api'
+import type { ModelInfoResult } from '../../api/api'
 
 function ScoreBar({ score }: { score: number }) {
   const color = score >= 70 ? 'bg-green-500' : score >= 45 ? 'bg-yellow-500' : 'bg-red-500'
@@ -83,14 +83,133 @@ function CompatibilityPanel({ result }: { result: CompatibilityResult }) {
   )
 }
 
-export default function Step3Model({ state, updateState, goToStep }: StepProps) {
+function LinkChip({ href, label, icon }: { href: string | null; label: string; icon: string }) {
+  if (!href) return null
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/4 text-xs text-secondary hover:border-accent/40 hover:text-accent transition-colors"
+    >
+      <span>{icon}</span>
+      <span>{label}</span>
+    </a>
+  )
+}
+
+function PerfBar({ label, value, description }: { label: string; value: number; description: string }) {
+  const color = value >= 70 ? 'bg-accent' : value >= 45 ? 'bg-yellow-500' : 'bg-red-500'
+  const textColor = value >= 70 ? 'text-accent' : value >= 45 ? 'text-yellow-400' : 'text-red-400'
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-medium text-primary">{label}</span>
+        <span className={`text-xs font-bold ${textColor}`}>{value}</span>
+      </div>
+      <div className="h-1.5 bg-white/8 rounded-full overflow-hidden mb-0.5">
+        <div
+          className={`h-full rounded-full transition-all duration-700 ${color}`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <p className="text-xs text-secondary/70">{description}</p>
+    </div>
+  )
+}
+
+function ModelInfoPanel({ info, loading }: { info: ModelInfoResult | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="mt-4 p-4 rounded-xl border border-white/8 bg-component flex items-center gap-3">
+        <span className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin flex-shrink-0" />
+        <span className="text-xs text-secondary">Fetching model info with Gemini AI...</span>
+      </div>
+    )
+  }
+
+  if (!info) return null
+
+  const hasLinks = info.arxiv_url || info.github_url || info.huggingface_url
+
+  return (
+    <div className="mt-4 p-4 rounded-xl border border-accent/20 bg-accent/3 space-y-4">
+      {/* Meta */}
+      <div className="flex items-center justify-between">
+        <div>
+          {info.organization && (
+            <p className="text-xs font-semibold text-primary">{info.organization}</p>
+          )}
+          {info.year && (
+            <p className="text-xs text-secondary">{info.year}</p>
+          )}
+        </div>
+        <p className="text-xs text-accent/60 font-mono uppercase tracking-widest">Model Info</p>
+      </div>
+
+      {/* Links */}
+      {hasLinks && (
+        <div className="flex flex-wrap gap-2">
+          <LinkChip href={info.arxiv_url} label="arXiv Paper" icon="📄" />
+          <LinkChip href={info.github_url} label="GitHub" icon="⌥" />
+          <LinkChip href={info.huggingface_url} label="HuggingFace" icon="🤗" />
+        </div>
+      )}
+
+      {/* Performance */}
+      {info.performance.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-secondary uppercase tracking-wider mb-3">
+            Performance Benchmarks
+          </p>
+          <div className="space-y-3">
+            {info.performance.map((p, i) => (
+              <PerfBar key={i} label={p.label} value={p.value} description={p.description} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function Step3Model({ state, updateState, goToStep, onApiKeyNeeded }: StepProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [modelInfo, setModelInfo] = useState<ModelInfoResult | null>(null)
+  const [modelInfoLoading, setModelInfoLoading] = useState(false)
 
   const domainModels = state.domain ? (MODELS[state.domain] ?? []) : []
 
+  // Auto-fetch model info whenever model selection changes
+  useEffect(() => {
+    if (!state.model || !state.domain) {
+      setModelInfo(null)
+      return
+    }
+    if (!hasApiKey()) return
+
+    let cancelled = false
+    setModelInfoLoading(true)
+    setModelInfo(null)
+
+    api.getModelInfo(state.model.name, state.domain)
+      .then(data => {
+        if (!cancelled) setModelInfo(data)
+      })
+      .catch(() => {
+        // Silently ignore — model info is supplementary
+      })
+      .finally(() => {
+        if (!cancelled) setModelInfoLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [state.model?.id, state.domain])
+
   async function checkCompatibility() {
     if (!state.model || !state.hardware || !state.domain) return
+    if (!hasApiKey()) { onApiKeyNeeded(); return }
     setLoading(true)
     setError(null)
     try {
@@ -154,9 +273,14 @@ export default function Step3Model({ state, updateState, goToStep }: StepProps) 
         })}
       </div>
 
+      {/* Model Info Panel (auto-fetched on select) */}
+      {state.model && (
+        <ModelInfoPanel info={modelInfo} loading={modelInfoLoading} />
+      )}
+
       {/* Compatibility Check */}
       {state.model && (
-        <div className="mb-8">
+        <div className="mt-6 mb-8">
           <button
             onClick={checkCompatibility}
             disabled={loading}

@@ -59,8 +59,17 @@ export interface WizardState {
   generatedCode: string | null
 }
 
+export interface CustomHardwareResult {
+  category: string
+  id: string
+  name: string
+  specs: string
+  description: string
+}
+
 export interface StepProps {
   state: WizardState
   updateState: (updates: Partial<WizardState>) => void
   goToStep: (step: number) => void
+  onApiKeyNeeded: () => void
 }

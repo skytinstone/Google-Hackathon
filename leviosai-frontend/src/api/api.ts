@@ -1,4 +1,4 @@
-import type { CompatibilityResult } from '../types'
+import type { CompatibilityResult, CustomHardwareResult } from '../types'
 
 // ============================================================
 // API Base URL
@@ -7,6 +7,55 @@ import type { CompatibilityResult } from '../types'
 // ============================================================
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
+
+// ============================================================
+// Gemini API Key (stored in localStorage for local dev)
+// ============================================================
+
+const API_KEY_STORAGE = 'leviosai_gemini_key'
+
+export function getApiKey(): string {
+  return localStorage.getItem(API_KEY_STORAGE) ?? ''
+}
+
+export function setApiKey(key: string) {
+  localStorage.setItem(API_KEY_STORAGE, key.trim())
+}
+
+export function clearApiKey() {
+  localStorage.removeItem(API_KEY_STORAGE)
+}
+
+export function hasApiKey(): boolean {
+  return !!localStorage.getItem(API_KEY_STORAGE)?.trim()
+}
+
+export async function validateApiKey(key: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/validate-key`, {
+    method: 'POST',
+    headers: { 'X-Gemini-Api-Key': key.trim() },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Invalid API key' })) as { detail?: string }
+    throw new Error(err.detail ?? 'Invalid API key')
+  }
+}
+
+export async function analyzeHardwarePdf(file: File): Promise<CustomHardwareResult> {
+  const apiKey = getApiKey()
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch(`${API_BASE}/api/analyze-hardware`, {
+    method: 'POST',
+    headers: apiKey ? { 'X-Gemini-Api-Key': apiKey } : {},
+    body: form,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Analysis failed' })) as { detail?: string }
+    throw new Error(err.detail ?? 'Analysis failed')
+  }
+  return res.json() as Promise<CustomHardwareResult>
+}
 
 // ============================================================
 // API Request/Response Types
@@ -47,12 +96,26 @@ export interface CodeGenResult {
   techniques: string[]
 }
 
+export interface ModelInfoResult {
+  arxiv_url: string | null
+  github_url: string | null
+  huggingface_url: string | null
+  year: string | null
+  organization: string | null
+  performance: Array<{ label: string; value: number; description: string }>
+}
+
 // ============================================================
 // Fetch Helper
 // ============================================================
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, options)
+  const apiKey = getApiKey()
+  const headers: Record<string, string> = {
+    ...(options?.headers as Record<string, string>),
+    ...(apiKey ? { 'X-Gemini-Api-Key': apiKey } : {}),
+  }
+  const res = await fetch(url, { ...options, headers })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: 'Request failed' })) as { detail?: string }
     throw new Error(err.detail ?? 'Request failed')
@@ -84,6 +147,13 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+    }),
+
+  getModelInfo: (modelName: string, domain: string): Promise<ModelInfoResult> =>
+    fetchJSON(`${API_BASE}/api/model-info`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model_name: modelName, domain }),
     }),
 }
 

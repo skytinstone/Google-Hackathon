@@ -1,15 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { api } from '../api/api'
 
 interface LoginScreenProps {
   onLogin: () => void
 }
 
-const DOMAIN_TAGS = [
-  { id: 'cv',  label: 'Computer Vision', color: 'text-blue-400  border-blue-400/30  bg-blue-400/8'  },
-  { id: 'llm', label: 'LLM',             color: 'text-purple-400 border-purple-400/30 bg-purple-400/8' },
-  { id: 'asr', label: 'Speech AI',       color: 'text-green-400  border-green-400/30  bg-green-400/8'  },
-]
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [username, setUsername] = useState('')
@@ -36,6 +31,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   return (
     <div className="bg-tech-grid min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
 
+      {/* Matrix grid animation */}
+      <MatrixGrid />
+
       {/* Corner decorations */}
       <CornerDecor position="top-left" />
       <CornerDecor position="top-right" />
@@ -59,26 +57,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         <div className="bg-[#13131a]/90 backdrop-blur-sm border border-white/8 rounded-2xl p-8 glow-accent">
 
           {/* Brand */}
-          <div className="flex items-center gap-3 mb-2">
-            <HexLogo />
-            <div>
-              <h1 className="font-mono text-2xl font-bold text-primary tracking-tight leading-none">
-                LEVIOSAI
-              </h1>
-              <p className="text-xs text-secondary font-mono mt-0.5">Edge AI Optimization Platform</p>
-            </div>
-          </div>
-
-          {/* Domain tags */}
-          <div className="flex gap-2 mb-8 mt-4">
-            {DOMAIN_TAGS.map(tag => (
-              <span
-                key={tag.id}
-                className={`text-xs font-mono px-2.5 py-1 rounded border ${tag.color}`}
-              >
-                {tag.label}
-              </span>
-            ))}
+          <div className="mb-6">
+            <h1 className="font-mono text-2xl font-bold text-primary tracking-tight leading-none">
+              LeviosAI
+            </h1>
+            <p className="text-xs text-secondary font-mono mt-0.5">Edge AI Optimization Platform</p>
           </div>
 
           {/* Divider */}
@@ -172,37 +155,128 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
         {/* Bottom label */}
         <div className="flex items-center justify-between mt-3 px-1">
-          <span className="font-mono text-xs text-secondary/50">Powered by Gemini AI</span>
-          <span className="font-mono text-xs text-secondary/50">Google Hackathon 2025</span>
+          <span className="font-mono text-xs text-secondary/50">Developed by Minseok Shin</span>
+          <span className="font-mono text-xs text-secondary/50">Google Hackathon 2026</span>
         </div>
       </div>
     </div>
   )
 }
 
-/* ── Sub-components ─────────────────────────────────────── */
+/* ── Matrix Grid Animation ───────────────────────────────── */
 
-function HexLogo() {
+interface Particle {
+  gx: number
+  gy: number
+  dir: 'h' | 'v'
+  progress: number
+  speed: number
+  segLen: number
+}
+
+function MatrixGrid() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const GRID = 48
+    const COLOR = '126, 87, 194'
+    let animId: number
+    let width = 0
+    let height = 0
+
+    function resize() {
+      width = canvas.offsetWidth
+      height = canvas.offsetHeight
+      canvas.width = width
+      canvas.height = height
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    function spawnParticle(): Particle {
+      const dir: 'h' | 'v' = Math.random() < 0.5 ? 'h' : 'v'
+      const cols = Math.floor(width / GRID) + 1
+      const rows = Math.floor(height / GRID) + 1
+      return {
+        gx: Math.floor(Math.random() * cols) * GRID,
+        gy: Math.floor(Math.random() * rows) * GRID,
+        dir,
+        progress: 0,
+        speed: 0.004 + Math.random() * 0.012,
+        segLen: 2 + Math.floor(Math.random() * 5),
+      }
+    }
+
+    const particles: Particle[] = Array.from({ length: 35 }, () => {
+      const p = spawnParticle()
+      p.progress = Math.random()
+      return p
+    })
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height)
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i]
+        p.progress += p.speed
+        if (p.progress >= 1) {
+          particles[i] = spawnParticle()
+          continue
+        }
+
+        const t = p.progress
+        const alpha = t < 0.2 ? t / 0.2 : t > 0.8 ? (1 - t) / 0.2 : 1
+        const dist = t * p.segLen * GRID
+
+        const x = p.dir === 'h' ? p.gx + dist : p.gx
+        const y = p.dir === 'h' ? p.gy : p.gy + dist
+
+        // Glow head
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, 10)
+        glow.addColorStop(0, `rgba(${COLOR}, ${alpha * 0.95})`)
+        glow.addColorStop(0.3, `rgba(${COLOR}, ${alpha * 0.45})`)
+        glow.addColorStop(1, `rgba(${COLOR}, 0)`)
+        ctx.fillStyle = glow
+        ctx.beginPath()
+        ctx.arc(x, y, 10, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Trail
+        const trailDist = Math.min(dist, GRID * 1.5)
+        const tx = p.dir === 'h' ? x - trailDist : x
+        const ty = p.dir === 'h' ? y : y - trailDist
+        const trail = ctx.createLinearGradient(tx, ty, x, y)
+        trail.addColorStop(0, `rgba(${COLOR}, 0)`)
+        trail.addColorStop(1, `rgba(${COLOR}, ${alpha * 0.55})`)
+        ctx.strokeStyle = trail
+        ctx.lineWidth = 1.5
+        ctx.beginPath()
+        ctx.moveTo(tx, ty)
+        ctx.lineTo(x, y)
+        ctx.stroke()
+      }
+
+      animId = requestAnimationFrame(draw)
+    }
+
+    draw()
+
+    return () => {
+      cancelAnimationFrame(animId)
+      window.removeEventListener('resize', resize)
+    }
+  }, [])
+
   return (
-    <svg width="40" height="46" viewBox="0 0 40 46" fill="none" aria-hidden="true">
-      <polygon
-        points="20,2 38,12 38,34 20,44 2,34 2,12"
-        fill="rgba(126,87,194,0.15)"
-        stroke="#7e57c2"
-        strokeWidth="1.5"
-      />
-      <text
-        x="20"
-        y="29"
-        textAnchor="middle"
-        fontSize="16"
-        fontWeight="bold"
-        fontFamily="monospace"
-        fill="#7e57c2"
-      >
-        L
-      </text>
-    </svg>
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+    />
   )
 }
 

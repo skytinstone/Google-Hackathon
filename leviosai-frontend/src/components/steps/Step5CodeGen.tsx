@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import type { StepProps } from '../../types'
-import { api, LANGUAGES } from '../../api/api'
+import { api, LANGUAGES, hasApiKey } from '../../api/api'
 
-export default function Step5CodeGen({ state, updateState, goToStep }: StepProps) {
+export default function Step5CodeGen({ state, updateState, goToStep, onApiKeyNeeded }: StepProps) {
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   async function generateCode() {
     if (!state.domain || !state.hardware || !state.model) return
+    if (!hasApiKey()) { onApiKeyNeeded(); return }
     setGenerating(true)
     setError(null)
     try {

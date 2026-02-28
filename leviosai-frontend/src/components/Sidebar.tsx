@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import type { WizardState } from '../types'
 
 const STEPS = [
@@ -27,6 +28,19 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ state, goToStep }: SidebarProps) {
+  const [location, setLocation] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then((data: { city?: string; country_name?: string }) => {
+        if (data.city && data.country_name) {
+          setLocation(`${data.city}, ${data.country_name}`)
+        }
+      })
+      .catch(() => null)
+  }, [])
+
   function isCompleted(stepNum: number) {
     return stepNum < state.currentStep
   }
@@ -39,7 +53,7 @@ export default function Sidebar({ state, goToStep }: SidebarProps) {
     <aside className="w-64 bg-component flex flex-col justify-between flex-shrink-0 border-r border-white/5">
       {/* Header */}
       <div className="p-5">
-        <h1 className="text-xl font-bold text-accent mb-1 tracking-tight">Leviosai</h1>
+        <h1 className="text-xl font-bold text-accent mb-1 tracking-tight">LeviosAI</h1>
         <p className="text-xs text-secondary mb-6">Edge AI Optimization</p>
 
         {/* Step List */}
@@ -112,6 +126,11 @@ export default function Sidebar({ state, goToStep }: SidebarProps) {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-primary truncate">stevenshin16</p>
             <p className="text-xs text-green-400">● Online</p>
+            {location && (
+              <p className="text-xs text-secondary mt-0.5 truncate" title={location}>
+                {location}
+              </p>
+            )}
           </div>
         </div>
       </div>

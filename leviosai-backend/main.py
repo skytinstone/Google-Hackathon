@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Annotated
 from google import genai
 import os
 import json
@@ -200,6 +200,11 @@ class CodeGenRequest(BaseModel):
     language: str
 
 
+class ModelInfoRequest(BaseModel):
+    model_name: str
+    domain: str
+
+
 # ============================================================
 # In-Memory User DB (dev only)
 # ============================================================
@@ -215,14 +220,14 @@ fake_users_db: Dict[str, Dict] = {
 # ============================================================
 
 
-def get_gemini_client() -> tuple[genai.Client, str]:
-    api_key = os.getenv("GEMINI_API_KEY")
+def get_gemini_client(header_key: Optional[str] = None) -> tuple[genai.Client, str]:
+    api_key = header_key or os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise HTTPException(
-            status_code=500, detail="GEMINI_API_KEY environment variable is not set"
+            status_code=500, detail="Gemini API key is not set. Provide it via the app settings or GEMINI_API_KEY env var."
         )
     client = genai.Client(api_key=api_key)
-    model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash")
+    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     return client, model_name
 
 
@@ -292,9 +297,60 @@ def login(user: User):
 # ============================================================
 
 
+@app.post("/api/analyze-hardware")
+async def analyze_hardware(
+    file: UploadFile = File(...),
+    x_gemini_api_key: Annotated[Optional[str], Header()] = None,
+):
+    client, model_name = get_gemini_client(x_gemini_api_key)
+    pdf_bytes = await file.read()
+
+    prompt = """You are a hardware spec analyst. Analyze this hardware datasheet PDF and extract key information.
+
+Respond ONLY with a valid JSON object:
+{
+  "category": "Best matching category from: Nvidia Jetson, Hailo, Mobile AP, PC, Embedded. Use 'Custom' if none match.",
+  "id": "unique_snake_case_id based on product name",
+  "name": "Full product name",
+  "specs": "Key specs in short format (e.g. 'ARM Cortex-A78, 100 TOPS, 10W')",
+  "description": "One sentence describing what this hardware is for"
+}"""
+
+    try:
+        from google.genai import types as genai_types
+        response = client.models.generate_content(
+            model=model_name,
+            contents=[
+                genai_types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+                prompt,
+            ],
+        )
+        result = extract_json(response.text)
+        return result
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(status_code=422, detail=f"Could not parse hardware info from PDF: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Hardware analysis failed: {str(e)}")
+
+
+@app.post("/api/validate-key")
+async def validate_key(
+    x_gemini_api_key: Annotated[Optional[str], Header()] = None,
+):
+    client, model_name = get_gemini_client(x_gemini_api_key)
+    try:
+        client.models.generate_content(model=model_name, contents="Reply with just: OK")
+        return {"valid": True}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"API key validation failed: {str(e)}")
+
+
 @app.post("/api/check-compatibility")
-async def check_compatibility(data: CompatibilityRequest):
-    client, model_name = get_gemini_client()
+async def check_compatibility(
+    data: CompatibilityRequest,
+    x_gemini_api_key: Annotated[Optional[str], Header()] = None,
+):
+    client, model_name = get_gemini_client(x_gemini_api_key)
 
     params_info = f" (Parameters: {data.model_params})" if data.model_params else ""
 
@@ -341,9 +397,52 @@ Respond ONLY with a valid JSON object (no markdown fences, no explanation outsid
         raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
 
 
+@app.post("/api/model-info")
+async def get_model_info(
+    data: ModelInfoRequest,
+    x_gemini_api_key: Annotated[Optional[str], Header()] = None,
+):
+    client, model_name = get_gemini_client(x_gemini_api_key)
+
+    prompt = f"""You are an AI model database expert with knowledge of deep learning research papers and open-source repositories.
+
+For the model "{data.model_name}" in the {data.domain} domain, provide accurate reference information based on your training knowledge.
+
+Respond ONLY with a valid JSON object:
+{{
+  "arxiv_url": "https://arxiv.org/abs/XXXX.XXXXX (real URL only, null if no paper)",
+  "github_url": "https://github.com/owner/repo (real URL only, null if unknown)",
+  "huggingface_url": "https://huggingface.co/... (real URL only, null if unknown)",
+  "year": "YYYY (publication or release year)",
+  "organization": "Developing organization or research lab",
+  "performance": [
+    {{"label": "Accuracy", "value": <integer 0-100>, "description": "<actual metric, e.g. mAP@0.5: 37.3% or WER: 5.1%>"}},
+    {{"label": "Speed", "value": <integer 0-100>, "description": "<edge inference speed context, e.g. 120 FPS on Jetson>"}},
+    {{"label": "Efficiency", "value": <integer 0-100>, "description": "<edge suitability: size, power, ops tradeoff>"}}
+  ]
+}}
+
+Performance value guidelines (0-100 where 100 is best for edge deployment):
+- Accuracy: relative accuracy score compared to similar edge models
+- Speed: 100 = very fast edge inference, 0 = very slow
+- Efficiency: overall edge deployment suitability score"""
+
+    try:
+        response = client.models.generate_content(model=model_name, contents=prompt)
+        result = extract_json(response.text)
+        return result
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(status_code=422, detail=f"Could not parse model info: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
+
+
 @app.post("/api/generate-code")
-async def generate_code(data: CodeGenRequest):
-    client, model_name = get_gemini_client()
+async def generate_code(
+    data: CodeGenRequest,
+    x_gemini_api_key: Annotated[Optional[str], Header()] = None,
+):
+    client, model_name = get_gemini_client(x_gemini_api_key)
 
     techniques_lines = "\n".join(
         f"  - {t.name}" + (f" ({t.subtype})" if t.subtype else "")
