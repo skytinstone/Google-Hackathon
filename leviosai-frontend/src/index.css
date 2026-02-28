@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #1a1a1e;
+  --color-primary: #dcdce0;
+  --color-secondary: #8a8a93;
+  --color-accent: #7e57c2;
+  --color-component: #282830;
+}
+
+/* Tech grid background for login screen */
+.bg-tech-grid {
+  background-color: #0f0f12;
+  background-image:
+    linear-gradient(rgba(126, 87, 194, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(126, 87, 194, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Glow effects */
+.glow-accent {
+  box-shadow: 0 0 24px rgba(126, 87, 194, 0.3), 0 0 64px rgba(126, 87, 194, 0.08);
+}
+
+/* Blinking cursor */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Fade-in for login card */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.animate-fade-in {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
