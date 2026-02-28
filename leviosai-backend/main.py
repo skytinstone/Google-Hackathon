@@ -227,7 +227,7 @@ def get_gemini_client(header_key: Optional[str] = None) -> tuple[genai.Client, s
             status_code=500, detail="Gemini API key is not set. Provide it via the app settings or GEMINI_API_KEY env var."
         )
     client = genai.Client(api_key=api_key)
-    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model_name = "gemini-2.5-flash"
     return client, model_name
 
 
