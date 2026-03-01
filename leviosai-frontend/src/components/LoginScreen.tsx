@@ -58,10 +58,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
           {/* Brand */}
           <div className="mb-6">
-            <h1 className="font-mono text-2xl font-bold text-primary tracking-tight leading-none">
-              LeviosAI
-            </h1>
-            <p className="text-xs text-secondary font-mono mt-0.5">Edge AI Optimization Platform</p>
+            <div className="flex items-center gap-3 leading-none">
+              <img src="/leviosai.png" alt="LeviosAI" className="w-9 h-9 object-contain rounded-md" />
+              <h1 className="font-mono text-2xl font-bold text-primary tracking-tight leading-none">
+                LeviosAI
+              </h1>
+            </div>
+            <p className="text-xs text-secondary font-mono mt-1.5">Edge AI Optimization Platform</p>
           </div>
 
           {/* Divider */}
