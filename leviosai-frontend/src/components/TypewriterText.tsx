@@ -14,7 +14,7 @@ export default function TypewriterText({
   speed = 35,
   delay = 0,
   className = '',
-  showCursor = true,
+  showCursor = false,
   onDone,
 }: Props) {
   const [displayed, setDisplayed] = useState('')

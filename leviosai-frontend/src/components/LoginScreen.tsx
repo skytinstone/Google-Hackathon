@@ -10,17 +10,13 @@ interface LoginScreenProps {
 function VerticalWatermark() {
   const text = 'LEVIOSAI'
   const [count, setCount] = useState(0)
-  const [blinking, setBlinking] = useState(false)
 
   useEffect(() => {
     let i = 0
     const id = setInterval(() => {
       i++
       setCount(i)
-      if (i >= text.length) {
-        clearInterval(id)
-        setTimeout(() => setBlinking(true), 400)
-      }
+      if (i >= text.length) clearInterval(id)
     }, 130)
     return () => clearInterval(id)
   }, [])
@@ -31,14 +27,11 @@ function VerticalWatermark() {
       style={{ zIndex: 0 }}
     >
       <p
-        className={[
-          'text-[72px] font-black font-mono tracking-[0.18em] text-white/[0.045] leading-none',
-          blinking ? 'animate-watermark-blink' : '',
-        ].join(' ')}
+        className="text-[72px] font-black font-mono tracking-[0.18em] text-white/[0.045] leading-none"
         style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
       >
         {text.slice(0, count)}
-        {!blinking && count < text.length && (
+        {count < text.length && (
           <span className="animate-blink text-white/[0.06]">_</span>
         )}
       </p>
@@ -97,7 +90,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <TypewriterText text="System Online" speed={30} delay={200} showCursor={false} />
           </span>
           <span className="ml-auto font-mono text-xs text-secondary">
-            <TypewriterText text="v1.0.0" speed={30} delay={400} showCursor={false} />
+            <TypewriterText text="v0.9" speed={30} delay={400} showCursor={false} />
           </span>
         </div>
 

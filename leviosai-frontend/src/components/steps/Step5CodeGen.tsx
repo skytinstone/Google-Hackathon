@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { StepProps, SelectedTechnique } from '../../types'
 import { api, FILE_FORMATS, DOMAINS, HARDWARE, MODELS, TECHNIQUES_BY_DOMAIN, TECHNIQUES, hasApiKey, callGeminiDirect } from '../../api/api'
 import TypewriterText from '../TypewriterText'
+import { addLog } from '../../utils/syslog'
 
 interface FileFormat { lang: string; ext: string; label: string }
 type EditSection = 'domain' | 'hardware' | 'model' | 'techniques' | null
@@ -230,6 +231,7 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
     if (!state.domain || !state.hardware || !state.model) return
     if (!hasApiKey()) { return }
     setGenerating(true); setError(null)
+    addLog(`Generating ${format.lang} inference code · ${state.model.name} on ${state.hardware.device}`, 'GEN')
     try {
       const result = await api.generateCode({
         domain: state.domain,
@@ -240,8 +242,11 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
         language: format.lang,
       })
       updateState({ generatedCode: result.code, language: format.lang })
+      const lines = result.code.split('\n').length
+      addLog(`Code synthesis complete · ${lines} lines generated · ready for deployment`, 'OK')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Code generation failed')
+      addLog('Code synthesis failed · check API key and configuration', 'ERR')
     } finally { setGenerating(false) }
   }
 

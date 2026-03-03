@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { StepProps, SelectedSensor } from '../../types'
 import { SENSORS } from '../../api/api'
 import TypewriterText from '../TypewriterText'
@@ -32,8 +32,8 @@ function Tooltip({ children, content }: { children: React.ReactNode; content: Re
 
 // ── Sensor Node ───────────────────────────────────────────────
 function SensorNode({
-  sensor, index, total: _total,
-  isDragOver, onDragStart, onDragOver, onDragDrop,
+  sensor, index, total,
+  isDragOver, onDragStart, onDragOver, onDragDrop, onDragEnd, onMoveUp, onMoveDown,
 }: {
   sensor: SelectedSensor
   index: number
@@ -42,6 +42,9 @@ function SensorNode({
   onDragStart: (i: number) => void
   onDragOver: (e: React.DragEvent, i: number) => void
   onDragDrop: (i: number) => void
+  onDragEnd: () => void
+  onMoveUp: (i: number) => void
+  onMoveDown: (i: number) => void
 }) {
   const sensorData = SENSORS.find(s => s.id === sensor.id)
 
@@ -53,7 +56,7 @@ function SensorNode({
         </p>
         <p className="text-[10px] font-mono text-accent/80 mb-1">{sensor.type} · {sensor.specs}</p>
         {sensorData && <p className="text-[10px] text-secondary leading-relaxed">{sensorData.description}</p>}
-        <p className="text-[10px] text-secondary/50 font-mono mt-1">Drag to reorder</p>
+        <p className="text-[10px] text-secondary/50 font-mono mt-1">Drag or use ▲▼ to reorder</p>
       </div>
     }>
       <div
@@ -61,6 +64,7 @@ function SensorNode({
         onDragStart={() => onDragStart(index)}
         onDragOver={e => onDragOver(e, index)}
         onDrop={() => onDragDrop(index)}
+        onDragEnd={onDragEnd}
         className={[
           'relative px-4 py-3 rounded-xl border cursor-grab active:cursor-grabbing transition-all duration-200 select-none',
           isDragOver
@@ -69,8 +73,23 @@ function SensorNode({
         ].join(' ')}
         style={{ minWidth: '140px' }}
       >
-        {/* Drag handle */}
-        <div className="absolute top-2 right-2 text-secondary/30 text-[10px] font-mono">⠿</div>
+        {/* ▲/▼ reorder buttons */}
+        <div className="absolute top-1 right-1 flex flex-col gap-0.5">
+          <button
+            type="button"
+            onMouseDown={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); onMoveUp(index) }}
+            disabled={index === 0}
+            className="w-5 h-4 flex items-center justify-center text-secondary/40 hover:text-primary disabled:opacity-20 transition-colors text-[10px] leading-none cursor-pointer"
+          >▲</button>
+          <button
+            type="button"
+            onMouseDown={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); onMoveDown(index) }}
+            disabled={index >= total - 1}
+            className="w-5 h-4 flex items-center justify-center text-secondary/40 hover:text-primary disabled:opacity-20 transition-colors text-[10px] leading-none cursor-pointer"
+          >▼</button>
+        </div>
 
         <div className="flex items-center gap-2.5 mb-1">
           <span className="text-[10px] font-bold font-mono text-accent/80 bg-accent/10 px-1.5 py-0.5 rounded flex-shrink-0">{SENSOR_ICONS[sensor.type] ?? 'SEN'}</span>
@@ -179,11 +198,11 @@ function ConnectorLines({ sensorCount }: { sensorCount: number }) {
 
 // ── Main Step ─────────────────────────────────────────────────
 export default function Step3HardwareConfig({ state, updateState, goToStep }: StepProps) {
-  const [dragSrcIndex, setDragSrcIndex] = useState<number | null>(null)
+  const dragSrcRef = useRef<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   const handleDragStart = useCallback((i: number) => {
-    setDragSrcIndex(i)
+    dragSrcRef.current = i
   }, [])
 
   const handleDragOver = useCallback((e: React.DragEvent, i: number) => {
@@ -191,16 +210,36 @@ export default function Step3HardwareConfig({ state, updateState, goToStep }: St
     setDragOverIndex(i)
   }, [])
 
+  const handleDragEnd = useCallback(() => {
+    dragSrcRef.current = null
+    setDragOverIndex(null)
+  }, [])
+
   const handleDrop = useCallback((targetIndex: number) => {
-    if (dragSrcIndex === null || dragSrcIndex === targetIndex) {
-      setDragSrcIndex(null); setDragOverIndex(null); return
+    const src = dragSrcRef.current
+    if (src === null || src === targetIndex) {
+      dragSrcRef.current = null; setDragOverIndex(null); return
     }
     const newSensors = [...state.sensors]
-    const [moved] = newSensors.splice(dragSrcIndex, 1)
+    const [moved] = newSensors.splice(src, 1)
     newSensors.splice(targetIndex, 0, moved)
     updateState({ sensors: newSensors })
-    setDragSrcIndex(null); setDragOverIndex(null)
-  }, [dragSrcIndex, state.sensors, updateState])
+    dragSrcRef.current = null; setDragOverIndex(null)
+  }, [state.sensors, updateState])
+
+  const handleMoveUp = useCallback((i: number) => {
+    if (i === 0) return
+    const newSensors = [...state.sensors]
+    ;[newSensors[i - 1], newSensors[i]] = [newSensors[i], newSensors[i - 1]]
+    updateState({ sensors: newSensors })
+  }, [state.sensors, updateState])
+
+  const handleMoveDown = useCallback((i: number) => {
+    if (i >= state.sensors.length - 1) return
+    const newSensors = [...state.sensors]
+    ;[newSensors[i], newSensors[i + 1]] = [newSensors[i + 1], newSensors[i]]
+    updateState({ sensors: newSensors })
+  }, [state.sensors, updateState])
 
   const hasSensors = state.sensors.length > 0
 
@@ -233,6 +272,9 @@ export default function Step3HardwareConfig({ state, updateState, goToStep }: St
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDragDrop={handleDrop}
+                    onDragEnd={handleDragEnd}
+                    onMoveUp={handleMoveUp}
+                    onMoveDown={handleMoveDown}
                   />
                 ))}
               </div>
@@ -287,8 +329,8 @@ export default function Step3HardwareConfig({ state, updateState, goToStep }: St
             <span>Compute output</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-secondary/30">⠿</span>
-            <span>Drag to reorder sensors</span>
+            <span className="text-secondary/30">▲▼</span>
+            <span>Reorder sensors</span>
           </div>
           <div className="flex items-center gap-1.5 ml-auto">
             <span className="text-accent">{state.sensors.length} sensor{state.sensors.length !== 1 ? 's' : ''}</span>

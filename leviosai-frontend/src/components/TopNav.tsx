@@ -44,7 +44,7 @@ export default function TopNav({ activeTab, onTabChange }: Props) {
 
       {/* Right: version tag */}
       <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-        <span className="text-xs font-mono text-accent/60 border border-accent/20 rounded-lg px-2.5 py-1">v2.0</span>
+        <span className="text-xs font-mono text-accent/60 border border-accent/20 rounded-lg px-2.5 py-1">v0.9</span>
       </div>
     </nav>
   )

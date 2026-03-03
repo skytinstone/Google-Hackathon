@@ -1,10 +1,113 @@
 import { useState } from 'react'
-import type { StepProps, SavedProject } from '../../types'
+import type { StepProps, SavedProject, SelectedSensor } from '../../types'
 import TypewriterText from '../TypewriterText'
 
 const SENSOR_ICONS: Record<string, string> = {
   Vision: 'CAM', Depth: 'LDR', RF: 'RF', Audio: 'MIC',
   Motion: 'IMU', Thermal: 'THM', Proximity: 'PRX', Location: 'GPS',
+}
+
+// ── ERD Pipeline diagram (read-only preview) ─────────────────
+function PipelineDiagram({
+  sensors, hardware, model,
+}: {
+  sensors: SelectedSensor[]
+  hardware: { device: string; specs: string } | null
+  model: { name: string; params?: string } | null
+}) {
+  if (!hardware) return null
+  const N = sensors.length
+  const NODE_H = 58
+  const GAP = 8
+  const totalH = N > 0 ? N * NODE_H + (N - 1) * GAP : NODE_H
+  const centerY = totalH / 2
+
+  return (
+    <div className="flex items-center gap-0 overflow-x-auto py-1">
+      {/* Sensor nodes */}
+      {N > 0 && (
+        <div className="flex flex-col flex-shrink-0" style={{ gap: GAP }}>
+          {sensors.map(s => (
+            <div
+              key={s.id}
+              className="relative px-3 py-2 rounded-xl border border-white/15 bg-[#0e1017] flex items-center gap-2"
+              style={{ minWidth: 118, height: NODE_H }}
+            >
+              <span className="text-[9px] font-bold font-mono text-accent/80 bg-accent/10 px-1 py-0.5 rounded flex-shrink-0">
+                {SENSOR_ICONS[s.type] ?? 'SEN'}
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold text-primary truncate">{s.name}</p>
+                <p className="text-[9px] font-mono text-accent/60">{s.type}</p>
+                <p className="text-[9px] text-secondary/50 font-mono leading-tight truncate">{s.specs}</p>
+              </div>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2 h-2 rounded-full bg-accent border border-[#0e1017] shadow-[0_0_6px_rgba(107,150,190,0.6)]" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* SVG connector: sensors → HW */}
+      {N > 0 && (
+        <svg width="56" height={totalH} className="flex-shrink-0">
+          <defs>
+            <linearGradient id="s7grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#6b96be" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="#6b96be" stopOpacity="0.3" />
+            </linearGradient>
+          </defs>
+          {sensors.map((_, i) => {
+            const y = i * (NODE_H + GAP) + NODE_H / 2
+            return (
+              <line key={i} x1="2" y1={y} x2="52" y2={centerY}
+                stroke="url(#s7grad)" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.8" />
+            )
+          })}
+          <circle cx="52" cy={centerY} r="3" fill="#6b96be" opacity="0.8" />
+        </svg>
+      )}
+      {N === 0 && <div className="w-6 flex-shrink-0" />}
+
+      {/* Hardware node */}
+      <div
+        className="relative px-4 py-3 rounded-2xl border-2 border-accent/60 bg-accent/10 shadow-[0_0_20px_rgba(107,150,190,0.18)] flex-shrink-0 text-center"
+        style={{ minWidth: 136 }}
+      >
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-accent border-2 border-[#0e1017] shadow-[0_0_8px_rgba(107,150,190,0.8)]" />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-[#0e1017] shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
+        <div className="w-8 h-8 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mx-auto mb-1.5">
+          <span className="text-base">⬡</span>
+        </div>
+        <p className="text-primary font-bold text-xs">{hardware.device}</p>
+        <p className="text-[9px] font-mono text-accent/70 mt-0.5">Main Compute</p>
+        <p className="text-[9px] text-secondary/50 font-mono mt-0.5 leading-tight">{hardware.specs}</p>
+      </div>
+
+      {/* Arrow HW → AI */}
+      {model && (
+        <div className="flex items-center mx-2 flex-shrink-0">
+          <div className="w-8 h-px bg-gradient-to-r from-accent/60 to-green-400/60" />
+          <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[7px] border-l-green-400/60 border-b-[4px] border-b-transparent" />
+        </div>
+      )}
+
+      {/* AI Model node */}
+      {model && (
+        <div
+          className="relative px-4 py-3 rounded-xl border border-green-400/30 bg-green-400/5 flex-shrink-0 text-center"
+          style={{ minWidth: 128 }}
+        >
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-green-400 border-2 border-[#0e1017]" />
+          <div className="w-7 h-7 rounded-lg bg-green-400/15 border border-green-400/25 flex items-center justify-center mx-auto mb-1.5">
+            <span className="text-sm">◈</span>
+          </div>
+          <p className="text-green-400 font-semibold text-xs">{model.name}</p>
+          {model.params && <p className="text-[9px] font-mono text-green-400/60 mt-0.5">{model.params}</p>}
+          <p className="text-[9px] font-mono text-green-400/40 mt-0.5">AI Model</p>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function Step7Complete({ state, updateState, goToStep, onAddProject }: StepProps) {
@@ -79,24 +182,28 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
             ))}
           </div>
 
-          {/* Sensor diagram preview */}
-          {state.sensors.length > 0 && (
+          {/* Hardware Pipeline ERD */}
+          {state.hardware && (
             <div className="p-4 rounded-xl border border-white/8 bg-component mb-5">
-              <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-widest mb-3">Hardware Pipeline</p>
-              <div className="flex items-center gap-2 flex-wrap">
-                {state.sensors.map(s => (
-                  <span key={s.id} className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-white/6 border border-white/10 text-secondary rounded-lg font-mono">
-                    <span className="text-[9px] font-bold text-accent/60">{SENSOR_ICONS[s.type] ?? 'SEN'}</span>{s.name}
-                  </span>
-                ))}
-                <span className="text-accent/50 text-sm">→</span>
-                <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-accent/10 border border-accent/25 text-accent rounded-lg font-mono">
-                  ⬡ {state.hardware?.device}
-                </span>
-                <span className="text-green-400/50 text-sm">→</span>
-                <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg font-mono">
-                  ◈ {state.model?.name}
-                </span>
+              <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-widest mb-4">Hardware Pipeline</p>
+              <PipelineDiagram
+                sensors={state.sensors}
+                hardware={state.hardware}
+                model={state.model}
+              />
+              <div className="mt-3 flex items-center gap-4 text-[9px] font-mono text-secondary/40">
+                {state.sensors.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-px border-t border-dashed border-accent/50" />
+                    <span>Sensor → Compute</span>
+                  </div>
+                )}
+                {state.model && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-px bg-gradient-to-r from-accent/50 to-green-400/50" />
+                    <span>Compute → AI</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

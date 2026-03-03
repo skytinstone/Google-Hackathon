@@ -17,6 +17,8 @@ import Step5CodeGen from './components/steps/Step5CodeGen'
 import Step7Complete from './components/steps/Step7Complete'
 import { getApiKey } from './api/api'
 import type { WizardState, SavedProject } from './types'
+import { addLog } from './utils/syslog'
+import SystemLog from './components/SystemLog'
 
 type ActiveTab = 'dashboard' | 'project' | 'contact'
 
@@ -85,6 +87,16 @@ function App() {
       setActiveTab('dashboard')
       setPendingLogout(false)
     } else if (pendingStep !== null) {
+      const stepMessages: Record<number, string> = {
+        1: 'Domain selection phase activated',
+        2: 'Hardware survey initiated · scanning inventory',
+        3: 'Topology mapping engaged · sensor array',
+        4: 'AI model catalogue queried',
+        5: 'Optimization matrix analysis',
+        6: 'Code synthesis engine primed',
+        7: 'Pipeline integrity check · all systems nominal',
+      }
+      addLog(stepMessages[pendingStep] ?? `Module ${pendingStep} loaded`, 'STEP')
       setState(prev => ({ ...prev, currentStep: pendingStep }))
       setPendingStep(null)
     }
@@ -102,16 +114,20 @@ function App() {
   function handleLogin() {
     setIsLoggedIn(true)
     setTransitioning(true)
+    addLog('Authentication handshake complete · operator terminal active', 'AUTH')
+    setTimeout(() => addLog('Loading ops dashboard · fetching telemetry', 'NAV'), 350)
   }
 
   function handleLogout() {
     setPendingLogout(true)
     setTransitioning(true)
+    addLog('Session terminated · all clearances revoked', 'AUTH')
   }
 
   function addProject(project: SavedProject) {
     setSavedProjects(prev => [project, ...prev])
     setActiveTab('dashboard')
+    addLog(`Project "${project.name}" committed · dashboard updated`, 'OK')
   }
 
   function handleNewProject() {
@@ -134,6 +150,7 @@ function App() {
     })
     setShowNewProjectModal(false)
     setActiveTab('project')
+    addLog(`Pipeline initialized · "${data.name}"`, 'INIT')
   }
 
   function handleTabChange(tab: ActiveTab) {
@@ -144,6 +161,12 @@ function App() {
     }
     setActiveTab(tab)
     if (tab === 'project') setChatOpen(false)
+    const tabLogs: Record<ActiveTab, string> = {
+      dashboard: 'Loading ops dashboard · fetching telemetry',
+      project:   'Pipeline wizard engaged · awaiting configuration',
+      contact:   'Opening comms channel · signal strength optimal',
+    }
+    addLog(tabLogs[tab], 'NAV')
   }
 
   // ── Initial site load ────────────────────────────────────────
@@ -240,7 +263,10 @@ function App() {
             {/* Chat toggle — only in Project tab */}
             {activeTab === 'project' && (
               <button
-                onClick={() => setChatOpen(v => !v)}
+                onClick={() => {
+                  addLog(chatOpen ? 'AI assistant standing by · query mode off' : 'AI assistant engaged · awaiting query', 'ACT')
+                  setChatOpen(v => !v)
+                }}
                 className={[
                   'flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-mono',
                   chatOpen
@@ -288,6 +314,9 @@ function App() {
           state={state}
         />
       )}
+
+      {/* Palantir-style system activity log (sidebar handles it in Project tab) */}
+      {activeTab !== 'project' && <SystemLog />}
     </>
   )
 }

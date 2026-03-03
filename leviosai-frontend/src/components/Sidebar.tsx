@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import type { WizardState } from '../types'
 import ProfileModal from './ProfileModal'
+import { subscribe, type LogEntry } from '../utils/syslog'
+
+const LOG_TYPE_STYLE: Record<string, string> = {
+  AUTH: 'text-green-400', NAV: 'text-accent', STEP: 'text-accent',
+  ACT: 'text-primary/40', OK: 'text-green-400', ERR: 'text-red-400',
+  INIT: 'text-yellow-400', GEN: 'text-yellow-400',
+}
 
 const STEPS = [
   { num: 1, label: 'Domain',          key: 'domain'        as const },
@@ -34,6 +41,10 @@ interface SidebarProps {
 export default function Sidebar({ state, goToStep, onLogout }: SidebarProps) {
   const [location, setLocation] = useState<string | null>(null)
   const [showProfile, setShowProfile] = useState(false)
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([])
+  const [logCollapsed, setLogCollapsed] = useState(false)
+
+  useEffect(() => subscribe(setLogEntries), [])
 
   useEffect(() => {
     fetch('https://ipapi.co/json/')
@@ -118,6 +129,47 @@ export default function Sidebar({ state, goToStep, onLogout }: SidebarProps) {
             </ul>
           </nav>
         </div>
+
+        {/* ── System Log (above profile) ──────────────────────── */}
+        {logEntries.length > 0 && (
+          <div className="border-t border-white/5">
+            <button
+              onClick={() => setLogCollapsed(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-2 hover:bg-white/3 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+                <span className="text-[9px] font-mono text-secondary/50 uppercase tracking-[0.18em]">Sys Log</span>
+                <span className="text-[9px] text-secondary/25">· {logEntries.length}</span>
+              </div>
+              <span className="text-secondary/25 text-[9px]">{logCollapsed ? '▲' : '▼'}</span>
+            </button>
+            {!logCollapsed && (
+              <div className="max-h-[148px] overflow-y-auto">
+                {logEntries.slice(0, 6).map((entry, idx) => (
+                  <div
+                    key={entry.id}
+                    className={[
+                      'flex items-start gap-1.5 px-4 py-1 border-t border-white/[0.03]',
+                      idx === 0 ? 'animate-fade-in' : '',
+                    ].join(' ')}
+                  >
+                    <span className={`flex-shrink-0 text-[8px] font-bold font-mono w-8 mt-0.5 ${LOG_TYPE_STYLE[entry.type] ?? 'text-primary/40'}`}>
+                      {entry.type}
+                    </span>
+                    <span className="text-[9px] text-secondary/50 font-mono leading-tight line-clamp-2">
+                      ▸ {entry.message}
+                    </span>
+                  </div>
+                ))}
+                <div className="px-4 py-1.5 flex items-center gap-1.5 border-t border-white/[0.03]">
+                  <span className="text-green-400/30 animate-blink text-[10px]">█</span>
+                  <span className="text-[8px] font-mono text-secondary/20">ops terminal</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* User profile (clickable → ProfileModal) + Logout */}
         <div className="p-4 border-t border-white/5 space-y-2">
