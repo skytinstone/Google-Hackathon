@@ -1,8 +1,49 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { api } from '../api/api'
+import TypewriterText from './TypewriterText'
 
 interface LoginScreenProps {
   onLogin: () => void
+}
+
+// ── Vertical LEVIOSAI watermark (same as DashboardPage) ──────
+function VerticalWatermark() {
+  const text = 'LEVIOSAI'
+  const [count, setCount] = useState(0)
+  const [blinking, setBlinking] = useState(false)
+
+  useEffect(() => {
+    let i = 0
+    const id = setInterval(() => {
+      i++
+      setCount(i)
+      if (i >= text.length) {
+        clearInterval(id)
+        setTimeout(() => setBlinking(true), 400)
+      }
+    }, 130)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <div
+      className="fixed left-4 bottom-10 pointer-events-none select-none"
+      style={{ zIndex: 0 }}
+    >
+      <p
+        className={[
+          'text-[72px] font-black font-mono tracking-[0.18em] text-white/[0.045] leading-none',
+          blinking ? 'animate-watermark-blink' : '',
+        ].join(' ')}
+        style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+      >
+        {text.slice(0, count)}
+        {!blinking && count < text.length && (
+          <span className="animate-blink text-white/[0.06]">_</span>
+        )}
+      </p>
+    </div>
+  )
 }
 
 
@@ -31,6 +72,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   return (
     <div className="bg-tech-grid min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
 
+      {/* Background LEVIOSAI watermark */}
+      <VerticalWatermark />
+
       {/* Matrix grid animation */}
       <MatrixGrid />
 
@@ -49,8 +93,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         {/* Top status bar */}
         <div className="flex items-center gap-2 mb-3 px-1">
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="font-mono text-xs text-green-400 tracking-widest uppercase">System Online</span>
-          <span className="ml-auto font-mono text-xs text-secondary">v1.0.0</span>
+          <span className="font-mono text-xs text-green-400 tracking-widest uppercase">
+            <TypewriterText text="System Online" speed={30} delay={200} showCursor={false} />
+          </span>
+          <span className="ml-auto font-mono text-xs text-secondary">
+            <TypewriterText text="v1.0.0" speed={30} delay={400} showCursor={false} />
+          </span>
         </div>
 
         {/* Card */}
@@ -61,16 +109,20 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <div className="flex items-center gap-3 leading-none">
               <img src="/leviosai.png" alt="LeviosAI" className="w-9 h-9 object-contain rounded-md" />
               <h1 className="font-mono text-2xl font-bold text-primary tracking-tight leading-none">
-                LeviosAI
+                <TypewriterText text="LeviosAI" speed={35} delay={500} showCursor={false} />
               </h1>
             </div>
-            <p className="text-xs text-secondary font-mono mt-1.5">Edge AI Optimization Platform</p>
+            <p className="text-xs text-secondary font-mono mt-1.5">
+              <TypewriterText text="Edge AI Optimization Platform" speed={25} delay={700} showCursor={false} />
+            </p>
           </div>
 
           {/* Divider */}
           <div className="flex items-center gap-3 mb-6">
             <div className="flex-1 h-px bg-white/8" />
-            <span className="font-mono text-xs text-secondary tracking-widest">AUTHENTICATE</span>
+            <span className="font-mono text-xs text-secondary tracking-widest">
+              <TypewriterText text="AUTHENTICATE" speed={40} delay={1200} showCursor={false} />
+            </span>
             <div className="flex-1 h-px bg-white/8" />
           </div>
 
@@ -79,7 +131,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             {/* Username */}
             <div>
               <label className="block font-mono text-xs text-secondary uppercase tracking-widest mb-2">
-                User ID
+                <TypewriterText text="User ID" speed={40} delay={1500} showCursor={false} />
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent font-mono text-sm select-none">
@@ -100,7 +152,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             {/* Password */}
             <div>
               <label className="block font-mono text-xs text-secondary uppercase tracking-widest mb-2">
-                Password
+                <TypewriterText text="Password" speed={40} delay={1650} showCursor={false} />
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent font-mono text-sm select-none">
@@ -147,7 +199,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  Initialize Session
+                  <TypewriterText text="Initialize Session" speed={35} delay={1800} showCursor={false} />
                   <span className="animate-blink">_</span>
                 </span>
               )}
@@ -158,8 +210,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
         {/* Bottom label */}
         <div className="flex items-center justify-between mt-3 px-1">
-          <span className="font-mono text-xs text-secondary/50">Developed by Minseok Shin</span>
-          <span className="font-mono text-xs text-secondary/50">Google Hackathon 2026</span>
+          <span className="font-mono text-xs text-secondary/50">
+            <TypewriterText text="Developed by Minseok Shin" speed={25} delay={2100} showCursor={false} />
+          </span>
+          <span className="font-mono text-xs text-secondary/50">
+            <TypewriterText text="Google Hackathon 2026" speed={25} delay={2200} showCursor={false} />
+          </span>
         </div>
       </div>
     </div>
