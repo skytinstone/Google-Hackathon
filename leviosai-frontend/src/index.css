@@ -105,3 +105,13 @@
 .animate-flicker {
   animation: flicker 8s step-end infinite;
 }
+
+/* Watermark blink — slow pulse for background LEVIOSAI text */
+@keyframes watermark-blink {
+  0%, 40%  { opacity: 1;   }
+  50%, 90% { opacity: 0.1; }
+  100%     { opacity: 1;   }
+}
+.animate-watermark-blink {
+  animation: watermark-blink 2.2s step-end infinite;
+}

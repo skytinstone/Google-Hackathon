@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { StepProps, SelectedSensor } from '../../types'
 import { SENSORS } from '../../api/api'
+import TypewriterText from '../TypewriterText'
 
 const SENSOR_ICONS: Record<string, string> = {
   Vision: 'CAM', Depth: 'LDR', RF: 'RF', Audio: 'MIC',
@@ -208,7 +209,7 @@ export default function Step3HardwareConfig({ state, updateState, goToStep }: St
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
         <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 3 of 7</p>
-        <h2 className="text-3xl font-bold text-primary">Hardware Configuration</h2>
+        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Hardware Configuration" speed={40} /></h2>
         <p className="text-secondary mt-2">
           Your pipeline configuration — hover nodes for specs, drag to reorder sensors
         </p>

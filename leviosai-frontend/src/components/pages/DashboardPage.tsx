@@ -1,6 +1,46 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import TypewriterText from '../TypewriterText'
 import type { SavedProject } from '../../types'
+
+// ── Vertical LEVIOSAI watermark ────────────────────────────────
+function VerticalWatermark() {
+  const text = 'LEVIOSAI'
+  const [count, setCount] = useState(0)
+  const [blinking, setBlinking] = useState(false)
+
+  useEffect(() => {
+    let i = 0
+    const id = setInterval(() => {
+      i++
+      setCount(i)
+      if (i >= text.length) {
+        clearInterval(id)
+        setTimeout(() => setBlinking(true), 400)
+      }
+    }, 130)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <div
+      className="fixed left-4 bottom-10 pointer-events-none select-none"
+      style={{ zIndex: 0 }}
+    >
+      <p
+        className={[
+          'text-[72px] font-black font-mono tracking-[0.18em] text-white/[0.045] leading-none',
+          blinking ? 'animate-watermark-blink' : '',
+        ].join(' ')}
+        style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+      >
+        {text.slice(0, count)}
+        {!blinking && count < text.length && (
+          <span className="animate-blink text-white/[0.06]">_</span>
+        )}
+      </p>
+    </div>
+  )
+}
 
 interface Props {
   projects: SavedProject[]
@@ -175,6 +215,10 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
   const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 
   return (
+    <>
+    {/* Background LEVIOSAI watermark — fixed bottom-left, vertical */}
+    <VerticalWatermark />
+
     <div className="max-w-6xl mx-auto space-y-8">
 
       {/* ── Header ────────────────────────────────────────────── */}
@@ -439,5 +483,6 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
         </div>
       )}
     </div>
+    </>
   )
 }

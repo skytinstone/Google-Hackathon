@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import type { StepProps, SelectedTechnique } from '../../types'
 import { api, FILE_FORMATS, DOMAINS, HARDWARE, MODELS, TECHNIQUES_BY_DOMAIN, TECHNIQUES, hasApiKey, callGeminiDirect } from '../../api/api'
+import TypewriterText from '../TypewriterText'
 
 interface FileFormat { lang: string; ext: string; label: string }
 type EditSection = 'domain' | 'hardware' | 'model' | 'techniques' | null
@@ -273,7 +274,7 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
       {/* Header */}
       <div className="mb-4 flex-shrink-0">
         <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 6 of 7</p>
-        <h2 className="text-3xl font-bold text-primary">Generate Code</h2>
+        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Generate Code" speed={40} /></h2>
         <p className="text-secondary mt-1">Edit configuration inline · generate · download</p>
       </div>
 

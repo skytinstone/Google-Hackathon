@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { StepProps, SavedProject } from '../../types'
+import TypewriterText from '../TypewriterText'
 
 const SENSOR_ICONS: Record<string, string> = {
   Vision: 'CAM', Depth: 'LDR', RF: 'RF', Audio: 'MIC',
@@ -47,7 +48,7 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
         <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 7 of 7</p>
-        <h2 className="text-3xl font-bold text-primary">Configuration Complete</h2>
+        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Configuration Complete" speed={40} /></h2>
         <p className="text-secondary mt-2">Review your Edge AI pipeline and save it to your Dashboard</p>
       </div>
 

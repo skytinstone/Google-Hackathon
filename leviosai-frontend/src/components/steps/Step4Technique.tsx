@@ -1,5 +1,6 @@
 import type { StepProps, SelectedTechnique } from '../../types'
 import { TECHNIQUES, TECHNIQUES_BY_DOMAIN } from '../../api/api'
+import TypewriterText from '../TypewriterText'
 
 export default function Step4Technique({ state, updateState, goToStep }: StepProps) {
   // Use domain-specific techniques if available, fall back to common techniques
@@ -36,7 +37,7 @@ export default function Step4Technique({ state, updateState, goToStep }: StepPro
       {/* Header */}
       <div className="mb-8">
         <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 5 of 7</p>
-        <h2 className="text-3xl font-bold text-primary">Optimization Techniques</h2>
+        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Optimization Techniques" speed={40} /></h2>
         <p className="text-secondary mt-2">
           {state.domain
             ? <><span className="text-accent">{state.domain}</span>-specific techniques for <span className="text-accent">{state.model?.name}</span></>

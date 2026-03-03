@@ -1,3 +1,8 @@
+import TypewriterText from '../TypewriterText'
+
+// TODO: Replace with your actual YouTube channel or video URL
+const YOUTUBE_URL = 'https://www.youtube.com/your-channel'
+
 export default function ContactPage() {
   const team = [
     {
@@ -9,17 +14,14 @@ export default function ContactPage() {
     },
   ]
 
-  const links = [
-    { icon: '⌥', label: 'GitHub Repository', url: 'https://github.com/skytinstone/Google-Hackathon', desc: 'Source code & contributions' },
-    { icon: '◈', label: 'Google AI Studio', url: 'https://aistudio.google.com/app/apikey', desc: 'Get your API key' },
-  ]
-
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       {/* Header */}
       <div>
         <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Contact</p>
-        <h2 className="text-3xl font-bold text-primary">Get in Touch</h2>
+        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight">
+          <TypewriterText text="Get in Touch" speed={45} />
+        </h2>
         <p className="text-secondary mt-2">Questions, feedback, or collaboration inquiries</p>
       </div>
 
@@ -125,29 +127,26 @@ export default function ContactPage() {
         </div>
       </div>
 
-      {/* Resources */}
+      {/* YouTube */}
       <div>
-        <p className="text-xs font-mono text-secondary/60 uppercase tracking-widest mb-4">Resources</p>
-        <div className="space-y-3">
-          {links.map(link => (
-            <a
-              key={link.label}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-xl border border-white/8 bg-component hover:border-accent/40 hover:bg-accent/5 transition-all group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-white/6 border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:border-accent/25 transition-colors">
-                <span className="text-secondary group-hover:text-accent transition-colors">{link.icon}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-primary font-semibold text-sm group-hover:text-accent transition-colors">{link.label}</p>
-                <p className="text-xs text-secondary mt-0.5">{link.desc}</p>
-              </div>
-              <span className="text-secondary/30 group-hover:text-accent transition-colors">↗</span>
-            </a>
-          ))}
-        </div>
+        <p className="text-xs font-mono text-secondary/60 uppercase tracking-widest mb-4">Video</p>
+        <a
+          href={YOUTUBE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-4 p-4 rounded-xl border border-white/8 bg-component hover:border-red-500/40 hover:bg-red-500/5 transition-all group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center flex-shrink-0 group-hover:border-red-500/50 transition-colors">
+            <span className="text-red-400 text-xs font-mono font-bold">YT</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-primary font-semibold text-sm group-hover:text-red-400 transition-colors">
+              LeviosAI YouTube Channel
+            </p>
+            <p className="text-xs text-secondary mt-0.5">Demo videos &amp; tutorials</p>
+          </div>
+          <span className="text-secondary/30 group-hover:text-red-400 transition-colors">↗</span>
+        </a>
       </div>
 
       {/* Footer */}

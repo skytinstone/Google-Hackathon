@@ -1,5 +1,6 @@
 import type { StepProps } from '../../types'
 import { DOMAINS, DOMAIN_DETAILS } from '../../api/api'
+import TypewriterText from '../TypewriterText'
 
 export default function Step1Domain({ state, updateState, goToStep }: StepProps) {
   function select(name: string) {
@@ -21,7 +22,7 @@ export default function Step1Domain({ state, updateState, goToStep }: StepProps)
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
         <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 1 of 7</p>
-        <h2 className="text-3xl font-bold text-primary">Select AI Domain</h2>
+        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Select AI Domain" speed={40} /></h2>
         <p className="text-secondary mt-2">Choose the application domain for your Edge AI deployment</p>
       </div>
 

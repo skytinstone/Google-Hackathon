@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { StepProps, CompatibilityResult } from '../../types'
 import { MODELS, api, hasApiKey } from '../../api/api'
 import type { ModelInfoResult } from '../../api/api'
+import TypewriterText from '../TypewriterText'
 
 function ScoreBar({ score }: { score: number }) {
   const color = score >= 70 ? 'bg-green-500' : score >= 45 ? 'bg-yellow-500' : 'bg-red-500'
@@ -182,7 +183,7 @@ export default function Step3Model({ state, updateState, goToStep, onApiKeyNeede
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
         <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 4 of 7</p>
-        <h2 className="text-3xl font-bold text-primary">Select AI Model</h2>
+        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Select AI Model" speed={40} /></h2>
         <p className="text-secondary mt-2">
           Choose a model for <span className="text-accent">{state.domain}</span> on <span className="text-accent">{state.hardware?.device}</span>
         </p>
