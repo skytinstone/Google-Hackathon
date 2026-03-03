@@ -49,7 +49,7 @@ function App() {
   const [pendingStep, setPendingStep]        = useState<number | null>(null)
 
   // Navigation
-  const [activeTab, setActiveTab] = useState<ActiveTab>('project')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard')
 
   // Chatbot
   const [chatOpen, setChatOpen] = useState(false)
@@ -82,7 +82,7 @@ function App() {
       setIsLoggedIn(false)
       setState(initialState)
       setChatOpen(false)
-      setActiveTab('project')
+      setActiveTab('dashboard')
       setPendingLogout(false)
     } else if (pendingStep !== null) {
       setState(prev => ({ ...prev, currentStep: pendingStep }))
@@ -137,6 +137,11 @@ function App() {
   }
 
   function handleTabChange(tab: ActiveTab) {
+    if (tab === 'project' && !state.projectName) {
+      // No active project — show creation modal before entering wizard
+      setShowNewProjectModal(true)
+      return
+    }
     setActiveTab(tab)
     if (tab === 'project') setChatOpen(false)
   }

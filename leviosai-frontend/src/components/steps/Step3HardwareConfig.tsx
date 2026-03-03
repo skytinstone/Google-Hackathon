@@ -31,7 +31,7 @@ function Tooltip({ children, content }: { children: React.ReactNode; content: Re
 
 // ── Sensor Node ───────────────────────────────────────────────
 function SensorNode({
-  sensor, index, total,
+  sensor, index, total: _total,
   isDragOver, onDragStart, onDragOver, onDragDrop,
 }: {
   sensor: SelectedSensor

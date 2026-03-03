@@ -11,7 +11,7 @@ interface Props {
   state: WizardState
 }
 
-export default function ChatBot({ isOpen, onToggle, currentStep, state }: Props) {
+export default function ChatBot({ isOpen, onToggle: _onToggle, currentStep, state }: Props) {
   const ctx = CHATBOT_CONTEXTS[currentStep] ?? CHATBOT_CONTEXTS[1]
   const [msgs, setMsgs]     = useState<ChatMsg[]>([{ role: 'bot', text: ctx.welcome }])
   const [input, setInput]   = useState('')

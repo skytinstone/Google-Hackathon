@@ -1,4 +1,5 @@
-import { useState, useRef, KeyboardEvent } from 'react'
+import { useState, useRef } from 'react'
+import type { KeyboardEvent } from 'react'
 
 interface NewProjectFormData {
   name: string

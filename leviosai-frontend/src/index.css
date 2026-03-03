@@ -39,3 +39,69 @@
 .animate-fade-in {
   animation: fade-in-up 0.5s ease-out forwards;
 }
+
+/* Typewriter cursor */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.animate-cursor {
+  display: inline-block;
+  animation: cursor-blink 0.8s step-end infinite;
+}
+
+/* Scan-line overlay (CRT / Palantir data-display feel) */
+.scan-lines {
+  position: relative;
+}
+.scan-lines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.06) 3px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Data-pulse — subtle glowing border animation on stat cards */
+@keyframes data-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(107, 150, 190, 0); }
+  50%       { box-shadow: 0 0 12px 2px rgba(107, 150, 190, 0.12); }
+}
+.animate-data-pulse {
+  animation: data-pulse 3s ease-in-out infinite;
+}
+
+/* Number counter roll-in */
+@keyframes count-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.animate-count-in {
+  animation: count-in 0.4s ease-out forwards;
+}
+
+/* Horizontal bar fill */
+@keyframes bar-fill {
+  from { width: 0; }
+}
+.animate-bar {
+  animation: bar-fill 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Terminal text flicker (very subtle) */
+@keyframes flicker {
+  0%, 96%, 100% { opacity: 1; }
+  97%            { opacity: 0.85; }
+  98%            { opacity: 1; }
+  99%            { opacity: 0.9; }
+}
+.animate-flicker {
+  animation: flicker 8s step-end infinite;
+}
