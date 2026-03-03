@@ -1,7 +1,9 @@
 import type { StepProps, SelectedTechnique } from '../../types'
-import { TECHNIQUES } from '../../api/api'
+import { TECHNIQUES, TECHNIQUES_BY_DOMAIN } from '../../api/api'
 
 export default function Step4Technique({ state, updateState, goToStep }: StepProps) {
+  // Use domain-specific techniques if available, fall back to common techniques
+  const availableTechs = (state.domain && TECHNIQUES_BY_DOMAIN[state.domain]) ? TECHNIQUES_BY_DOMAIN[state.domain] : TECHNIQUES
   function isTechEnabled(id: string) {
     return state.techniques.some(t => t.id === id)
   }
@@ -33,14 +35,19 @@ export default function Step4Technique({ state, updateState, goToStep }: StepPro
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 4 of 5</p>
+        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 5 of 7</p>
         <h2 className="text-3xl font-bold text-primary">Optimization Techniques</h2>
-        <p className="text-secondary mt-2">Select one or more techniques to apply to <span className="text-accent">{state.model?.name}</span></p>
+        <p className="text-secondary mt-2">
+          {state.domain
+            ? <><span className="text-accent">{state.domain}</span>-specific techniques for <span className="text-accent">{state.model?.name}</span></>
+            : <>Select one or more techniques to apply to <span className="text-accent">{state.model?.name}</span></>
+          }
+        </p>
       </div>
 
       {/* Technique Cards */}
       <div className="space-y-4 mb-10">
-        {TECHNIQUES.map(tech => {
+        {availableTechs.map(tech => {
           const enabled = isTechEnabled(tech.id)
           const selectedSubtype = getSelectedSubtype(tech.id)
 
@@ -129,15 +136,15 @@ export default function Step4Technique({ state, updateState, goToStep }: StepPro
       {/* Navigation */}
       <div className="flex justify-between">
         <button
-          onClick={() => goToStep(3)}
+          onClick={() => goToStep(4)}
           className="px-6 py-2.5 border border-white/10 text-secondary font-semibold rounded-lg hover:border-white/20 hover:text-primary transition-colors"
         >
           ← Back
         </button>
         <button
-          onClick={() => goToStep(5)}
+          onClick={() => goToStep(6)}
           disabled={!canProceed}
-          className="px-6 py-2.5 bg-accent text-white font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/80 transition-colors"
+          className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
         >
           Next: Generate Code →
         </button>

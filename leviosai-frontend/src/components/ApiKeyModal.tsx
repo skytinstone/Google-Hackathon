@@ -131,7 +131,7 @@ export default function ApiKeyModal({ onClose }: ApiKeyModalProps) {
                 <button
                   type="submit"
                   disabled={!key.trim() || status === 'loading'}
-                  className="flex-1 py-2.5 bg-accent text-white font-semibold rounded-lg hover:bg-accent/80 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 bg-primary text-background font-semibold rounded-lg hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm flex items-center justify-center gap-2"
                 >
                   {status === 'loading' ? (
                     <>

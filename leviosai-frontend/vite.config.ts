@@ -9,11 +9,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://google-hackathon-e1cl.vercel.app',
         changeOrigin: true,
       },
       '/login': {
-        target: 'http://localhost:8000',
+        target: 'https://google-hackathon-e1cl.vercel.app',
         changeOrigin: true,
       },
     },

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"bg-accent text-white font-semibold rounded-lg\" d:/Google-Hackathon/leviosai-frontend/src/components/steps/*.tsx)",
+      "Bash(npm run build)",
+      "Bash(export PATH=\"$PATH:/mnt/c/Program Files/nodejs\")",
+      "Bash(npm --version)",
+      "Bash(export PATH=\"$PATH:/c/Users/신민석/AppData/Roaming/npm\")",
+      "Bash(cat d:/Google-Hackathon/leviosai-frontend/.env*)",
+      "Bash(ls d:/Google-Hackathon/leviosai-frontend/.env*)"
+    ]
+  }
+}

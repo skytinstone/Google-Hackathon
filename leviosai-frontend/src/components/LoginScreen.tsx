@@ -41,7 +41,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       <CornerDecor position="bottom-right" />
 
       {/* Ambient glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-accent/5 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-white/3 blur-3xl pointer-events-none" />
 
       {/* Login Card */}
       <div className="animate-fade-in relative z-10 w-full max-w-md mx-4">
@@ -138,7 +138,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <button
               type="submit"
               disabled={loading || !username || !password}
-              className="w-full mt-2 font-mono text-sm font-bold uppercase tracking-widest py-3 rounded-lg transition-all duration-200 bg-accent text-white hover:bg-accent/80 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full mt-2 font-mono text-sm font-bold uppercase tracking-widest py-3 rounded-lg transition-all duration-200 bg-primary text-background hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -187,7 +187,7 @@ function MatrixGrid() {
     if (!ctx) return
 
     const GRID = 48
-    const COLOR = '126, 87, 194'
+    const COLOR = '107, 150, 190'
     let animId: number
     let width = 0
     let height = 0
@@ -296,6 +296,6 @@ function CornerDecor({ position }: { position: CornerPos }) {
     'bottom-right': 'bottom-6 right-6 border-b border-r',
   }
   return (
-    <div className={`${base} ${posMap[position]} border-accent/25`} />
+    <div className={`${base} ${posMap[position]} border-white/12`} />
   )
 }

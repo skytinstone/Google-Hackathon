@@ -1,38 +1,178 @@
 import { useState, useRef } from 'react'
-import type { StepProps } from '../../types'
-import { HARDWARE, analyzeHardwarePdf, hasApiKey } from '../../api/api'
+import type { StepProps, SelectedSensor } from '../../types'
+import { HARDWARE, HARDWARE_DETAILS, SENSORS, analyzeHardwarePdf, hasApiKey } from '../../api/api'
 
 type HardwareMap = typeof HARDWARE
 
+// Sensor type label map
+const SENSOR_ICONS: Record<string, string> = {
+  Vision: 'CAM', Depth: 'LDR', RF: 'RF', Audio: 'MIC',
+  Motion: 'IMU', Thermal: 'THM', Proximity: 'PRX', Location: 'GPS',
+}
+
+// ── Hardware Right Panel ──────────────────────────────────────
+function HardwareRightPanel({
+  hardware, deviceId, sensors, onSensorToggle,
+}: {
+  hardware: { device: string; specs: string } | null
+  deviceId: string
+  sensors: SelectedSensor[]
+  onSensorToggle: (s: SelectedSensor) => void
+}) {
+  const details = deviceId ? HARDWARE_DETAILS[deviceId] : null
+
+  return (
+    <div className="flex flex-col gap-4 h-full overflow-y-auto">
+      {/* Hardware Info */}
+      {hardware ? (
+        <div className="rounded-xl border border-accent/25 bg-accent/5 overflow-hidden animate-fade-in">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-accent/15">
+            <div>
+              <p className="text-[10px] font-mono text-accent/70 uppercase tracking-widest">Selected Hardware</p>
+              <p className="text-primary font-semibold text-sm mt-0.5">{hardware.device}</p>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 border border-accent/25 text-accent rounded-full font-mono">{hardware.specs}</span>
+          </div>
+
+          {details && (
+            <div className="p-4 space-y-3">
+              {/* Features */}
+              <div>
+                <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-widest mb-2">Key Features</p>
+                <ul className="space-y-1">
+                  {details.features.map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-secondary">
+                      <span className="text-accent/60 mt-0.5 flex-shrink-0">▸</span>{f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {/* Links */}
+              <div className="grid grid-cols-2 gap-2">
+                {details.productUrl && (
+                  <a href={details.productUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-white/8 bg-white/3 hover:border-white/20 transition-all text-xs text-secondary hover:text-primary">
+                    <span className="font-mono text-[10px]">URL</span><span className="font-mono">Product</span><span className="ml-auto">↗</span>
+                  </a>
+                )}
+                {details.datasheetUrl ? (
+                  <a href={details.datasheetUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-white/8 bg-white/3 hover:border-white/20 transition-all text-xs text-secondary hover:text-primary">
+                    <span className="font-mono text-[10px]">PDF</span><span className="font-mono">Datasheet</span><span className="ml-auto">↓</span>
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-white/5 opacity-40 text-xs text-secondary">
+                    <span className="font-mono text-[10px]">PDF</span><span className="font-mono">Datasheet</span>
+                  </div>
+                )}
+                <a href={`https://sketchfab.com/search?q=${encodeURIComponent(hardware.device)}&type=models`} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-white/8 bg-white/3 hover:border-white/20 transition-all text-xs text-secondary hover:text-primary">
+                  <span className="font-mono text-[10px]">3D</span><span className="font-mono">3D Model</span><span className="ml-auto">↗</span>
+                </a>
+                <a href={`https://grabcad.com/library?query=${encodeURIComponent(hardware.device)}`} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-white/8 bg-white/3 hover:border-white/20 transition-all text-xs text-secondary hover:text-primary">
+                  <span>⬡</span><span className="font-mono">CAD File</span><span className="ml-auto">↗</span>
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-white/10 bg-white/2 p-6 text-center">
+          <p className="text-secondary text-xs font-mono">← Select hardware to see details</p>
+        </div>
+      )}
+
+      {/* Sensor Selection */}
+      <div className="rounded-xl border border-white/8 bg-component overflow-hidden">
+        <div className="px-4 py-3 border-b border-white/6 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-mono text-secondary/60 uppercase tracking-widest">Peripheral Sensors</p>
+            <p className="text-primary text-sm font-semibold mt-0.5">Optional Hardware</p>
+          </div>
+          {sensors.length > 0 && (
+            <span className="text-[10px] font-mono text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full">
+              {sensors.length} selected
+            </span>
+          )}
+        </div>
+
+        <div className="p-4 grid grid-cols-2 gap-2">
+          {SENSORS.map(s => {
+            const selected = sensors.some(sel => sel.id === s.id)
+            return (
+              <button
+                key={s.id}
+                onClick={() => onSensorToggle({ id: s.id, name: s.name, type: s.type, specs: s.specs })}
+                title={s.description}
+                className={[
+                  'relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left transition-all duration-200',
+                  selected
+                    ? 'border-accent bg-accent/10 shadow-[0_0_14px_rgba(107,150,190,0.25)]'
+                    : 'border-white/8 bg-background/50 hover:border-white/20 hover:bg-white/4',
+                ].join(' ')}
+              >
+                <span className="text-[10px] font-mono font-bold text-accent/70 flex-shrink-0 min-w-[28px] text-center">
+                  {SENSOR_ICONS[s.type] ?? 'SEN'}
+                </span>
+                <div className="min-w-0">
+                  <p className={['text-xs font-semibold truncate', selected ? 'text-accent' : 'text-primary'].join(' ')}>
+                    {s.name}
+                  </p>
+                  <p className="text-[10px] text-secondary/70 font-mono truncate">{s.type}</p>
+                </div>
+                {selected && (
+                  <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-accent rounded-full flex items-center justify-center text-[8px] text-white font-bold">
+                    ✓
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {sensors.length > 0 && (
+          <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+            {sensors.map(s => (
+              <span key={s.id} className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 bg-accent/10 border border-accent/20 text-accent rounded-full">
+                {SENSOR_ICONS[s.type] ?? '◎'} {s.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Main Step ─────────────────────────────────────────────────
 export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNeeded }: StepProps) {
   const [openCategory, setOpenCategory] = useState<string>(
-    state.hardware?.category ?? Object.keys(HARDWARE)[0]
+    state.hardware?.category ?? Object.keys(HARDWARE)[0],
   )
   const [hardware, setHardware] = useState<HardwareMap>({ ...HARDWARE })
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploading, setUploading]       = useState(false)
+  const [uploadError, setUploadError]   = useState<string | null>(null)
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   function selectDevice(category: string, device: { id: string; name: string; specs: string }) {
     updateState({
       hardware: { category, device: device.name, specs: device.specs },
-      model: null,
-      compatibilityResult: null,
-      techniques: [],
-      generatedCode: null,
+      model: null, compatibilityResult: null, techniques: [], generatedCode: null,
     })
+  }
+
+  function toggleSensor(sensor: SelectedSensor) {
+    const has = state.sensors.some(s => s.id === sensor.id)
+    updateState({ sensors: has ? state.sensors.filter(s => s.id !== sensor.id) : [...state.sensors, sensor] })
   }
 
   async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     if (!hasApiKey()) { onApiKeyNeeded(); return }
-
-    setUploading(true)
-    setUploadError(null)
-    setUploadSuccess(null)
-
+    setUploading(true); setUploadError(null); setUploadSuccess(null)
     try {
       const result = await analyzeHardwarePdf(file)
       const newDevice = { id: result.id, name: result.name, specs: result.specs }
@@ -53,128 +193,110 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
     }
   }
 
+  const selectedDeviceId = state.hardware
+    ? hardware[state.hardware.category]?.devices.find(d => d.name === state.hardware!.device)?.id ?? ''
+    : ''
+
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="mb-8">
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 2 of 5</p>
+      <div className="mb-6 flex-shrink-0">
+        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 2 of 7</p>
         <h2 className="text-3xl font-bold text-primary">Select Target Hardware</h2>
-        <p className="text-secondary mt-2">
-          Choose the edge device where your AI model will run
-        </p>
+        <p className="text-secondary mt-2">Choose the edge device and peripheral sensors for your AI deployment</p>
       </div>
 
-      {/* Hardware Categories */}
-      <div className="space-y-3 mb-6">
-        {Object.entries(hardware).map(([category, data]) => {
-          const isOpen = openCategory === category
-          const categorySelected = state.hardware?.category === category
+      {/* Split layout */}
+      <div className="flex gap-6 flex-1 min-h-0">
+        {/* Left — Hardware category accordion */}
+        <div className="w-1/2 flex flex-col gap-3 overflow-y-auto pr-1">
+          <div className="space-y-2">
+            {Object.entries(hardware).map(([category, data]) => {
+              const isOpen = openCategory === category
+              const categorySelected = state.hardware?.category === category
+              return (
+                <div
+                  key={category}
+                  className={[
+                    'rounded-xl border transition-all duration-150',
+                    categorySelected ? 'border-accent/40 bg-accent/5' : 'border-white/8 bg-component',
+                  ].join(' ')}
+                >
+                  <button
+                    className="w-full flex items-center justify-between px-4 py-3 text-left"
+                    onClick={() => setOpenCategory(isOpen ? '' : category)}
+                  >
+                    <div>
+                      <span className={['font-semibold text-sm', categorySelected ? 'text-accent' : 'text-primary'].join(' ')}>
+                        {category}
+                      </span>
+                      <p className="text-secondary text-xs mt-0.5">{data.description}</p>
+                    </div>
+                    <span className="text-secondary text-xs ml-2 flex-shrink-0">{isOpen ? '▲' : '▼'}</span>
+                  </button>
 
-          return (
-            <div
-              key={category}
-              className={[
-                'rounded-xl border transition-all duration-150',
-                categorySelected
-                  ? 'border-accent/40 bg-accent/5'
-                  : 'border-white/8 bg-component',
-              ].join(' ')}
-            >
-              {/* Category Header */}
-              <button
-                className="w-full flex items-center justify-between px-5 py-4 text-left"
-                onClick={() => setOpenCategory(isOpen ? '' : category)}
-              >
-                <div>
-                  <span className={['font-semibold', categorySelected ? 'text-accent' : 'text-primary'].join(' ')}>
-                    {category}
-                  </span>
-                  <span className="text-secondary text-sm ml-3">{data.description}</span>
+                  {isOpen && (
+                    <div className="px-4 pb-3 grid grid-cols-1 gap-2">
+                      {data.devices.map(device => {
+                        const selected = state.hardware?.device === device.name
+                        return (
+                          <button
+                            key={device.id}
+                            onClick={() => selectDevice(category, device)}
+                            className={[
+                              'text-left px-3 py-2.5 rounded-lg border transition-all duration-150',
+                              selected
+                                ? 'bg-accent/15 border-accent text-primary'
+                                : 'bg-background/50 border-white/8 text-secondary hover:border-accent/40 hover:text-primary',
+                            ].join(' ')}
+                          >
+                            <p className="font-medium text-sm">{device.name}</p>
+                            <p className="text-xs text-secondary mt-0.5">{device.specs}</p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-                <span className="text-secondary text-sm ml-4 flex-shrink-0">
-                  {isOpen ? '▲' : '▼'}
-                </span>
-              </button>
+              )
+            })}
+          </div>
 
-              {/* Device List */}
-              {isOpen && (
-                <div className="px-5 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {data.devices.map(device => {
-                    const selected = state.hardware?.device === device.name
-                    return (
-                      <button
-                        key={device.id}
-                        onClick={() => selectDevice(category, device)}
-                        className={[
-                          'text-left px-4 py-3 rounded-lg border transition-all duration-150',
-                          selected
-                            ? 'bg-accent/15 border-accent text-primary'
-                            : 'bg-background/50 border-white/8 text-secondary hover:border-accent/40 hover:text-primary',
-                        ].join(' ')}
-                      >
-                        <p className="font-medium text-sm">{device.name}</p>
-                        <p className="text-xs text-secondary mt-0.5">{device.specs}</p>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* PDF Upload Section */}
-      <div className="mb-10 rounded-xl border border-dashed border-accent/30 bg-accent/4 px-5 py-4">
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">
-          Add Custom Hardware
-        </p>
-        <p className="text-xs text-secondary mb-3">
-          Upload a hardware datasheet (PDF) — Gemini AI will extract specs and add it to the list above.
-        </p>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          <label className={[
-            'flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold cursor-pointer transition-colors',
-            uploading
-              ? 'border-white/10 text-secondary cursor-not-allowed'
-              : 'border-accent/40 text-accent hover:bg-accent/10',
-          ].join(' ')}>
-            {uploading ? (
-              <>
-                <span className="w-3.5 h-3.5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-                Analyzing PDF...
-              </>
-            ) : (
-              'Upload Datasheet (PDF)'
+          {/* PDF Upload */}
+          <div className="rounded-xl border border-dashed border-accent/25 bg-accent/3 px-4 py-3">
+            <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Custom Hardware</p>
+            <p className="text-xs text-secondary mb-2">Upload a datasheet PDF — AI extracts specs automatically.</p>
+            <label className={[
+              'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-colors',
+              uploading ? 'border-white/10 text-secondary cursor-not-allowed' : 'border-accent/40 text-accent hover:bg-accent/10',
+            ].join(' ')}>
+              {uploading
+                ? <><span className="w-3 h-3 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />Analyzing...</>
+                : 'Upload PDF'}
+              <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" disabled={uploading} onChange={handlePdfUpload} />
+            </label>
+            {uploadSuccess && (
+              <p className="mt-2 text-xs text-green-400 flex items-center gap-1"><span>✓</span>{uploadSuccess}</p>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf"
-              className="hidden"
-              disabled={uploading}
-              onChange={handlePdfUpload}
-            />
-          </label>
+            {uploadError && (
+              <p className="mt-2 text-xs text-red-400 flex items-center gap-1"><span>!</span>{uploadError}</p>
+            )}
+          </div>
         </div>
 
-        {uploadSuccess && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
-            <span>✓</span>
-            <span>{uploadSuccess}</span>
-          </div>
-        )}
-        {uploadError && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-            <span>!</span>
-            <span>{uploadError}</span>
-          </div>
-        )}
+        {/* Right — Hardware info + Sensor selection */}
+        <div className="flex-1 min-w-0">
+          <HardwareRightPanel
+            hardware={state.hardware}
+            deviceId={selectedDeviceId}
+            sensors={state.sensors}
+            onSensorToggle={toggleSensor}
+          />
+        </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="flex justify-between mt-6 flex-shrink-0">
         <button
           onClick={() => goToStep(1)}
           className="px-6 py-2.5 border border-white/10 text-secondary font-semibold rounded-lg hover:border-white/20 hover:text-primary transition-colors"
@@ -184,9 +306,9 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
         <button
           onClick={() => goToStep(3)}
           disabled={!state.hardware}
-          className="px-6 py-2.5 bg-accent text-white font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/80 transition-colors"
+          className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
         >
-          Next: Model Selection →
+          Next: HW Config →
         </button>
       </div>
     </div>

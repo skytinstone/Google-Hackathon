@@ -44,6 +44,30 @@ export interface SelectedTechnique {
   subtype: string | null
 }
 
+export interface SelectedSensor {
+  id: string
+  name: string
+  type: string
+  specs: string
+}
+
+export interface SavedProject {
+  id: string
+  name: string
+  projectNo: number
+  author: string
+  ccAuthors: string[]
+  description: string
+  customDate: string
+  createdAt: string
+  domain: string | null
+  hardware: string | null
+  sensors: string[]
+  model: string | null
+  techniques: string[]
+  language: string
+}
+
 export interface WizardState {
   currentStep: number
   domain: string | null
@@ -52,11 +76,18 @@ export interface WizardState {
     device: string
     specs: string
   } | null
+  sensors: SelectedSensor[]
   model: ModelInfo | null
   compatibilityResult: CompatibilityResult | null
   techniques: SelectedTechnique[]
   language: string
   generatedCode: string | null
+  projectName: string
+  projectNo: number
+  projectAuthor: string
+  projectCcAuthors: string[]
+  projectDescription: string
+  projectCustomDate: string
 }
 
 export interface CustomHardwareResult {
@@ -72,4 +103,5 @@ export interface StepProps {
   updateState: (updates: Partial<WizardState>) => void
   goToStep: (step: number) => void
   onApiKeyNeeded: () => void
+  onAddProject?: (project: SavedProject) => void
 }
