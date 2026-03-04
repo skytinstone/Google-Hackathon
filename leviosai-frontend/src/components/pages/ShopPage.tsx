@@ -383,7 +383,7 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
                 <button key={p.id} onClick={() => setView('browse')}
                   className="w-full p-3 rounded-xl border border-white/8 hover:border-accent/20 transition-colors text-left">
                   <p className="text-xs font-mono font-bold text-primary">{p.name}</p>
-                  <p className="text-[10px] font-mono text-secondary">{p.config.hardware ?? 'N/A'} · {p.config.sensors?.length ?? 0} sensors</p>
+                  <p className="text-[10px] font-mono text-secondary">{p.hardware ?? 'N/A'} · {p.sensors?.length ?? 0} sensors</p>
                 </button>
               ))}
             </div>

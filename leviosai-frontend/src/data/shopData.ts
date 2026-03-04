@@ -1,4 +1,4 @@
-import type { Store, ShopProduct, ShopCategory, BomEntry, StoreId, WizardState } from '../types'
+import type { Store, ShopProduct, ShopCategory, BomEntry, WizardState } from '../types'
 
 // ── Stores ──────────────────────────────────────────────────
 
@@ -592,27 +592,6 @@ export const PRODUCT_CATALOG: ShopProduct[] = [
 
 export function generateBom(state: WizardState): BomEntry[] {
   const entries: BomEntry[] = []
-  const hwId = state.hardware
-    ? Object.values(
-        // flatten all hardware device ids from HARDWARE to find by device name
-        (() => {
-          // We need to find hardware device ID from state.hardware.device name
-          const deviceName = state.hardware?.device
-          for (const p of PRODUCT_CATALOG) {
-            if (p.category === 'main_board' && p.associatedHardware.length > 0) {
-              // check if any product's associated hardware matches by name pattern
-              const hwIds = p.associatedHardware
-              for (const hid of hwIds) {
-                if (deviceName?.toLowerCase().includes(hid.replace(/_/g, ' ').split(' ').pop() ?? '')) {
-                  return hid
-                }
-              }
-            }
-          }
-          return null
-        })()
-      )
-    : null
 
   // Determine hardware device ID from state
   const hardwareDeviceId = findHardwareDeviceId(state.hardware?.device ?? '')

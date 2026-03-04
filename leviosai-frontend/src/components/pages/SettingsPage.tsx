@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import TypewriterText from '../TypewriterText'
 import { showToast } from '../../utils/toast'
 import { addLog } from '../../utils/syslog'
-import { useI18n, setLocale as setI18nLocale } from '../../utils/i18n'
+import { setLocale as setI18nLocale } from '../../utils/i18n'
 
 const ACCENT_PRESETS = [
   { name: 'Default Blue', value: '#6b96be' },

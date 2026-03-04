@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { StepProps, SavedProject, SelectedSensor, WizardState } from '../../types'
 import TypewriterText from '../TypewriterText'
-import { showToast } from '../../utils/toast'
 
 const SENSOR_ICONS: Record<string, string> = {
   Vision: 'CAM', Depth: 'LDR', RF: 'RF', Audio: 'MIC',
