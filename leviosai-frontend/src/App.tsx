@@ -350,7 +350,15 @@ function MainPage({
         state={state}
       />
 
-      {activeTab !== 'shop' && <SystemLog position="left" sidebarVisible={sidebarVisible} />}
+      <SystemLog position="top-right" />
+
+      {/* LEVIOSAI brand — bottom-left on all pages except project (sidebar has it) */}
+      {activeTab !== 'project' && (
+        <div className="fixed bottom-4 left-5 z-30 flex items-center gap-2 pointer-events-none select-none">
+          <img src="/leviosai.png" alt="LeviosAI" className="w-5 h-5 object-contain opacity-40" />
+          <span className="font-mono text-primary/30 font-bold tracking-[0.15em] text-sm">LEVIOSAI</span>
+        </div>
+      )}
 
       {/* Keyboard shortcuts help modal */}
       {showShortcuts && (

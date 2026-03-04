@@ -25,7 +25,7 @@ const TYPE_COLOR_LIGHT: Record<LogType, string> = {
 }
 
 interface Props {
-  position?: 'left' | 'right'
+  position?: 'left' | 'right' | 'top-right'
   sidebarVisible?: boolean
 }
 
@@ -38,20 +38,27 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
   if (entries.length === 0) return null
 
   const isRight = position === 'right'
+  const isTopRight = position === 'top-right'
   const isLight = theme === 'light'
   const TYPE_COLOR = isLight ? TYPE_COLOR_LIGHT : TYPE_COLOR_DARK
 
-  // Position: center for login, left with sidebar offset for main
-  const posStyle: React.CSSProperties = isRight
-    ? { left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }
-    : { left: sidebarVisible ? '272px' : '100px' }
+  // Position: center for login, top-right for main, left fallback
+  const posStyle: React.CSSProperties = isTopRight
+    ? { left: '4px', top: '500px' }
+    : isRight
+      ? { left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }
+      : { left: sidebarVisible ? '272px' : '100px' }
+
+  const fixedClass = isTopRight
+    ? 'fixed z-40 font-mono select-none pointer-events-none transition-all duration-300'
+    : 'fixed bottom-6 z-40 font-mono select-none pointer-events-none transition-all duration-300'
 
   return (
     <div
-      className="fixed bottom-6 z-40 font-mono select-none pointer-events-none transition-all duration-300"
+      className={fixedClass}
       style={{ ...posStyle, maxWidth: '560px' }}
     >
-      {entries.slice(0, 6).map((entry, idx) => (
+      {entries.slice(0, 10).map((entry, idx) => (
         <div
           key={entry.id}
           className={[
@@ -59,7 +66,7 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
             isRight ? 'justify-center' : '',
             idx === 0 ? 'animate-fade-in' : '',
           ].join(' ')}
-          style={{ opacity: 1 - idx * 0.13 }}
+          style={{ opacity: 1 }}
         >
           <span className="text-[11px] tabular-nums" style={{ color: isLight ? '#16a34a' : '#4ade80' }}>{entry.time}</span>
           <span className="text-[11px] font-bold tracking-wider" style={{ color: TYPE_COLOR[entry.type] }}>

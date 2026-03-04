@@ -196,6 +196,24 @@ html {
   animation: flicker 8s step-end infinite;
 }
 
+/* Gauge tick — system health value pulse */
+@keyframes gauge-tick {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+.animate-gauge-tick {
+  animation: gauge-tick 3s ease-in-out infinite;
+}
+
+/* Heatmap cell fade-in */
+@keyframes heatmap-cell {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-heatmap-cell {
+  animation: heatmap-cell 0.3s ease-out forwards;
+}
+
 /* Watermark blink — slow pulse for background LEVIOSAI text */
 @keyframes watermark-blink {
   0%, 40%  { opacity: 1;   }

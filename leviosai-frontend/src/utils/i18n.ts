@@ -40,6 +40,14 @@ const translations: Record<Locale, Record<string, string>> = {
     'dashboard.sensors': 'Sensors',
     'dashboard.model': 'Model',
     'dashboard.noDescription': 'No description',
+    'dashboard.sensorsActive': 'Sensors Active',
+    'dashboard.techniquesApplied': 'Techniques Applied',
+    'dashboard.activityHeatmap': 'Activity Heatmap',
+    'dashboard.techniqueUsage': 'Technique Usage',
+    'dashboard.systemHealth': 'System Health',
+    'dashboard.sensorMatrix': 'Sensor × Hardware',
+    'dashboard.uptime': 'Edge Runtime Uptime',
+    'dashboard.noActivity': 'No activity in last 12 weeks',
 
     // Steps — titles English, subtitles English
     'step1.title': 'Select AI Domain',
@@ -274,6 +282,14 @@ const translations: Record<Locale, Record<string, string>> = {
     'dashboard.sensors': '센서',
     'dashboard.model': '모델',
     'dashboard.noDescription': '설명 없음',
+    'dashboard.sensorsActive': '활성 센서',
+    'dashboard.techniquesApplied': '적용 기법',
+    'dashboard.activityHeatmap': '활동 히트맵',
+    'dashboard.techniqueUsage': '기법 사용률',
+    'dashboard.systemHealth': '시스템 상태',
+    'dashboard.sensorMatrix': '센서 × 하드웨어',
+    'dashboard.uptime': '엣지 런타임 가동 시간',
+    'dashboard.noActivity': '최근 12주간 활동 없음',
 
     // Steps — 제목 영어 유지, 부제 한국어
     'step1.title': 'Select AI Domain',

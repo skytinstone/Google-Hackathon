@@ -43,32 +43,27 @@ export default function SettingsPage() {
     setAccentColor(color)
     localStorage.setItem('leviosai_accent', color)
     document.documentElement.style.setProperty('--color-accent', color)
-    showToast('Accent color updated', 'success')
     addLog(`Theme accent updated · ${color}`, 'ACT')
   }
 
   function handleFontSizeChange(size: FontSize) {
     applyFontSize(size)
-    showToast(`Font size: ${size}`, 'success')
     addLog(`Font size updated · ${size}`, 'ACT')
   }
 
   function handleZoomChange(level: ZoomLevel) {
     applyZoom(level)
-    showToast(`Display zoom: ${level}%`, 'success')
     addLog(`Display zoom updated · ${level}%`, 'ACT')
   }
 
   function handleThemeChange(mode: ThemeMode) {
     applyTheme(mode)
-    showToast(mode === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', 'success')
     addLog(`Theme mode · ${mode}`, 'ACT')
   }
 
   function handleLanguageChange(lang: 'en' | 'ko') {
     setLanguage(lang)
     setI18nLocale(lang)
-    showToast(lang === 'ko' ? '언어가 한국어로 변경되었습니다' : 'Language set to English', 'success')
     addLog(`Language preference · ${lang === 'ko' ? 'Korean' : 'English'}`, 'ACT')
   }
 
