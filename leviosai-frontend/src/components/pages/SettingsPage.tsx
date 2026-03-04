@@ -3,7 +3,7 @@ import TypewriterText from '../TypewriterText'
 import { showToast } from '../../utils/toast'
 import { addLog } from '../../utils/syslog'
 import { useI18n, setLocale as setI18nLocale } from '../../utils/i18n'
-import { useTheme, type ThemeMode, type FontSize } from '../../utils/theme'
+import { useTheme, type ThemeMode, type FontSize, type ZoomLevel } from '../../utils/theme'
 
 const ACCENT_PRESETS = [
   { name: 'Default Blue', value: '#6b96be' },
@@ -21,7 +21,7 @@ const FONT_SIZE_PRESETS: { label: string; key: string; value: FontSize }[] = [
 
 export default function SettingsPage() {
   const { t } = useI18n()
-  const { theme, fontSize, setTheme: applyTheme, setFontSize: applyFontSize } = useTheme()
+  const { theme, fontSize, zoom, setTheme: applyTheme, setFontSize: applyFontSize, setZoom: applyZoom } = useTheme()
   const [apiKey, setApiKey] = useState('')
   const [apiKeyMasked, setApiKeyMasked] = useState('')
   const [accentColor, setAccentColor] = useState('#6b96be')
@@ -51,6 +51,12 @@ export default function SettingsPage() {
     applyFontSize(size)
     showToast(`Font size: ${size}`, 'success')
     addLog(`Font size updated · ${size}`, 'ACT')
+  }
+
+  function handleZoomChange(level: ZoomLevel) {
+    applyZoom(level)
+    showToast(`Display zoom: ${level}%`, 'success')
+    addLog(`Display zoom updated · ${level}%`, 'ACT')
   }
 
   function handleThemeChange(mode: ThemeMode) {
@@ -199,6 +205,29 @@ export default function SettingsPage() {
                   {p.label}
                 </span>
                 {t(p.key)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Display Zoom */}
+        <div className="p-5 rounded-2xl border border-white/8 bg-component">
+          <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Appearance</p>
+          <p className="text-sm font-bold text-primary mt-0.5 font-mono">Display Zoom</p>
+          <p className="text-[10px] text-secondary/40 font-mono mt-1">Scale the entire UI for better visibility on large monitors</p>
+          <div className="mt-4 flex items-center gap-2">
+            {(['90', '100', '110', '120', '130'] as ZoomLevel[]).map(level => (
+              <button
+                key={level}
+                onClick={() => handleZoomChange(level)}
+                className={[
+                  'px-3 py-2 rounded-xl border transition-all text-xs font-mono font-bold',
+                  zoom === level
+                    ? 'border-accent/50 bg-accent/10 text-accent'
+                    : 'border-white/8 text-secondary hover:border-white/20',
+                ].join(' ')}
+              >
+                {level}%
               </button>
             ))}
           </div>

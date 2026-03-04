@@ -214,6 +214,7 @@ fake_users_db: Dict[str, Dict] = {
     "admin": {"username": "admin", "password": "1234"},
     "pjscjs777": {"username": "pjscjs777", "password": "wnstjd1986!"},
     "poupeehansol": {"username": "poupeehansol", "password": "1234"},
+    "shfive55": {"username": "shfive55", "password": "1234"},
 }
 
 
