@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { api } from '../api/api'
 import { useI18n, setLocale, type Locale } from '../utils/i18n'
+import { addLog } from '../utils/syslog'
 import SystemLog from './SystemLog'
 
 interface LoginScreenProps {
@@ -195,8 +196,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   useEffect(() => {
     injectKeyframes()
+    addLog('Login module initialized · awaiting credentials', 'INIT')
     // Start phase 1 (typewriter begins) after short dark delay
-    const t1 = setTimeout(() => setPhase(1), 300)
+    const t1 = setTimeout(() => {
+      setPhase(1)
+      addLog('Boot sequence started · rendering LEVIOSAI', 'INIT')
+    }, 300)
     return () => clearTimeout(t1)
   }, [])
 
@@ -213,23 +218,47 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         setTimeout(() => {
           setTypingDone(true)
           setPhase(2)
+          addLog('Brand render complete · click anywhere to proceed', 'OK')
         }, 400)
       }
     }, 180) // 180ms per character for dramatic effect
     return () => clearInterval(id)
   }, [phase >= 1 ? 1 : 0])
 
-  function handleScreenClick() {
-    if (phase < 2 || clicked) return
-    setClicked(true)
-    setTimeout(() => setPhase(3), 100) // brand moves left + card slides in
+  function handleScreenClick(e: React.MouseEvent) {
+    const x = Math.round(e.clientX)
+    const y = Math.round(e.clientY)
+
+    if (phase < 2) return
+
+    if (!clicked) {
+      setClicked(true)
+      addLog(`User interaction detected at (${x}, ${y}) · opening terminal`, 'ACT')
+      setTimeout(() => {
+        setPhase(3)
+        addLog('Authentication console loaded · ready for input', 'NAV')
+      }, 100)
+      return
+    }
+
+    // After phase 3: log every click on empty areas
+    addLog(`Click event at (${x}, ${y}) · no target element`, 'ACT')
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setLoading(true); setError(null)
-    try { await api.login(username, password); onLogin(username) }
-    catch (err) { setError(err instanceof Error ? err.message : 'Login failed') }
+    addLog(`Authentication attempt · user: ${username}`, 'AUTH')
+    try {
+      await api.login(username, password)
+      addLog(`Authentication handshake complete · operator terminal active`, 'OK')
+      onLogin(username)
+    }
+    catch (err) {
+      const msg = err instanceof Error ? err.message : 'Login failed'
+      addLog(`Authentication failed · ${msg}`, 'ERR')
+      setError(msg)
+    }
     finally { setLoading(false) }
   }
 
@@ -259,7 +288,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         {([['en', 'English'], ['ko', '한국어']] as const).map(([code, label]) => (
           <button
             key={code}
-            onClick={() => setLocale(code as Locale)}
+            onClick={() => { setLocale(code as Locale); addLog(`Locale switched to ${code === 'en' ? 'English' : 'Korean'}`, 'ACT') }}
             className={[
               'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all',
               locale === code
