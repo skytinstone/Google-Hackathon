@@ -12,12 +12,8 @@ import {
   getAssemblySteps,
   getSdkSteps,
   getBenchmarkResult,
-  getDeployLogLines,
   type HardwarePinMap,
   type AssemblyStep,
-  type SdkStep,
-  type BenchmarkResult,
-  type DeployLogLine,
 } from '../../data/deployData'
 
 interface Props {
@@ -285,7 +281,7 @@ function HardwareAssemblyDiagramCompact({ pinMap, steps, checkedSteps, onToggleS
         </svg>
       </div>
       <div className="lg:w-64 space-y-1">
-        {steps.map((step, i) => {
+        {steps.map((step) => {
           const isChecked = checkedSteps.has(step.id)
           return (
             <button key={step.id} onClick={() => onToggleStep(step.id)}
@@ -568,7 +564,7 @@ function SoftwareTab({ project, state }: { project: SavedProject; state: WizardS
    ================================================================ */
 interface TodoItem { id: string; text: string; done: boolean }
 
-function AiNotesTab({ project, state }: { project: SavedProject; state: WizardState }) {
+function AiNotesTab({ project }: { project: SavedProject }) {
   const { t } = useI18n()
   const { theme } = useTheme()
   const isLight = theme === 'light'
@@ -872,7 +868,7 @@ export default function DeployPage({ state, savedProjects, onGoToProject }: Prop
         {activeTab === 'overview' && <OverviewTab project={selectedProject} state={state} />}
         {activeTab === 'hardware' && <HardwareTab project={selectedProject} state={state} />}
         {activeTab === 'software' && <SoftwareTab project={selectedProject} state={state} />}
-        {activeTab === 'notes' && <AiNotesTab project={selectedProject} state={state} />}
+        {activeTab === 'notes' && <AiNotesTab project={selectedProject} />}
         {activeTab === 'media' && <MediaTab project={selectedProject} />}
       </div>
     </div>

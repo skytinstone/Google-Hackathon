@@ -162,7 +162,7 @@ const GENERIC_PIN_MAP: HardwarePinMap = {
   ],
 }
 
-const HARDWARE_PIN_MAPS: HardwarePinMap[] = [JETSON_PIN_MAP, HAILO_PIN_MAP, STM32_PIN_MAP, GENERIC_PIN_MAP]
+// Pin maps are accessed via getPinMap() below
 
 export function getPinMap(category: string): HardwarePinMap {
   const cat = category.toLowerCase()
