@@ -68,6 +68,7 @@ function StoreLink({ store, product }: { store: typeof STORES[number]; product: 
 function ProductCard({ product, onAdd, isRecommended }: {
   product: ShopProduct; onAdd: (id: string, qty: number) => void; isRecommended: boolean
 }) {
+  const { t } = useI18n()
   const [qty, setQty] = useState(1)
   const cat = SHOP_CATEGORIES[product.category]
   return (
