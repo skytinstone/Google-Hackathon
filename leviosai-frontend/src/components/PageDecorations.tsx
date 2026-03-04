@@ -67,10 +67,10 @@ export function VerticalDateTime({ sidebarVisible }: { sidebarVisible?: boolean 
       className="fixed top-20 pointer-events-none select-none transition-all duration-300"
       style={{ zIndex: 0, left: sidebarVisible ? '272px' : '16px' }}
     >
-      <p className="text-[34px] font-black font-mono tracking-[0.08em] text-white/30 leading-[0.95]">
+      <p className="text-[24px] font-black font-mono tracking-[0.08em] text-white/30 leading-[0.95]">
         {dateStr}
       </p>
-      <p className="text-[34px] font-black font-mono tracking-[0.08em] text-white/30 leading-[0.95]">
+      <p className="text-[24px] font-black font-mono tracking-[0.08em] text-white/30 leading-[0.95]">
         {timeStr}
       </p>
     </div>

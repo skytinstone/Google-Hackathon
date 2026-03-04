@@ -42,12 +42,10 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
   const isLight = theme === 'light'
   const TYPE_COLOR = isLight ? TYPE_COLOR_LIGHT : TYPE_COLOR_DARK
 
-  // Position: center for login, top-right for main, left fallback
-  const posStyle: React.CSSProperties = isTopRight
-    ? { left: '285px', bottom: '40px' }
-    : isRight
-      ? { left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }
-      : { left: sidebarVisible ? '272px' : '100px' }
+  // Position: login + main share bottom-left; admin uses sidebar-aware left
+  const posStyle: React.CSSProperties = (isTopRight || isRight)
+    ? { left: '4px', bottom: '500px' }
+    : { left: sidebarVisible ? '272px' : '100px' }
 
   const fixedClass = 'fixed z-40 font-mono select-none pointer-events-none transition-all duration-300'
 
@@ -61,7 +59,7 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
           key={entry.id}
           className={[
             'flex items-center gap-2 py-0.5',
-            isRight ? 'justify-center' : '',
+            '',
             idx === 0 ? 'animate-fade-in' : '',
           ].join(' ')}
           style={{ opacity: 1 }}
