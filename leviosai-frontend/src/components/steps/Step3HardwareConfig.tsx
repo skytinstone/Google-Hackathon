@@ -348,13 +348,49 @@ export default function Step3HardwareConfig({ state, updateState, goToStep }: St
         >
           ← Back
         </button>
-        <button
-          onClick={() => goToStep(4)}
-          disabled={!state.hardware}
-          className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
-        >
-          Next: AI Model →
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              const hw = state.hardware
+              if (!hw) return
+              const sensors = state.sensors
+              const html = `<!DOCTYPE html><html><head><title>Hardware Configuration - LeviosAI</title>
+<style>body{font-family:monospace;padding:40px;color:#222;max-width:800px;margin:0 auto}
+h1{font-size:24px;border-bottom:2px solid #6b96be;padding-bottom:8px}
+h2{font-size:16px;color:#6b96be;margin-top:24px}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+td,th{padding:8px 12px;border:1px solid #ddd;text-align:left;font-size:13px}
+th{background:#f5f5f5;font-weight:bold}
+.badge{display:inline-block;background:#e8f0fe;color:#1a73e8;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:4px}
+.footer{margin-top:32px;padding-top:16px;border-top:1px solid #ddd;font-size:11px;color:#888}</style></head>
+<body><h1>LeviosAI — Hardware Configuration</h1>
+<p>Generated: ${new Date().toLocaleString()}</p>
+<h2>Main Compute Unit</h2>
+<table><tr><th>Device</th><td>${hw.device}</td></tr>
+<tr><th>Category</th><td>${hw.category}</td></tr>
+<tr><th>Specs</th><td>${hw.specs}</td></tr></table>
+${sensors.length > 0 ? `<h2>Sensors (${sensors.length})</h2>
+<table><tr><th>#</th><th>Name</th><th>Type</th><th>Specs</th></tr>
+${sensors.map((s, i) => `<tr><td>${i + 1}</td><td>${s.name}</td><td>${s.type}</td><td>${s.specs}</td></tr>`).join('')}
+</table>` : '<h2>Sensors</h2><p>No sensors configured</p>'}
+${state.domain ? `<h2>Domain</h2><p><span class="badge">${state.domain}</span></p>` : ''}
+<div class="footer">LeviosAI · Edge AI Optimization Platform</div></body></html>`
+              const w = window.open('', '_blank')
+              if (w) { w.document.write(html); w.document.close(); w.print() }
+            }}
+            disabled={!state.hardware}
+            className="px-4 py-2.5 border border-accent/30 text-accent font-mono text-xs rounded-lg hover:bg-accent/10 transition-colors disabled:opacity-30"
+          >
+            PDF Download
+          </button>
+          <button
+            onClick={() => goToStep(4)}
+            disabled={!state.hardware}
+            className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+          >
+            Next: AI Model →
+          </button>
+        </div>
       </div>
     </div>
   )

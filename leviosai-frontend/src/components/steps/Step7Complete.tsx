@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import type { StepProps, SavedProject, SelectedSensor } from '../../types'
+import type { StepProps, SavedProject, SelectedSensor, WizardState } from '../../types'
 import TypewriterText from '../TypewriterText'
+import { showToast } from '../../utils/toast'
 
 const SENSOR_ICONS: Record<string, string> = {
   Vision: 'CAM', Depth: 'LDR', RF: 'RF', Audio: 'MIC',
@@ -110,9 +111,116 @@ function PipelineDiagram({
   )
 }
 
-export default function Step7Complete({ state, updateState, goToStep, onAddProject }: StepProps) {
+// ── Deployment Guide ──────────────────────────────────────────
+function getDeploymentSteps(state: WizardState) {
+  const steps: { title: string; desc: string; cmd?: string }[] = []
+  const hw = state.hardware?.category || ''
+  const lang = state.language || 'Python'
+
+  // 1. Environment
+  if (lang === 'Python' || lang === 'Python (.ipynb)') {
+    steps.push({ title: 'Environment Setup', desc: 'Create a virtual environment and install base dependencies', cmd: 'python -m venv venv && source venv/bin/activate\npip install torch torchvision onnxruntime numpy' })
+  } else if (lang === 'C++') {
+    steps.push({ title: 'Environment Setup', desc: 'Install build tools and libraries', cmd: 'sudo apt install cmake g++ libopencv-dev' })
+  } else {
+    steps.push({ title: 'Environment Setup', desc: 'Install required runtime and build dependencies for your platform' })
+  }
+
+  // 2. Hardware SDK
+  if (hw.includes('Jetson') || hw.includes('Nvidia')) {
+    steps.push({ title: 'JetPack SDK Setup', desc: 'Install NVIDIA JetPack with CUDA, cuDNN, and TensorRT', cmd: 'sudo apt install nvidia-jetpack\n# Verify: dpkg -l | grep tensorrt' })
+  } else if (hw.includes('Hailo')) {
+    steps.push({ title: 'Hailo SDK Setup', desc: 'Install Hailo Runtime and HailoRT libraries', cmd: 'pip install hailort\n# Download Hailo Model Zoo from developer zone' })
+  } else if (hw.includes('Mobile')) {
+    steps.push({ title: 'Mobile SDK Setup', desc: 'Configure mobile inference framework (TFLite / NNAPI / Core ML)' })
+  } else if (hw.includes('Embedded') || hw.includes('STM32')) {
+    steps.push({ title: 'Embedded Toolchain', desc: 'Install STM32CubeIDE and X-CUBE-AI for model conversion', cmd: 'stm32cubeide --install-xcubeai' })
+  }
+
+  // 3. Model prep
+  steps.push({ title: 'Model Preparation', desc: `Download and optimize ${state.model?.name ?? 'your model'} for edge deployment` })
+
+  // 4. Optimization
+  if (state.techniques.length > 0) {
+    const techNames = state.techniques.map(t => t.name).join(', ')
+    steps.push({ title: 'Apply Optimizations', desc: `Run optimization pipeline: ${techNames}` })
+  }
+
+  // 5. Deploy & Test
+  steps.push({ title: 'Deploy & Test', desc: 'Transfer the optimized model to target device and run inference validation' })
+
+  // 6. Benchmark
+  steps.push({ title: 'Performance Benchmark', desc: 'Measure latency, throughput, memory usage, and power consumption on target hardware' })
+
+  return steps
+}
+
+function DeploymentGuide({ state }: { state: WizardState }) {
+  const [open, setOpen] = useState(false)
+  const steps = getDeploymentSteps(state)
+  const [copied, setCopied] = useState<number | null>(null)
+
+  function copyCmd(idx: number, cmd: string) {
+    navigator.clipboard.writeText(cmd).then(() => {
+      setCopied(idx)
+      setTimeout(() => setCopied(null), 2000)
+    })
+  }
+
+  return (
+    <div className="p-5 rounded-2xl border border-white/8 bg-component mb-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Deployment</p>
+          <p className="text-sm font-bold text-primary mt-0.5 font-mono">Quick Start Guide</p>
+        </div>
+        <button
+          onClick={() => setOpen(v => !v)}
+          className="text-xs font-mono text-secondary hover:text-primary transition-colors px-2 py-1 rounded border border-white/8 hover:border-white/20"
+        >
+          {open ? '▴ Collapse' : '▾ Expand'}
+        </button>
+      </div>
+
+      {open && (
+        <div className="mt-4 space-y-3 animate-fade-in">
+          {steps.map((s, i) => (
+            <div key={i} className="flex gap-3">
+              <div className="flex flex-col items-center flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent text-[10px] font-bold font-mono">
+                  {i + 1}
+                </div>
+                {i < steps.length - 1 && <div className="w-px flex-1 bg-white/8 mt-1" />}
+              </div>
+              <div className="flex-1 pb-3">
+                <p className="text-xs font-bold text-primary font-mono">{s.title}</p>
+                <p className="text-[11px] text-secondary mt-0.5">{s.desc}</p>
+                {s.cmd && (
+                  <div className="mt-2 relative group">
+                    <pre className="bg-background/60 border border-white/5 rounded-lg p-3 text-[10px] font-mono text-accent/80 overflow-x-auto whitespace-pre">
+                      {s.cmd}
+                    </pre>
+                    <button
+                      onClick={() => copyCmd(i, s.cmd!)}
+                      className="absolute top-1.5 right-1.5 text-[10px] font-mono text-secondary/40 hover:text-primary bg-background/80 px-1.5 py-0.5 rounded border border-white/8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      {copied === i ? '✓' : 'Copy'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function Step7Complete({ state, updateState, goToStep, onAddProject, onGoToShop }: StepProps) {
   const [projectName, setProjectName] = useState(state.projectName || '')
   const [added, setAdded] = useState(false)
+  const [showPopup, setShowPopup] = useState(false)
 
   function handleAddProject() {
     if (!projectName.trim()) return
@@ -133,8 +241,13 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
       language: state.language,
     }
     updateState({ projectName: projectName.trim() })
-    onAddProject?.(project)
     setAdded(true)
+    setShowPopup(true)
+
+    // Auto redirect to Dashboard after 2.5s
+    setTimeout(() => {
+      onAddProject?.(project)
+    }, 2500)
   }
 
   const summary = [
@@ -207,6 +320,9 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
               </div>
             </div>
           )}
+
+          {/* Deployment Guide */}
+          <DeploymentGuide state={state} />
 
           {/* Compatibility score if available */}
           {state.compatibilityResult && (
@@ -314,6 +430,16 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
             </div>
           </div>
 
+          {/* Shop components */}
+          {onGoToShop && state.hardware && (
+            <button
+              onClick={onGoToShop}
+              className="mt-3 w-full py-2 border border-accent/30 text-accent text-xs font-mono font-semibold rounded-lg hover:bg-accent/10 hover:border-accent/50 transition-colors flex items-center justify-center gap-2"
+            >
+              🛒 Shop Components
+            </button>
+          )}
+
           {/* Start over */}
           <button
             onClick={() => goToStep(1)}
@@ -333,6 +459,71 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
           ← Back
         </button>
       </div>
+
+      {/* Completion popup overlay */}
+      {showPopup && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center animate-fade-in">
+          <div className="text-center">
+            {/* Animated checkmark circle */}
+            <div
+              className="w-24 h-24 mx-auto mb-6 rounded-full border-4 border-green-500 flex items-center justify-center"
+              style={{ animation: 'popIn 0.4s ease-out' }}
+            >
+              <svg
+                className="w-12 h-12 text-green-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline
+                  points="20 6 9 17 4 12"
+                  style={{
+                    strokeDasharray: 24,
+                    strokeDashoffset: 0,
+                    animation: 'drawCheck 0.5s 0.3s ease-out both',
+                  }}
+                />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-primary font-mono" style={{ animation: 'popIn 0.3s 0.4s ease-out both' }}>
+              Project Created!
+            </h3>
+            <p className="text-secondary mt-2" style={{ animation: 'popIn 0.3s 0.5s ease-out both' }}>
+              "{projectName}" has been saved successfully
+            </p>
+            <p className="text-xs text-secondary/50 mt-6 font-mono" style={{ animation: 'popIn 0.3s 0.7s ease-out both' }}>
+              Redirecting to Dashboard...
+            </p>
+            <div className="mt-3 flex justify-center">
+              <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-500 rounded-full"
+                  style={{ animation: 'fillBar 2.5s linear' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Inline keyframes */}
+          <style>{`
+            @keyframes popIn {
+              from { opacity: 0; transform: scale(0.8); }
+              to { opacity: 1; transform: scale(1); }
+            }
+            @keyframes drawCheck {
+              from { stroke-dashoffset: 24; }
+              to { stroke-dashoffset: 0; }
+            }
+            @keyframes fillBar {
+              from { width: 0%; }
+              to { width: 100%; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   )
 }

@@ -43,8 +43,8 @@ export default function Step1Domain({ state, updateState, goToStep }: StepProps)
                     : 'bg-component border-white/8 hover:border-accent/40 hover:bg-accent/5',
                 ].join(' ')}
               >
-                <span className="w-10 h-10 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center text-accent font-mono font-bold text-xs flex-shrink-0">
-                  {domain.id.toUpperCase()}
+                <span className="w-10 h-10 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center text-accent text-base flex-shrink-0">
+                  ◈
                 </span>
                 <div className="min-w-0 flex-1">
                   <h3 className={['font-semibold', selected ? 'text-accent' : 'text-primary'].join(' ')}>

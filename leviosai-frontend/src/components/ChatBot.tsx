@@ -185,11 +185,12 @@ export default function ChatBot({ isOpen, onToggle: _onToggle, currentStep, stat
 
 function getQuickPrompts(step: number): string[] {
   const map: Record<number, string[]> = {
+    0: ['What is Edge AI?', 'Best hardware?', 'Getting started'],
     1: ['What is BCI?', 'CV vs LLM?', 'Best for robotics?'],
     2: ['Jetson vs Hailo?', 'Low power options?', 'Best for mobile?'],
     3: ['YOLOv8 vs YOLOv11?', 'Smallest LLM?', 'EEGNet explained'],
     4: ['PTQ vs QAT?', 'Best combo?', 'Pruning trade-offs?'],
     5: ['Explain imports', 'Add INT8 support', 'Optimize latency'],
   }
-  return map[step] ?? []
+  return map[step] ?? map[0]
 }

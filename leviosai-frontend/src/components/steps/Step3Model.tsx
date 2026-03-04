@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { StepProps, CompatibilityResult } from '../../types'
-import { MODELS, api, hasApiKey } from '../../api/api'
+import { MODELS, api, hasApiKey, callGeminiDirect } from '../../api/api'
 import type { ModelInfoResult } from '../../api/api'
 import TypewriterText from '../TypewriterText'
 
@@ -50,8 +50,31 @@ export default function Step3Model({ state, updateState, goToStep, onApiKeyNeede
   const [error, setError] = useState<string | null>(null)
   const [modelInfo, setModelInfo] = useState<ModelInfoResult | null>(null)
   const [modelInfoLoading, setModelInfoLoading] = useState(false)
+  const [topModels, setTopModels] = useState<string[]>([])
+  const [recommending, setRecommending] = useState(false)
 
   const domainModels = state.domain ? (MODELS[state.domain] ?? []) : []
+
+  async function handleRecommend() {
+    if (!state.domain || !state.hardware) return
+    if (!hasApiKey()) { onApiKeyNeeded(); return }
+    setRecommending(true)
+    try {
+      const modelNames = domainModels.map(m => m.name).join(', ')
+      const prompt = `For ${state.domain} domain on ${state.hardware.device} (${state.hardware.specs}), rank the top 3 best models from this list: ${modelNames}. Reply ONLY with the 3 model names separated by commas, nothing else. Example: ModelA, ModelB, ModelC`
+      const result = await callGeminiDirect(
+        'You are an Edge AI model recommendation engine. Reply only with model names.',
+        prompt,
+        0.3,
+      )
+      const names = result.split(',').map(n => n.trim()).filter(Boolean).slice(0, 3)
+      setTopModels(names)
+    } catch {
+      setTopModels(domainModels.slice(0, 3).map(m => m.name))
+    } finally {
+      setRecommending(false)
+    }
+  }
 
   useEffect(() => {
     if (!state.model || !state.domain) { setModelInfo(null); return }
@@ -193,22 +216,43 @@ export default function Step3Model({ state, updateState, goToStep, onApiKeyNeede
       <div className="flex gap-6 flex-1 min-h-0">
         {/* Left — Model grid */}
         <div className="w-2/5 overflow-y-auto pr-1">
+          {/* Recommend button */}
+          <button
+            onClick={handleRecommend}
+            disabled={recommending}
+            className="w-full mb-3 flex items-center justify-center gap-2 py-2 border border-accent/30 text-accent text-xs font-mono rounded-lg hover:bg-accent/10 transition-colors disabled:opacity-50"
+          >
+            {recommending ? (
+              <><span className="animate-spin">⟳</span> Analyzing...</>
+            ) : (
+              <><span>⟳</span> AI Recommend Top Models</>
+            )}
+          </button>
           <div className="grid grid-cols-1 gap-2">
             {domainModels.map(model => {
               const selected = state.model?.id === model.id
+              const rank = topModels.findIndex(n => model.name.toLowerCase().includes(n.toLowerCase()) || n.toLowerCase().includes(model.name.toLowerCase()))
+              const isTop = rank !== -1
               return (
                 <button
                   key={model.id}
                   onClick={() => selectModel(model)}
                   className={[
-                    'text-left px-4 py-3 rounded-xl border transition-all duration-150',
+                    'text-left px-4 py-3 rounded-xl border transition-all duration-150 relative',
                     selected
                       ? 'bg-accent/10 border-accent'
-                      : 'bg-component border-white/8 hover:border-accent/40 hover:bg-accent/5',
+                      : isTop
+                        ? 'bg-green-500/5 border-green-500/30 hover:border-green-500/50'
+                        : 'bg-component border-white/8 hover:border-accent/40 hover:bg-accent/5',
                   ].join(' ')}
                 >
+                  {isTop && (
+                    <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold font-mono bg-green-500 text-white px-1.5 py-0.5 rounded-full">
+                      TOP {rank + 1}
+                    </span>
+                  )}
                   <div className="flex items-start justify-between gap-2">
-                    <p className={['font-semibold text-sm', selected ? 'text-accent' : 'text-primary'].join(' ')}>
+                    <p className={['font-semibold text-sm', selected ? 'text-accent' : isTop ? 'text-green-400' : 'text-primary'].join(' ')}>
                       {model.name}
                     </p>
                     <span className="text-xs px-2 py-0.5 bg-white/8 text-secondary rounded-full flex-shrink-0">

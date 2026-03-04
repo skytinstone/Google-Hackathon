@@ -1,43 +1,11 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import TypewriterText from '../TypewriterText'
+import WorldMap from '../WorldMap'
 import type { SavedProject } from '../../types'
-
-// ── Vertical LEVIOSAI watermark ────────────────────────────────
-function VerticalWatermark() {
-  const text = 'LEVIOSAI'
-  const [count, setCount] = useState(0)
-
-  useEffect(() => {
-    let i = 0
-    const id = setInterval(() => {
-      i++
-      setCount(i)
-      if (i >= text.length) clearInterval(id)
-    }, 130)
-    return () => clearInterval(id)
-  }, [])
-
-  return (
-    <div
-      className="fixed left-4 bottom-10 pointer-events-none select-none"
-      style={{ zIndex: 0 }}
-    >
-      <p
-        className="text-[72px] font-black font-mono tracking-[0.18em] text-white/[0.045] leading-none"
-        style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-      >
-        {text.slice(0, count)}
-        {count < text.length && (
-          <span className="animate-blink text-white/[0.06]">_</span>
-        )}
-      </p>
-    </div>
-  )
-}
 
 interface Props {
   projects: SavedProject[]
-  onOpenProject: () => void
+  onOpenProject: (project: SavedProject) => void
   onNewProject: () => void
 }
 
@@ -97,7 +65,7 @@ function BarRow({
   )
 }
 
-function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: () => void }) {
+function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: (p: SavedProject) => void }) {
   const displayDate = project.customDate
     ? new Date(project.customDate + 'T00:00:00').toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
@@ -108,7 +76,7 @@ function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: () =>
 
   return (
     <button
-      onClick={onOpen}
+      onClick={() => onOpen(project)}
       className="text-left p-5 rounded-2xl border border-white/8 bg-component hover:border-accent/40 hover:bg-accent/5 transition-all duration-200 group"
     >
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -177,6 +145,10 @@ function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: () =>
 // ── Main component ─────────────────────────────────────────────────────────
 
 export default function DashboardPage({ projects, onOpenProject, onNewProject }: Props) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterDomain, setFilterDomain] = useState<string | ''>('')
+  const [filterHardware, setFilterHardware] = useState<string | ''>('')
+
   const stats = useMemo(() => {
     const domains   = Array.from(new Set(projects.map(p => p.domain).filter(Boolean)))   as string[]
     const hardwares = Array.from(new Set(projects.map(p => p.hardware).filter(Boolean))) as string[]
@@ -203,19 +175,33 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
     return { domains, hardwares, models, domainCounts, hwCounts, langCounts, modelCounts, recent, allSensors }
   }, [projects])
 
+  const filteredProjects = useMemo(() => {
+    return projects.filter(p => {
+      const q = searchQuery.toLowerCase()
+      const matchesSearch = !searchQuery ||
+        p.name.toLowerCase().includes(q) ||
+        (p.description?.toLowerCase().includes(q)) ||
+        (p.author?.toLowerCase().includes(q)) ||
+        (p.model?.toLowerCase().includes(q))
+      const matchesDomain = !filterDomain || p.domain === filterDomain
+      const matchesHw = !filterHardware || p.hardware === filterHardware
+      return matchesSearch && matchesDomain && matchesHw
+    })
+  }, [projects, searchQuery, filterDomain, filterHardware])
+
   const now = new Date()
   const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
   const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 
   return (
-    <>
-    {/* Background LEVIOSAI watermark — fixed bottom-left, vertical */}
-    <VerticalWatermark />
-
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8 relative">
+      {/* World map background */}
+      <div className="absolute -top-8 -left-8 -right-8 h-[400px] overflow-hidden rounded-2xl">
+        <WorldMap />
+      </div>
 
       {/* ── Header ────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 relative" style={{ zIndex: 1 }}>
         <div>
           <div className="flex items-center gap-3 mb-2">
             <p className="text-[10px] font-semibold text-accent/70 uppercase tracking-[0.25em] font-mono">
@@ -450,14 +436,47 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
         </div>
       ) : (
         <div>
+          {/* Search & Filter bar */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary/40 text-sm">⌕</span>
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search pipelines..."
+                className="w-full bg-component border border-white/8 text-primary rounded-xl pl-9 pr-4 py-2.5 text-xs placeholder:text-secondary/30 focus:outline-none focus:border-accent/50 transition-colors font-mono"
+              />
+            </div>
+            {stats.domains.length > 0 && (
+              <select
+                value={filterDomain}
+                onChange={e => setFilterDomain(e.target.value)}
+                className="bg-component border border-white/8 text-primary rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer"
+              >
+                <option value="">All Domains</option>
+                {stats.domains.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            )}
+            {stats.hardwares.length > 0 && (
+              <select
+                value={filterHardware}
+                onChange={e => setFilterHardware(e.target.value)}
+                className="bg-component border border-white/8 text-primary rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer"
+              >
+                <option value="">All Hardware</option>
+                {stats.hardwares.map(h => <option key={h} value={h}>{h}</option>)}
+              </select>
+            )}
+          </div>
+
           <div className="flex items-center justify-between mb-4">
             <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">All Pipelines</p>
             <p className="text-[10px] font-mono text-secondary/25">
-              {projects.length} record{projects.length !== 1 ? 's' : ''}
+              {filteredProjects.length}{filteredProjects.length !== projects.length ? ` / ${projects.length}` : ''} record{filteredProjects.length !== 1 ? 's' : ''}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map(project => (
+            {filteredProjects.map(project => (
               <ProjectCard key={project.id} project={project} onOpen={onOpenProject} />
             ))}
             {/* New pipeline card */}
@@ -476,6 +495,5 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
         </div>
       )}
     </div>
-    </>
   )
 }

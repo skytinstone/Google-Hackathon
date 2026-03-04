@@ -1,10 +1,40 @@
+import { useState } from 'react'
 import type { StepProps, SelectedTechnique } from '../../types'
-import { TECHNIQUES, TECHNIQUES_BY_DOMAIN } from '../../api/api'
+import { TECHNIQUES, TECHNIQUES_BY_DOMAIN, callGeminiDirect, hasApiKey } from '../../api/api'
 import TypewriterText from '../TypewriterText'
 
-export default function Step4Technique({ state, updateState, goToStep }: StepProps) {
+// Domain-specific recommended technique IDs
+const DOMAIN_RECOMMENDATIONS: Record<string, string[]> = {
+  'Computer Vision': ['quantization', 'tensorrt'],
+  'LLM': ['quantization', 'lora'],
+  'Auto Speech Recognition': ['quantization', 'ctc_opt'],
+  'BCI': ['quantization', 'transfer'],
+}
+
+export default function Step4Technique({ state, updateState, goToStep, onApiKeyNeeded }: StepProps) {
   // Use domain-specific techniques if available, fall back to common techniques
   const availableTechs = (state.domain && TECHNIQUES_BY_DOMAIN[state.domain]) ? TECHNIQUES_BY_DOMAIN[state.domain] : TECHNIQUES
+  const [recommendedIds, setRecommendedIds] = useState<string[]>(
+    state.domain ? (DOMAIN_RECOMMENDATIONS[state.domain] ?? ['quantization']) : ['quantization']
+  )
+  const [recommending, setRecommending] = useState(false)
+
+  async function handleRecommend() {
+    if (!state.domain || !state.model) return
+    if (!hasApiKey()) { onApiKeyNeeded?.(); return }
+    setRecommending(true)
+    try {
+      const techNames = availableTechs.map(t => `${t.id}:${t.name}`).join(', ')
+      const prompt = `For ${state.domain} with ${state.model.name} (${state.model.params}) on ${state.hardware?.device ?? 'edge device'}, which 2 optimization techniques are best? Available: ${techNames}. Reply ONLY with the technique IDs separated by commas. Example: quantization, pruning`
+      const result = await callGeminiDirect('You are an Edge AI optimization expert. Reply only with technique IDs.', prompt, 0.3)
+      const ids = result.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+      if (ids.length > 0) setRecommendedIds(ids)
+    } catch {
+      // keep defaults
+    } finally {
+      setRecommending(false)
+    }
+  }
   function isTechEnabled(id: string) {
     return state.techniques.some(t => t.id === id)
   }
@@ -46,22 +76,43 @@ export default function Step4Technique({ state, updateState, goToStep }: StepPro
         </p>
       </div>
 
+      {/* Recommend button */}
+      <button
+        onClick={handleRecommend}
+        disabled={recommending}
+        className="w-full mb-4 flex items-center justify-center gap-2 py-2.5 border border-accent/30 text-accent text-xs font-mono rounded-lg hover:bg-accent/10 transition-colors disabled:opacity-50"
+      >
+        {recommending ? (
+          <><span className="animate-spin">⟳</span> Analyzing best techniques...</>
+        ) : (
+          <><span>⟳</span> AI Recommend Techniques</>
+        )}
+      </button>
+
       {/* Technique Cards */}
       <div className="space-y-4 mb-10">
         {availableTechs.map(tech => {
           const enabled = isTechEnabled(tech.id)
           const selectedSubtype = getSelectedSubtype(tech.id)
+          const isRecommended = recommendedIds.includes(tech.id)
 
           return (
             <div
               key={tech.id}
               className={[
-                'rounded-xl border transition-all duration-150',
+                'rounded-xl border transition-all duration-150 relative',
                 enabled
                   ? 'bg-accent/8 border-accent/30'
-                  : 'bg-component border-white/8',
+                  : isRecommended
+                    ? 'bg-green-500/5 border-green-500/30 shadow-[0_0_12px_rgba(74,222,128,0.1)]'
+                    : 'bg-component border-white/8',
               ].join(' ')}
             >
+              {isRecommended && !enabled && (
+                <span className="absolute -top-2 right-4 text-[9px] font-bold font-mono bg-green-500 text-white px-2 py-0.5 rounded-full">
+                  RECOMMENDED
+                </span>
+              )}
               {/* Technique Header */}
               <div className="flex items-center gap-4 px-5 py-4">
                 {/* Toggle */}
@@ -82,7 +133,7 @@ export default function Step4Technique({ state, updateState, goToStep }: StepPro
                 </button>
 
                 <div className="flex-1 min-w-0">
-                  <p className={['font-semibold', enabled ? 'text-primary' : 'text-secondary'].join(' ')}>
+                  <p className={['font-semibold', enabled ? 'text-primary' : isRecommended ? 'text-green-400' : 'text-secondary'].join(' ')}>
                     {tech.name}
                   </p>
                   <p className="text-xs text-secondary mt-0.5">{tech.description}</p>

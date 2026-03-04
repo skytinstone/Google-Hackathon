@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
+import { TemplateSelector, type ProjectTemplate } from './ProjectTemplates'
 
 interface NewProjectFormData {
   name: string
@@ -8,6 +9,7 @@ interface NewProjectFormData {
   ccAuthors: string[]
   customDate: string
   description: string
+  template?: ProjectTemplate
 }
 
 interface Props {
@@ -26,6 +28,13 @@ export default function NewProjectModal({ nextProjectNo, defaultAuthor, onSubmit
   const [ccInput, setCcInput]       = useState('')
   const [customDate, setCustomDate] = useState(today)
   const [description, setDescription] = useState('')
+  const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null)
+
+  function handleTemplateSelect(t: ProjectTemplate) {
+    setSelectedTemplate(t)
+    if (!name) setName(t.name)
+    if (!description) setDescription(t.description)
+  }
 
   const ccRef = useRef<HTMLInputElement>(null)
 
@@ -59,6 +68,7 @@ export default function NewProjectModal({ nextProjectNo, defaultAuthor, onSubmit
       ccAuthors,
       customDate,
       description: description.trim(),
+      template: selectedTemplate ?? undefined,
     })
   }
 
@@ -94,6 +104,16 @@ export default function NewProjectModal({ nextProjectNo, defaultAuthor, onSubmit
         </div>
 
         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+
+          {/* Template Selector */}
+          <TemplateSelector onSelect={handleTemplateSelect} />
+          {selectedTemplate && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/5 border border-accent/20 text-xs font-mono">
+              <span>{selectedTemplate.icon}</span>
+              <span className="text-accent">Template: {selectedTemplate.name}</span>
+              <button onClick={() => setSelectedTemplate(null)} className="ml-auto text-secondary/40 hover:text-primary">✕</button>
+            </div>
+          )}
 
           {/* Project Name */}
           <div>

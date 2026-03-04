@@ -212,6 +212,7 @@ class ModelInfoRequest(BaseModel):
 fake_users_db: Dict[str, Dict] = {
     "stevenshin16": {"username": "stevenshin16", "password": "1234"},
     "admin": {"username": "admin", "password": "1234"},
+    "pjscjs777": {"username": "pjscjs777", "password": "wnstjd1986!"},
 }
 
 

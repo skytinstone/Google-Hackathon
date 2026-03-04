@@ -333,8 +333,17 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
                     </button>
                   </div>
                 </div>
-                <pre className="flex-1 p-4 overflow-auto text-xs leading-relaxed text-primary font-mono bg-background/60">
-                  <code>{state.generatedCode}</code>
+                <pre className="flex-1 overflow-auto text-xs leading-relaxed font-mono bg-background/60">
+                  <code className="flex">
+                    <span className="flex flex-col text-right pr-4 pl-4 py-4 text-secondary/30 select-none border-r border-white/5 flex-shrink-0 sticky left-0 bg-background/60">
+                      {state.generatedCode?.split('\n').map((_, i) => (
+                        <span key={i}>{i + 1}</span>
+                      ))}
+                    </span>
+                    <span className="flex-1 py-4 pl-4 pr-4 text-primary overflow-x-auto whitespace-pre">
+                      {state.generatedCode}
+                    </span>
+                  </code>
                 </pre>
               </div>
 

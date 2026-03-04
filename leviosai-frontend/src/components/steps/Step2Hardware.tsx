@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import type { StepProps, SelectedSensor } from '../../types'
 import { HARDWARE, HARDWARE_DETAILS, SENSORS, analyzeHardwarePdf, hasApiKey } from '../../api/api'
 import TypewriterText from '../TypewriterText'
+import HardwareBenchmark from '../HardwareBenchmark'
 
 type HardwareMap = typeof HARDWARE
 
@@ -295,6 +296,9 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
           />
         </div>
       </div>
+
+      {/* Hardware Benchmark */}
+      <HardwareBenchmark selectedDevice={state.hardware?.device} />
 
       {/* Navigation */}
       <div className="flex justify-between mt-6 flex-shrink-0">

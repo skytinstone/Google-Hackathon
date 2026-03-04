@@ -104,4 +104,49 @@ export interface StepProps {
   goToStep: (step: number) => void
   onApiKeyNeeded: () => void
   onAddProject?: (project: SavedProject) => void
+  onGoToShop?: () => void
+}
+
+// ── Shop Types ──────────────────────────────────────────────
+
+export type StoreId = 'amazon' | 'aliexpress' | 'naver' | 'auction' | '11st' | 'coupang' | 'ebay' | 'mouser' | 'digikey'
+export type ShopCategory = 'main_board' | 'sensor' | 'cable' | 'power' | 'frame' | 'accessory' | 'fastener' | 'wiring'
+
+export interface Store {
+  id: StoreId
+  name: string
+  nameKo: string
+  searchUrl: string
+  logoChar: string
+  color: string
+}
+
+export interface ShopProduct {
+  id: string
+  name: string
+  nameKo: string
+  category: ShopCategory
+  description: string
+  specs: string
+  priceRange: { min: number; max: number }
+  associatedHardware: string[]
+  associatedSensors: string[]
+  searchKeywords: Partial<Record<StoreId, string>>
+  tags: string[]
+}
+
+export interface CartItem {
+  productId: string
+  quantity: number
+  addedAt: string
+  sourceProjectId: string | null
+}
+
+export interface BomEntry {
+  category: ShopCategory
+  productId: string
+  productName: string
+  reason: string
+  quantity: number
+  required: boolean
 }

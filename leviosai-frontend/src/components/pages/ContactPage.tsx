@@ -9,7 +9,7 @@ export default function ContactPage() {
       name: 'Minseok Shin',
       role: 'Lead Engineer',
       email: 'stevenshin16@gmail.com',
-      github: 'github.com/stevenshin16',
+      github: 'github.com/skytinstone',
       avatar: 'S',
     },
   ]

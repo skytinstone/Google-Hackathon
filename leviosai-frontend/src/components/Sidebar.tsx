@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import type { WizardState } from '../types'
-import ProfileModal from './ProfileModal'
 import { subscribe, type LogEntry } from '../utils/syslog'
 
 const LOG_TYPE_STYLE: Record<string, string> = {
@@ -39,21 +38,10 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ state, goToStep, onLogout }: SidebarProps) {
-  const [location, setLocation] = useState<string | null>(null)
-  const [showProfile, setShowProfile] = useState(false)
   const [logEntries, setLogEntries] = useState<LogEntry[]>([])
   const [logCollapsed, setLogCollapsed] = useState(false)
 
   useEffect(() => subscribe(setLogEntries), [])
-
-  useEffect(() => {
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then((data: { city?: string; country_name?: string }) => {
-        if (data.city && data.country_name) setLocation(`${data.city}, ${data.country_name}`)
-      })
-      .catch(() => null)
-  }, [])
 
   function isCompleted(n: number) { return n < state.currentStep }
   function isClickable(n: number)  { return n < state.currentStep }
@@ -171,24 +159,8 @@ export default function Sidebar({ state, goToStep, onLogout }: SidebarProps) {
           </div>
         )}
 
-        {/* User profile (clickable → ProfileModal) + Logout */}
-        <div className="p-4 border-t border-white/5 space-y-2">
-          <button
-            onClick={() => setShowProfile(true)}
-            className="w-full flex items-center gap-3 px-2 py-2 bg-background rounded-lg hover:bg-white/4 transition-colors text-left group"
-          >
-            <div className="w-8 h-8 bg-white/10 border border-white/15 rounded-full flex-shrink-0 flex items-center justify-center text-primary text-xs font-bold font-mono">
-              S
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-primary truncate">stevenshin16</p>
-              <p className="text-xs text-green-400">● Online</p>
-              {location && <p className="text-xs text-secondary mt-0.5 truncate">{location}</p>}
-            </div>
-            <span className="text-secondary/40 text-xs flex-shrink-0 group-hover:text-secondary transition-colors">▸</span>
-          </button>
-
-          {/* Logout button */}
+        {/* Logout */}
+        <div className="p-4 border-t border-white/5">
           <button
             onClick={onLogout}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-white/8 text-secondary hover:border-red-500/30 hover:text-red-400 transition-colors text-xs font-mono"
@@ -198,10 +170,6 @@ export default function Sidebar({ state, goToStep, onLogout }: SidebarProps) {
           </button>
         </div>
       </aside>
-
-      {showProfile && (
-        <ProfileModal location={location} onClose={() => setShowProfile(false)} />
-      )}
     </>
   )
 }
