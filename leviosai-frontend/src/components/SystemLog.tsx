@@ -31,6 +31,7 @@ interface Props {
 
 export default function SystemLog({ position = 'left', sidebarVisible }: Props) {
   const [entries, setEntries] = useState<LogEntry[]>([])
+  const [expanded, setExpanded] = useState(false)
   const { theme } = useTheme()
 
   useEffect(() => subscribe(setEntries), [])
@@ -42,34 +43,48 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
   const isLight = theme === 'light'
   const TYPE_COLOR = isLight ? TYPE_COLOR_LIGHT : TYPE_COLOR_DARK
 
-  // Position: login + main share bottom-left; admin uses sidebar-aware left
   const posStyle: React.CSSProperties = (isTopRight || isRight)
     ? { left: '4px', bottom: '500px' }
     : { left: sidebarVisible ? '272px' : '100px' }
 
-  const fixedClass = 'fixed z-40 font-mono select-none pointer-events-none transition-all duration-300'
+  const shown = expanded ? entries.slice(0, 8) : entries.slice(0, 2)
+  const hasMore = entries.length > 2
 
   return (
     <div
-      className={fixedClass}
-      style={{ ...posStyle, maxWidth: '560px' }}
+      className="fixed z-40 font-mono select-none transition-all duration-300"
+      style={{ ...posStyle, maxWidth: '480px' }}
     >
-      {entries.slice(0, 10).map((entry, idx) => (
+      {/* Toggle button */}
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className={`pointer-events-auto mb-0.5 text-[9px] tracking-wider uppercase px-1.5 py-0.5 rounded border transition-colors ${
+            isLight
+              ? 'text-black/40 border-black/10 hover:bg-black/5'
+              : 'text-white/30 border-white/10 hover:bg-white/5'
+          }`}
+        >
+          {expanded ? '▾ Collapse' : `▸ Log (${entries.length})`}
+        </button>
+      )}
+      {shown.map((entry, idx) => (
         <div
           key={entry.id}
           className={[
-            'flex items-center gap-2 py-0.5',
-            '',
+            'flex items-center gap-1.5 py-0.5',
             idx === 0 ? 'animate-fade-in' : '',
           ].join(' ')}
-          style={{ opacity: 1 }}
         >
-          <span className="text-[11px] tabular-nums" style={{ color: isLight ? '#16a34a' : '#4ade80' }}>{entry.time}</span>
-          <span className="text-[11px] font-bold tracking-wider" style={{ color: TYPE_COLOR[entry.type] }}>
+          <span className="text-[10px] tabular-nums flex-shrink-0" style={{ color: isLight ? '#16a34a' : '#4ade80' }}>
+            {entry.time.slice(0, 5)}
+          </span>
+          <span className="text-[10px] font-bold tracking-wider flex-shrink-0" style={{ color: TYPE_COLOR[entry.type] }}>
             {entry.type}
           </span>
-          <span className={`text-[11px] ${isLight ? 'text-black/40' : 'text-white/50'}`}>▸</span>
-          <span className={`text-[11px] leading-tight truncate ${isLight ? 'text-black/70' : 'text-white/70'}`}>{entry.message}</span>
+          <span className={`text-[10px] leading-tight truncate max-w-[280px] ${isLight ? 'text-black/60' : 'text-white/50'}`}>
+            {entry.message}
+          </span>
         </div>
       ))}
     </div>

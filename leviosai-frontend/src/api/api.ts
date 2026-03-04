@@ -110,6 +110,12 @@ export interface ProfileData {
   github: string
   role: string
   photo: string | null
+  organization: string
+  website: string
+  bio: string
+  expertise: string
+  framework: string
+  team: string
 }
 
 // ── API Client ───────────────────────────────────────────────

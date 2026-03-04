@@ -224,6 +224,53 @@ html {
   animation: watermark-blink 2.2s step-end infinite;
 }
 
+/* ── Deploy page animations ──────────────────────────────── */
+
+/* SVG wire draw-in effect */
+@keyframes wire-draw {
+  from { stroke-dashoffset: 300; }
+  to   { stroke-dashoffset: 0;   }
+}
+.animate-wire-draw {
+  stroke-dasharray: 300;
+  animation: wire-draw 1.2s ease-out forwards;
+}
+
+/* Flowing dashes on connected wires */
+@keyframes dash-flow {
+  to { stroke-dashoffset: -12; }
+}
+.animate-dash-flow {
+  animation: dash-flow 0.6s linear infinite;
+}
+
+/* Terminal line slide-in */
+@keyframes terminal-line {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+.animate-terminal-line {
+  animation: terminal-line 0.25s ease-out forwards;
+}
+
+/* Gauge arc fill */
+@keyframes arc-fill {
+  from { stroke-dashoffset: var(--arc-total); }
+  to   { stroke-dashoffset: var(--arc-offset); }
+}
+.animate-arc-fill {
+  animation: arc-fill 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Active phase pulse dot */
+@keyframes phase-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.85); }
+}
+.animate-phase-pulse {
+  animation: phase-pulse 2s ease-in-out infinite;
+}
+
 /* ── Dark scrollbar (all browsers) ─────────────────────────── */
 
 /* Webkit (Chrome, Safari, Edge) */

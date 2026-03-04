@@ -12,18 +12,42 @@ interface Props {
 const STORAGE_KEY = 'leviosai_profile'
 
 const DEFAULT_PROFILE: ProfileData = {
-  name:     '',
-  birthday: '',
-  email:    '',
-  github:   '',
-  role:     '',
-  photo:    null,
+  name:         '',
+  birthday:     '',
+  email:        '',
+  github:       '',
+  role:         '',
+  photo:        null,
+  organization: '',
+  website:      '',
+  bio:          '',
+  expertise:    '',
+  framework:    '',
+  team:         '',
 }
+
+const TEAM_ROLE_OPTIONS = [
+  'Founder', 'Lead Engineer', 'ML Engineer', 'Frontend Dev',
+  'Backend Dev', 'Designer', 'PM', 'Researcher',
+]
+
+const EXPERTISE_OPTIONS = [
+  'Computer Vision', 'NLP / LLM', 'Edge AI', 'Robotics',
+  'Audio / Speech', 'Reinforcement Learning', 'MLOps', 'Other',
+]
+
+const FRAMEWORK_OPTIONS = [
+  'TensorFlow Lite', 'PyTorch Mobile', 'ONNX Runtime', 'TensorRT',
+  'OpenVINO', 'Core ML', 'MediaPipe', 'Other',
+]
 
 function loadLocalProfile(): ProfileData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as ProfileData
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return { ...DEFAULT_PROFILE, ...parsed }
+    }
   } catch { /* ignore */ }
   return DEFAULT_PROFILE
 }
@@ -41,19 +65,12 @@ export default function ProfileModal({ username, location, onClose, onLogout }: 
   const [loading, setLoading] = useState(true)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // Load profile from API on mount
   useEffect(() => {
     if (!username) { setLoading(false); return }
     api.getProfile(username)
       .then(data => {
-        const merged: ProfileData = {
-          name:     data.name || profile.name,
-          birthday: data.birthday || profile.birthday,
-          email:    data.email || profile.email,
-          github:   data.github || profile.github,
-          role:     data.role || profile.role,
-          photo:    data.photo ?? profile.photo,
-        }
+        const merged: ProfileData = { ...DEFAULT_PROFILE, ...profile, ...data }
+        if (!merged.photo && profile.photo) merged.photo = profile.photo
         setProfile(merged)
         setDraft(merged)
         saveLocalProfile(merged)
@@ -63,9 +80,7 @@ export default function ProfileModal({ username, location, onClose, onLogout }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username])
 
-  useEffect(() => {
-    setDraft(profile)
-  }, [profile])
+  useEffect(() => { setDraft(profile) }, [profile])
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -82,19 +97,14 @@ export default function ProfileModal({ username, location, onClose, onLogout }: 
   async function handleSave() {
     setSaving(true)
     const updated = { ...draft }
-
-    // Save to localStorage immediately
     saveLocalProfile(updated)
     setProfile(updated)
-
-    // Save to API
     try {
       await api.updateProfile(username, updated)
       addLog('Profile saved to database', 'OK')
     } catch {
       addLog('Profile saved locally (server unreachable)', 'ERR')
     }
-
     setSaving(false)
     setEditing(false)
   }
@@ -104,215 +114,342 @@ export default function ProfileModal({ username, location, onClose, onLogout }: 
     setEditing(false)
   }
 
-  const displayData = editing ? draft : profile
+  const d = editing ? draft : profile
 
   function formatBirthday(iso: string) {
     if (!iso) return '—'
-    const [y, m, d] = iso.split('-')
-    return `${y} · ${m} · ${d}`
+    const [y, m, dd] = iso.split('-')
+    return `${y} · ${m} · ${dd}`
   }
+
+  /* ── Reusable row ───────────────────────────────────────── */
+  function InfoRow({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
+    return (
+      <div className="flex items-start gap-3 px-3 py-2.5 bg-white/3 rounded-xl border border-white/5">
+        <span className="text-secondary/60 text-xs font-mono w-4 flex-shrink-0 text-center mt-1">{icon}</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-wider">{label}</p>
+          {children}
+        </div>
+      </div>
+    )
+  }
+
+  const inputCls = 'w-full bg-transparent text-sm text-primary focus:outline-none font-mono mt-0.5 placeholder:text-secondary/30'
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget && !editing) onClose() }}
     >
-      <div className="relative w-full max-w-sm mx-4 bg-[#0e1017] border border-white/10 rounded-2xl shadow-2xl animate-fade-in overflow-hidden">
+      <div className="relative w-full max-w-md mx-4 bg-[#0e1017] border border-white/10 rounded-2xl shadow-2xl animate-fade-in overflow-hidden max-h-[90vh] flex flex-col">
 
         {/* Top accent bar */}
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent flex-shrink-0" />
 
-        {/* Header actions */}
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          {!editing ? (
-            <button
-              onClick={() => setEditing(true)}
-              className="text-xs font-mono text-accent/70 hover:text-accent transition-colors px-2.5 py-1 border border-accent/20 rounded-lg hover:border-accent/40"
-            >
-              Edit
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={handleCancel}
-                className="text-xs font-mono text-secondary hover:text-primary transition-colors px-2.5 py-1 border border-white/10 rounded-lg hover:border-white/20"
+        {/* Header: Avatar + Name + Buttons */}
+        <div className="p-6 pb-0 flex-shrink-0">
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <div
+                onClick={() => editing && fileRef.current?.click()}
+                className={[
+                  'w-14 h-14 rounded-full border-2 flex items-center justify-center overflow-hidden',
+                  editing
+                    ? 'border-accent/50 cursor-pointer hover:border-accent transition-colors'
+                    : 'border-white/15',
+                ].join(' ')}
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="text-xs font-mono text-background bg-primary hover:bg-primary/85 transition-colors px-2.5 py-1 rounded-lg font-semibold disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </button>
-            </>
-          )}
-          {!editing && (
-            <button
-              onClick={onClose}
-              className="text-secondary hover:text-primary transition-colors text-base leading-none ml-1"
-            >
-              ✕
-            </button>
+                {d.photo ? (
+                  <img src={d.photo} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-primary text-xl font-bold font-mono bg-white/10 w-full h-full flex items-center justify-center">
+                    {(d.name || username).charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              {editing && (
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <span className="text-white text-[9px] font-mono font-bold">EDIT</span>
+                </div>
+              )}
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+            </div>
+
+            {/* Name + Role */}
+            <div className="flex-1 min-w-0">
+              {editing ? (
+                <>
+                  <input
+                    type="text" value={draft.name} placeholder="Name"
+                    onChange={e => setDraft(dd => ({ ...dd, name: e.target.value }))}
+                    className="w-full bg-background/60 border border-white/10 text-primary rounded-lg px-3 py-1.5 text-base font-bold focus:outline-none focus:border-accent/50 transition-colors font-mono mb-1"
+                  />
+                  <input
+                    type="text" value={draft.role} placeholder="Role (e.g. ML Engineer)"
+                    onChange={e => setDraft(dd => ({ ...dd, role: e.target.value }))}
+                    className="w-full bg-background/60 border border-white/10 text-secondary rounded-lg px-3 py-1 text-xs focus:outline-none focus:border-accent/50 transition-colors font-mono"
+                  />
+                </>
+              ) : (
+                <>
+                  <p className="text-primary font-bold text-lg leading-tight truncate">{profile.name || username}</p>
+                  <p className="text-secondary text-xs font-mono mt-0.5 truncate">{profile.role || 'No role set'}</p>
+                </>
+              )}
+              <p className="text-green-400 text-[11px] mt-1 font-mono">● Active session</p>
+            </div>
+
+            {/* Action buttons - aligned right */}
+            <div className="flex items-center gap-2 flex-shrink-0 self-start">
+              {!editing ? (
+                <>
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="text-xs font-mono text-accent/70 hover:text-accent transition-colors px-2.5 py-1 border border-accent/20 rounded-lg hover:border-accent/40"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="text-secondary hover:text-primary transition-colors text-base leading-none"
+                  >
+                    ✕
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleCancel}
+                    className="text-xs font-mono text-secondary hover:text-primary transition-colors px-3 py-1.5 border border-white/10 rounded-lg hover:border-white/20"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="text-xs font-mono text-background bg-primary hover:bg-primary/85 transition-colors px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {editing && (
+            <p className="text-[10px] text-secondary/40 font-mono text-center mt-2">
+              Click avatar to upload photo
+            </p>
           )}
         </div>
 
-        <div className="p-7">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <span className="text-xs font-mono text-secondary/50 animate-pulse">Loading profile...</span>
             </div>
           ) : (
             <>
-              {/* Avatar + name */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="relative flex-shrink-0">
-                  <div
-                    onClick={() => editing && fileRef.current?.click()}
-                    className={[
-                      'w-16 h-16 rounded-full border-2 flex items-center justify-center overflow-hidden',
-                      editing
-                        ? 'border-accent/50 cursor-pointer hover:border-accent transition-colors'
-                        : 'border-white/15',
-                    ].join(' ')}
-                  >
-                    {displayData.photo ? (
-                      <img src={displayData.photo} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-primary text-2xl font-bold font-mono bg-white/10 w-full h-full flex items-center justify-center">
-                        {(displayData.name || username).charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  {editing && (
-                    <div
-                      onClick={() => fileRef.current?.click()}
-                      className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                    >
-                      <span className="text-white text-[10px] font-mono font-bold">EDIT</span>
-                    </div>
-                  )}
-                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-                </div>
+              {/* ── Personal ── */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1 h-px bg-white/6" />
+                <span className="font-mono text-[9px] text-secondary/50 uppercase tracking-[0.22em]">Personal</span>
+                <div className="flex-1 h-px bg-white/6" />
+              </div>
 
-                <div className="flex-1 min-w-0">
+              <div className="space-y-2">
+                {/* Bio */}
+                <InfoRow icon="≡" label="Bio">
                   {editing ? (
-                    <>
-                      <input
-                        type="text"
-                        value={draft.name}
-                        placeholder="Name"
-                        onChange={e => setDraft(d => ({ ...d, name: e.target.value }))}
-                        className="w-full bg-background/60 border border-white/10 text-primary rounded-lg px-3 py-1.5 text-base font-bold focus:outline-none focus:border-accent/50 transition-colors font-mono mb-1"
-                      />
-                      <input
-                        type="text"
-                        value={draft.role}
-                        placeholder="Role"
-                        onChange={e => setDraft(d => ({ ...d, role: e.target.value }))}
-                        className="w-full bg-background/60 border border-white/10 text-secondary rounded-lg px-3 py-1 text-xs focus:outline-none focus:border-accent/50 transition-colors font-mono"
-                      />
-                    </>
+                    <textarea
+                      value={draft.bio} placeholder="Brief introduction..."
+                      onChange={e => setDraft(dd => ({ ...dd, bio: e.target.value }))}
+                      rows={2}
+                      className="w-full bg-transparent text-sm text-primary focus:outline-none font-mono mt-0.5 placeholder:text-secondary/30 resize-none"
+                    />
                   ) : (
-                    <>
-                      <p className="text-primary font-bold text-lg leading-tight">{profile.name || username}</p>
-                      <p className="text-secondary text-xs font-mono mt-0.5">{profile.role || 'No role set'}</p>
-                    </>
+                    <p className="text-sm text-primary mt-0.5">{d.bio || '—'}</p>
                   )}
-                  <p className="text-green-400 text-xs mt-1">● Active session</p>
-                </div>
-              </div>
+                </InfoRow>
 
-              {editing && (
-                <p className="text-[10px] text-secondary/40 font-mono text-center -mt-3 mb-4">
-                  Click avatar to upload photo
-                </p>
-              )}
+                {/* Organization */}
+                <InfoRow icon="⌂" label="Organization">
+                  {editing ? (
+                    <input type="text" value={draft.organization} placeholder="Company / Lab / University"
+                      onChange={e => setDraft(dd => ({ ...dd, organization: e.target.value }))}
+                      className={inputCls} />
+                  ) : (
+                    <p className="text-sm text-primary mt-0.5 truncate">{d.organization || '—'}</p>
+                  )}
+                </InfoRow>
 
-              {/* Divider */}
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex-1 h-px bg-white/6" />
-                <span className="font-mono text-[9px] text-secondary/50 uppercase tracking-[0.22em]">Profile</span>
-                <div className="flex-1 h-px bg-white/6" />
-              </div>
-
-              {/* Info rows */}
-              <div className="space-y-2.5">
                 {/* Birthday */}
-                <div className="flex items-center gap-3 px-3 py-2.5 bg-white/3 rounded-xl border border-white/5">
-                  <span className="text-secondary/60 text-xs font-mono w-4 flex-shrink-0 text-center">◷</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-wider">Birthday</p>
-                    {editing ? (
-                      <input
-                        type="date"
-                        value={draft.birthday}
-                        onChange={e => setDraft(d => ({ ...d, birthday: e.target.value }))}
-                        className="w-full bg-transparent text-sm text-primary focus:outline-none font-mono mt-0.5"
-                        style={{ colorScheme: 'dark' }}
-                      />
-                    ) : (
-                      <p className="text-sm text-primary mt-0.5">{formatBirthday(profile.birthday)}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div className="flex items-center gap-3 px-3 py-2.5 bg-white/3 rounded-xl border border-white/5">
-                  <span className="text-secondary/60 text-xs font-mono w-4 flex-shrink-0 text-center">◉</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-wider">Email</p>
-                    {editing ? (
-                      <input
-                        type="email"
-                        value={draft.email}
-                        placeholder="your@email.com"
-                        onChange={e => setDraft(d => ({ ...d, email: e.target.value }))}
-                        className="w-full bg-transparent text-sm text-primary focus:outline-none font-mono mt-0.5"
-                      />
-                    ) : (
-                      <p className="text-sm text-primary mt-0.5 truncate">{profile.email || '—'}</p>
-                    )}
-                  </div>
-                </div>
+                <InfoRow icon="◷" label="Birthday">
+                  {editing ? (
+                    <input type="date" value={draft.birthday}
+                      onChange={e => setDraft(dd => ({ ...dd, birthday: e.target.value }))}
+                      className={inputCls} style={{ colorScheme: 'dark' }} />
+                  ) : (
+                    <p className="text-sm text-primary mt-0.5">{formatBirthday(profile.birthday)}</p>
+                  )}
+                </InfoRow>
 
                 {/* Location */}
-                <div className="flex items-center gap-3 px-3 py-2.5 bg-white/3 rounded-xl border border-white/5">
-                  <span className="text-secondary/60 text-xs font-mono w-4 flex-shrink-0 text-center">◎</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-wider">Location</p>
-                    <p className="text-sm text-primary mt-0.5 truncate">{location ?? 'Detecting...'}</p>
-                  </div>
-                </div>
+                <InfoRow icon="◎" label="Location">
+                  <p className="text-sm text-primary mt-0.5 truncate">{location ?? 'Detecting...'}</p>
+                </InfoRow>
+              </div>
+
+              {/* ── Contact ── */}
+              <div className="flex items-center gap-3 mb-3 mt-5">
+                <div className="flex-1 h-px bg-white/6" />
+                <span className="font-mono text-[9px] text-secondary/50 uppercase tracking-[0.22em]">Contact</span>
+                <div className="flex-1 h-px bg-white/6" />
+              </div>
+
+              <div className="space-y-2">
+                {/* Email */}
+                <InfoRow icon="◉" label="Email">
+                  {editing ? (
+                    <input type="email" value={draft.email} placeholder="your@email.com"
+                      onChange={e => setDraft(dd => ({ ...dd, email: e.target.value }))}
+                      className={inputCls} />
+                  ) : (
+                    <p className="text-sm text-primary mt-0.5 truncate">{d.email || '—'}</p>
+                  )}
+                </InfoRow>
+
+                {/* Website */}
+                <InfoRow icon="◆" label="Website">
+                  {editing ? (
+                    <input type="text" value={draft.website} placeholder="https://yoursite.com"
+                      onChange={e => setDraft(dd => ({ ...dd, website: e.target.value }))}
+                      className={inputCls} />
+                  ) : d.website ? (
+                    <a href={d.website.startsWith('http') ? d.website : `https://${d.website}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-sm text-primary mt-0.5 truncate block hover:text-accent transition-colors">
+                      {d.website}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-primary/40 mt-0.5">—</p>
+                  )}
+                </InfoRow>
 
                 {/* GitHub */}
-                <div className="flex items-center gap-3 px-3 py-2.5 bg-white/3 rounded-xl border border-white/5">
-                  <span className="text-secondary/60 text-xs font-mono w-4 flex-shrink-0 text-center">⌥</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-wider">GitHub</p>
-                    {editing ? (
-                      <input
-                        type="text"
-                        value={draft.github}
-                        placeholder="github.com/username"
-                        onChange={e => setDraft(d => ({ ...d, github: e.target.value }))}
-                        className="w-full bg-transparent text-sm text-primary focus:outline-none font-mono mt-0.5"
-                      />
-                    ) : profile.github ? (
-                      <a
-                        href={`https://${profile.github}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary mt-0.5 truncate block hover:text-accent transition-colors"
-                      >
-                        {profile.github}
-                      </a>
-                    ) : (
-                      <p className="text-sm text-primary/40 mt-0.5">—</p>
-                    )}
-                  </div>
-                </div>
+                <InfoRow icon="⌥" label="GitHub">
+                  {editing ? (
+                    <input type="text" value={draft.github} placeholder="github.com/username"
+                      onChange={e => setDraft(dd => ({ ...dd, github: e.target.value }))}
+                      className={inputCls} />
+                  ) : d.github ? (
+                    <a href={`https://${d.github}`} target="_blank" rel="noopener noreferrer"
+                      className="text-sm text-primary mt-0.5 truncate block hover:text-accent transition-colors">
+                      {d.github}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-primary/40 mt-0.5">—</p>
+                  )}
+                </InfoRow>
+
+                {/* Team */}
+                <InfoRow icon="⊞" label="Team">
+                  {editing ? (
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {TEAM_ROLE_OPTIONS.map(opt => {
+                        const selected = draft.team.split(',').map(s => s.trim()).includes(opt)
+                        return (
+                          <button key={opt} type="button"
+                            onClick={() => {
+                              const current = draft.team.split(',').map(s => s.trim()).filter(Boolean)
+                              const next = selected ? current.filter(c => c !== opt) : [...current, opt]
+                              setDraft(dd => ({ ...dd, team: next.join(', ') }))
+                            }}
+                            className={`text-[10px] font-mono px-2 py-1 rounded-md border transition-colors ${
+                              selected
+                                ? 'border-accent/50 bg-accent/10 text-accent'
+                                : 'border-white/10 text-secondary/60 hover:border-white/20'
+                            }`}>
+                            {opt}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-primary mt-0.5">{d.team || '—'}</p>
+                  )}
+                </InfoRow>
+              </div>
+
+              {/* ── Technical ── */}
+              <div className="flex items-center gap-3 mb-3 mt-5">
+                <div className="flex-1 h-px bg-white/6" />
+                <span className="font-mono text-[9px] text-secondary/50 uppercase tracking-[0.22em]">Technical</span>
+                <div className="flex-1 h-px bg-white/6" />
+              </div>
+
+              <div className="space-y-2">
+                {/* Expertise */}
+                <InfoRow icon="◈" label="AI Expertise">
+                  {editing ? (
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {EXPERTISE_OPTIONS.map(opt => {
+                        const selected = draft.expertise.split(',').map(s => s.trim()).includes(opt)
+                        return (
+                          <button key={opt} type="button"
+                            onClick={() => {
+                              const current = draft.expertise.split(',').map(s => s.trim()).filter(Boolean)
+                              const next = selected ? current.filter(c => c !== opt) : [...current, opt]
+                              setDraft(dd => ({ ...dd, expertise: next.join(', ') }))
+                            }}
+                            className={`text-[10px] font-mono px-2 py-1 rounded-md border transition-colors ${
+                              selected
+                                ? 'border-accent/50 bg-accent/10 text-accent'
+                                : 'border-white/10 text-secondary/60 hover:border-white/20'
+                            }`}>
+                            {opt}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-primary mt-0.5">{d.expertise || '—'}</p>
+                  )}
+                </InfoRow>
+
+                {/* Preferred Framework */}
+                <InfoRow icon="⚙" label="Preferred Framework">
+                  {editing ? (
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {FRAMEWORK_OPTIONS.map(opt => {
+                        const selected = draft.framework.split(',').map(s => s.trim()).includes(opt)
+                        return (
+                          <button key={opt} type="button"
+                            onClick={() => {
+                              const current = draft.framework.split(',').map(s => s.trim()).filter(Boolean)
+                              const next = selected ? current.filter(c => c !== opt) : [...current, opt]
+                              setDraft(dd => ({ ...dd, framework: next.join(', ') }))
+                            }}
+                            className={`text-[10px] font-mono px-2 py-1 rounded-md border transition-colors ${
+                              selected
+                                ? 'border-accent/50 bg-accent/10 text-accent'
+                                : 'border-white/10 text-secondary/60 hover:border-white/20'
+                            }`}>
+                            {opt}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-primary mt-0.5">{d.framework || '—'}</p>
+                  )}
+                </InfoRow>
               </div>
 
               {/* Actions */}

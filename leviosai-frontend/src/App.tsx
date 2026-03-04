@@ -15,6 +15,7 @@ import SettingsPage from './components/pages/SettingsPage'
 import AdminPage from './components/pages/AdminPage'
 import AdminMainPage from './components/pages/AdminMainPage'
 import ShopPage from './components/pages/ShopPage'
+import DeployPage from './components/pages/DeployPage'
 import Toast from './components/Toast'
 import ProjectDetailModal from './components/ProjectDetailModal'
 import ProfileModal from './components/ProfileModal'
@@ -59,6 +60,7 @@ const TAB_TO_PATH: Record<ActiveTab, string> = {
   dashboard: '/dashboard',
   project:   '/project',
   shop:      '/procurement',
+  deploy:    '/deploy',
   contact:   '/contact',
   settings:  '/settings',
   admin:     '/admin',
@@ -67,6 +69,7 @@ const TAB_TO_PATH: Record<ActiveTab, string> = {
 function pathToTab(pathname: string): ActiveTab {
   if (pathname.startsWith('/project'))     return 'project'
   if (pathname.startsWith('/procurement')) return 'shop'
+  if (pathname.startsWith('/deploy'))      return 'deploy'
   if (pathname.startsWith('/contact'))     return 'contact'
   if (pathname.startsWith('/settings'))    return 'settings'
   if (pathname.startsWith('/admin'))       return 'admin'
@@ -146,8 +149,9 @@ function MainPage({
       if (ctrl && e.key === '1') { e.preventDefault(); handleTabChange('dashboard') }
       else if (ctrl && e.key === '2') { e.preventDefault(); handleTabChange('project') }
       else if (ctrl && e.key === '3') { e.preventDefault(); handleTabChange('shop') }
-      else if (ctrl && e.key === '4') { e.preventDefault(); handleTabChange('contact') }
-      else if (ctrl && e.key === '5') { e.preventDefault(); handleTabChange('settings') }
+      else if (ctrl && e.key === '4') { e.preventDefault(); handleTabChange('deploy') }
+      else if (ctrl && e.key === '5') { e.preventDefault(); handleTabChange('contact') }
+      else if (ctrl && e.key === '6') { e.preventDefault(); handleTabChange('settings') }
       else if (ctrl && e.key === 'n') { e.preventDefault(); handleNewProject() }
       else if (ctrl && e.key === '/') { e.preventDefault(); setShowShortcuts(v => !v) }
       else if (e.key === 'Escape') {
@@ -248,6 +252,7 @@ function MainPage({
       dashboard: 'Loading ops dashboard · fetching telemetry',
       project:   'Pipeline wizard engaged · awaiting configuration',
       shop:      'Component procurement · scanning inventory',
+      deploy:    'Deploy console · hardware flash sequence initialized',
       contact:   'Opening comms channel · signal strength optimal',
       settings:  'Opening system configuration · preferences panel',
       admin:     'Admin console accessed · elevated privileges',
@@ -318,6 +323,13 @@ function MainPage({
         onUpdateQuantity={updateCartQuantity}
         onClearCart={clearCart}
         savedProjects={savedProjects}
+      />
+    )
+    if (activeTab === 'deploy') return (
+      <DeployPage
+        state={state}
+        savedProjects={savedProjects}
+        onGoToProject={() => handleTabChange('project')}
       />
     )
     if (activeTab === 'contact') return <ContactPage />
