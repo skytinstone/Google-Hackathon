@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 // ── Vertical LEVIOSAI watermark (bottom-left) ───────────────
-export function VerticalWatermark({ sidebarVisible }: { sidebarVisible?: boolean }) {
+export function VerticalWatermark(_props?: { sidebarVisible?: boolean }) {
   const text = 'LEVIOSAI'
   const [count, setCount] = useState(0)
 

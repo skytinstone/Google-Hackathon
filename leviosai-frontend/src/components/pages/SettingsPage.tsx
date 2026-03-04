@@ -3,6 +3,8 @@ import TypewriterText from '../TypewriterText'
 import { showToast } from '../../utils/toast'
 import { addLog } from '../../utils/syslog'
 import { setApiKey as saveApiKey, validateApiKey } from '../../api/api'
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '')
 import { useI18n, setLocale as setI18nLocale } from '../../utils/i18n'
 import { useTheme, type ThemeMode, type FontSize, type ZoomLevel } from '../../utils/theme'
 
@@ -84,14 +86,15 @@ export default function SettingsPage() {
     if (!trimmed) return
     setApiKeySaving(true)
     try {
-      const err = await validateApiKey(trimmed)
-      if (err) {
-        showToast(err, 'error')
+      await validateApiKey(trimmed)
+    } catch (e) {
+      if (API_BASE) {
+        // Only block save if backend is configured and reachable
+        showToast(e instanceof Error ? e.message : 'Invalid API key', 'error')
         setApiKeySaving(false)
         return
       }
-    } catch {
-      // Validation endpoint may not exist — save anyway
+      // No backend — save anyway
     }
     saveApiKey(trimmed)
     setApiKey(trimmed)
