@@ -581,7 +581,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2 flex-shrink-0 mt-1">
+        <div className="flex-shrink-0 mt-1">
           <button
             onClick={onNewProject}
             className="flex items-center gap-2 px-5 py-2.5 bg-primary text-background font-semibold rounded-xl hover:bg-primary/85 transition-colors text-sm font-mono"
@@ -589,14 +589,6 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
             <span>+</span>
             <span>{t('dashboard.newPipeline')}</span>
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-secondary/40 border border-white/6 rounded px-2 py-0.5 bg-white/2">
-              SYS: NOMINAL
-            </span>
-            <span className="text-[10px] font-mono text-accent/50 border border-accent/15 rounded px-2 py-0.5">
-              v2.0
-            </span>
-          </div>
         </div>
       </div>
 

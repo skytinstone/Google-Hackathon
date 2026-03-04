@@ -101,6 +101,17 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+// ── Profile types ────────────────────────────────────────────
+export interface ProfileData {
+  username?: string
+  name: string
+  birthday: string
+  email: string
+  github: string
+  role: string
+  photo: string | null
+}
+
 // ── API Client ───────────────────────────────────────────────
 export const api = {
   login: (username: string, password: string): Promise<LoginResult> =>
@@ -122,6 +133,13 @@ export const api = {
     fetchJSON(`${API_BASE}/api/model-info`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model_name: modelName, domain }),
+    }),
+  getProfile: (username: string): Promise<ProfileData> =>
+    fetchJSON(`${API_BASE}/api/profile/${encodeURIComponent(username)}`),
+  updateProfile: (username: string, data: Omit<ProfileData, 'username'>): Promise<{ status: string }> =>
+    fetchJSON(`${API_BASE}/api/profile/${encodeURIComponent(username)}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
     }),
 }
 

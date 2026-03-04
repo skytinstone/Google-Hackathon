@@ -6,11 +6,41 @@ from google import genai
 import os
 import json
 import re
+import sqlite3
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = FastAPI(title="Leviosai Backend", version="1.0.0")
+
+# ============================================================
+# SQLite Database
+# ============================================================
+
+DB_PATH = os.path.join(os.path.dirname(__file__), "leviosai.db")
+
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS profiles (
+            username TEXT PRIMARY KEY,
+            name TEXT NOT NULL DEFAULT '',
+            birthday TEXT NOT NULL DEFAULT '',
+            email TEXT NOT NULL DEFAULT '',
+            github TEXT NOT NULL DEFAULT '',
+            role TEXT NOT NULL DEFAULT '',
+            photo TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
 
 app.add_middleware(
     CORSMiddleware,
@@ -205,6 +235,15 @@ class ModelInfoRequest(BaseModel):
     domain: str
 
 
+class ProfileUpdate(BaseModel):
+    name: str = ''
+    birthday: str = ''
+    email: str = ''
+    github: str = ''
+    role: str = ''
+    photo: Optional[str] = None
+
+
 # ============================================================
 # In-Memory User DB (dev only)
 # ============================================================
@@ -293,6 +332,40 @@ def login(user: User):
     if not db_user or db_user["password"] != user.password:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     return {"message": f"Welcome {user.username}"}
+
+
+# ============================================================
+# Routes — Profile
+# ============================================================
+
+
+@app.get("/api/profile/{username}")
+def get_profile(username: str):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM profiles WHERE username = ?", (username,)).fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return {"username": username, "name": "", "birthday": "", "email": "", "github": "", "role": "", "photo": None}
+
+
+@app.put("/api/profile/{username}")
+def update_profile(username: str, data: ProfileUpdate):
+    conn = get_db()
+    conn.execute("""
+        INSERT INTO profiles (username, name, birthday, email, github, role, photo)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(username) DO UPDATE SET
+            name = excluded.name,
+            birthday = excluded.birthday,
+            email = excluded.email,
+            github = excluded.github,
+            role = excluded.role,
+            photo = excluded.photo
+    """, (username, data.name, data.birthday, data.email, data.github, data.role, data.photo))
+    conn.commit()
+    conn.close()
+    return {"status": "ok", "username": username}
 
 
 # ============================================================

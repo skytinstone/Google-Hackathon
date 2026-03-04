@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import LoginScreen from './components/LoginScreen'
 import ApiKeyModal from './components/ApiKeyModal'
 import LoadingScreen from './components/LoadingScreen'
@@ -17,6 +17,7 @@ import AdminMainPage from './components/pages/AdminMainPage'
 import ShopPage from './components/pages/ShopPage'
 import Toast from './components/Toast'
 import ProjectDetailModal from './components/ProjectDetailModal'
+import ProfileModal from './components/ProfileModal'
 import CustomCursor from './components/CustomCursor'
 import Step1Domain from './components/steps/Step1Domain'
 import Step2Hardware from './components/steps/Step2Hardware'
@@ -25,9 +26,9 @@ import Step3Model from './components/steps/Step3Model'
 import Step4Technique from './components/steps/Step4Technique'
 import Step5CodeGen from './components/steps/Step5CodeGen'
 import Step7Complete from './components/steps/Step7Complete'
-import { getApiKey } from './api/api'
 import type { WizardState, SavedProject, CartItem } from './types'
 import { addLog } from './utils/syslog'
+import { addNotification } from './utils/notifications'
 import { showToast } from './utils/toast'
 import { initTheme } from './utils/theme'
 import SystemLog from './components/SystemLog'
@@ -51,6 +52,25 @@ const initialState: WizardState = {
   projectCcAuthors: [],
   projectDescription: '',
   projectCustomDate: '',
+}
+
+// ── Route ↔ Tab mapping ─────────────────────────────────────────
+const TAB_TO_PATH: Record<ActiveTab, string> = {
+  dashboard: '/dashboard',
+  project:   '/project',
+  shop:      '/procurement',
+  contact:   '/contact',
+  settings:  '/settings',
+  admin:     '/admin',
+}
+
+function pathToTab(pathname: string): ActiveTab {
+  if (pathname.startsWith('/project'))     return 'project'
+  if (pathname.startsWith('/procurement')) return 'shop'
+  if (pathname.startsWith('/contact'))     return 'contact'
+  if (pathname.startsWith('/settings'))    return 'settings'
+  if (pathname.startsWith('/admin'))       return 'admin'
+  return 'dashboard'
 }
 
 // ── Login Page ───────────────────────────────────────────────
@@ -87,15 +107,36 @@ function MainPage({
   setShopCart: React.Dispatch<React.SetStateAction<CartItem[]>>
   onLogout: () => void
 }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Derive active tab from URL
+  const activeTab: ActiveTab = useMemo(() => pathToTab(location.pathname), [location.pathname])
+
   const [showApiModal, setShowApiModal] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [pendingStep, setPendingStep]     = useState<number | null>(null)
-  const [activeTab, setActiveTab]         = useState<ActiveTab>('dashboard')
   const [chatOpen, setChatOpen]           = useState(false)
   const [pendingLogout, setPendingLogout] = useState(false)
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [detailProject, setDetailProject] = useState<SavedProject | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [userLocation, setUserLocation] = useState<string | null>(null)
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(() => {
+    try {
+      const p = localStorage.getItem('leviosai_profile')
+      return p ? JSON.parse(p).photo : null
+    } catch { return null }
+  })
+
+  // ── Location detection ────────────────────────────────────
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(d => setUserLocation(`${d.city}, ${d.country_name}`))
+      .catch(() => setUserLocation('Unknown'))
+  }, [])
 
   // ── Keyboard shortcuts ────────────────────────────────────
   useEffect(() => {
@@ -111,6 +152,7 @@ function MainPage({
       else if (ctrl && e.key === '/') { e.preventDefault(); setShowShortcuts(v => !v) }
       else if (e.key === 'Escape') {
         if (showShortcuts) setShowShortcuts(false)
+        else if (showProfile) setShowProfile(false)
         else if (detailProject) setDetailProject(null)
         else if (showApiModal) setShowApiModal(false)
         else if (showNewProjectModal) setShowNewProjectModal(false)
@@ -125,7 +167,6 @@ function MainPage({
     if (pendingLogout) {
       setState(initialState)
       setChatOpen(false)
-      setActiveTab('dashboard')
       setPendingLogout(false)
       appLogout()
     } else if (pendingStep !== null) {
@@ -163,8 +204,9 @@ function MainPage({
 
   function addProject(project: SavedProject) {
     setSavedProjects(prev => [project, ...prev])
-    setActiveTab('dashboard')
+    navigate(TAB_TO_PATH.dashboard)
     addLog(`Project "${project.name}" committed · dashboard updated`, 'OK')
+    addNotification(`Project "${project.name}" saved to dashboard`, 'project')
     showToast('Project saved to dashboard', 'success')
   }
 
@@ -186,12 +228,12 @@ function MainPage({
       projectCcAuthors: data.ccAuthors,
       projectDescription: data.description,
       projectCustomDate: data.customDate,
-      // Pre-fill from template if available
       ...(t ? { domain: t.domain } : {}),
     })
     setShowNewProjectModal(false)
-    setActiveTab('project')
+    navigate(TAB_TO_PATH.project)
     addLog(`Pipeline initialized · "${data.name}"${t ? ` · template: ${t.name}` : ''}`, 'INIT')
+    addNotification(`New pipeline "${data.name}" created`, 'project')
     if (t) showToast(`Template "${t.name}" applied`, 'info')
   }
 
@@ -200,7 +242,7 @@ function MainPage({
       setShowNewProjectModal(true)
       return
     }
-    setActiveTab(tab)
+    navigate(TAB_TO_PATH[tab])
     if (tab === 'project') setChatOpen(false)
     const tabLogs: Record<string, string> = {
       dashboard: 'Loading ops dashboard · fetching telemetry',
@@ -222,6 +264,7 @@ function MainPage({
       }
       return [...prev, { productId, quantity, addedAt: new Date().toISOString(), sourceProjectId }]
     })
+    addNotification(`Added ${quantity}× item to cart`, 'cart')
   }
 
   function removeFromCart(productId: string) {
@@ -237,7 +280,6 @@ function MainPage({
     showToast('Cart cleared', 'info')
   }
 
-  const apiKeyConfirmed = !!getApiKey()
   const sidebarVisible = activeTab === 'project'
   const stepProps = {
     state, updateState, goToStep,
@@ -287,7 +329,7 @@ function MainPage({
   return (
     <>
       <Toast />
-      <TopNav activeTab={activeTab} onTabChange={handleTabChange} isAdmin={isAdmin} loggedInUser={loggedInUser} apiKeyConfirmed={apiKeyConfirmed} onApiKeyClick={() => setShowApiModal(true)} cartItemCount={shopCart.length} onLogout={handleLogout} />
+      <TopNav activeTab={activeTab} onTabChange={handleTabChange} isAdmin={isAdmin} loggedInUser={loggedInUser} onProfileClick={() => { setShowProfile(true); addLog('Profile panel accessed', 'NAV') }} profilePhoto={profilePhoto} />
       {activeTab !== 'shop' && <VerticalWatermark sidebarVisible={sidebarVisible} />}
       <VerticalPageName name={activeTab} chatOpen={chatOpen} />
 
@@ -311,6 +353,21 @@ function MainPage({
         </div>
 
         {showApiModal && <ApiKeyModal onClose={() => setShowApiModal(false)} />}
+
+        {showProfile && (
+          <ProfileModal
+            username={loggedInUser}
+            location={userLocation}
+            onClose={() => {
+              setShowProfile(false)
+              try {
+                const p = localStorage.getItem('leviosai_profile')
+                setProfilePhoto(p ? JSON.parse(p).photo : null)
+              } catch { /* ignore */ }
+            }}
+            onLogout={handleLogout}
+          />
+        )}
 
         {detailProject && (
           <ProjectDetailModal
@@ -337,7 +394,6 @@ function MainPage({
         <LoadingScreen onComplete={handleTransitionComplete} duration={700} hasBackdrop />
       )}
 
-      {/* Floating ChatBot toggle button */}
       <FloatingChatButton isOpen={chatOpen} onToggle={() => {
         addLog(chatOpen ? 'AI assistant standing by' : 'AI assistant engaged', 'ACT')
         setChatOpen(v => !v)
@@ -352,15 +408,6 @@ function MainPage({
 
       <SystemLog position="top-right" />
 
-      {/* LEVIOSAI brand — bottom-left on all pages except project (sidebar has it) */}
-      {activeTab !== 'project' && (
-        <div className="fixed bottom-4 left-5 z-30 flex items-center gap-2 pointer-events-none select-none">
-          <img src="/leviosai.png" alt="LeviosAI" className="w-5 h-5 object-contain opacity-40" />
-          <span className="font-mono text-primary/30 font-bold tracking-[0.15em] text-sm">LEVIOSAI</span>
-        </div>
-      )}
-
-      {/* Keyboard shortcuts help modal */}
       {showShortcuts && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center" onClick={() => setShowShortcuts(false)}>
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-component shadow-2xl animate-fade-in p-6" onClick={e => e.stopPropagation()}>
@@ -372,7 +419,7 @@ function MainPage({
               {[
                 ['⌘/Ctrl + 1', 'Dashboard'],
                 ['⌘/Ctrl + 2', 'Project'],
-                ['⌘/Ctrl + 3', 'Shop'],
+                ['⌘/Ctrl + 3', 'Procurement'],
                 ['⌘/Ctrl + 4', 'Contact'],
                 ['⌘/Ctrl + 5', 'Settings'],
                 ['⌘/Ctrl + N', 'New Pipeline'],
@@ -405,7 +452,7 @@ function MobileGuard() {
           LeviosAI is optimized for larger screens. Please access from a tablet (iPad) or desktop browser for the full experience.
         </p>
       </div>
-      <p className="text-[10px] font-mono text-secondary/30 mt-8">v0.9 · Google AI Hackathon 2026</p>
+      <p className="text-[10px] font-mono text-secondary/30 mt-8">Google AI Hackathon 2026</p>
     </div>
   )
 }
@@ -418,10 +465,8 @@ function App() {
   const [transitioning, setTransitioning] = useState(false)
   const [state, setState] = useState<WizardState>(initialState)
 
-  // Initialize theme + font size from localStorage
   useEffect(() => { initTheme() }, [])
 
-  // Mobile detection: phones only (< 768px), tablets pass through
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
     setIsMobile(mq.matches)
@@ -456,6 +501,7 @@ function App() {
     setLoggedInUser(username || '')
     setTransitioning(true)
     addLog('Authentication handshake complete · operator terminal active', 'AUTH')
+    addNotification(`Signed in as ${username || 'user'}`, 'auth')
     setTimeout(() => addLog('Loading ops dashboard · fetching telemetry', 'NAV'), 350)
   }
 
@@ -480,7 +526,7 @@ function App() {
           path="/login"
           element={
             isLoggedIn
-              ? <Navigate to="/main" replace />
+              ? <Navigate to="/dashboard" replace />
               : <LoginPage
                   onLogin={handleLogin}
                   transitioning={transitioning}
@@ -489,7 +535,7 @@ function App() {
           }
         />
         <Route
-          path="/main"
+          path="/*"
           element={
             isLoggedIn
               ? loggedInUser === 'admin'
@@ -507,8 +553,6 @@ function App() {
               : <Navigate to="/login" replace />
           }
         />
-        <Route path="/" element={<Navigate to={isLoggedIn ? '/main' : '/login'} replace />} />
-        <Route path="*" element={<Navigate to={isLoggedIn ? '/main' : '/login'} replace />} />
       </Routes>
     </>
   )
