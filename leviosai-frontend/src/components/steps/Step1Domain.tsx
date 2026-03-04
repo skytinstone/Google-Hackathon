@@ -19,11 +19,20 @@ export default function Step1Domain({ state, updateState, goToStep }: StepProps)
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="mb-6 flex-shrink-0">
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 1 of 7</p>
-        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Select AI Domain" speed={40} /></h2>
-        <p className="text-secondary mt-2">Choose the application domain for your Edge AI deployment</p>
+      {/* Header + Next button */}
+      <div className="mb-6 flex-shrink-0 flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 1 of 7</p>
+          <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Select AI Domain" speed={40} /></h2>
+          <p className="text-secondary mt-2">Choose the application domain for your Edge AI deployment</p>
+        </div>
+        <button
+          onClick={() => goToStep(2)}
+          disabled={!state.domain}
+          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+        >
+          Next: Hardware →
+        </button>
       </div>
 
       {/* Split layout */}
@@ -62,8 +71,8 @@ export default function Step1Domain({ state, updateState, goToStep }: StepProps)
           })}
         </div>
 
-        {/* Right — Domain detail panel */}
-        <div className="flex-1 min-w-0">
+        {/* Right — Domain detail panel (70% scale to avoid overlap with decorative elements) */}
+        <div className="flex-1 min-w-0" style={{ transform: 'scale(0.7)', transformOrigin: 'top left' }}>
           {!selectedDetail ? (
             <div className="h-full flex flex-col items-center justify-center text-center rounded-2xl border border-dashed border-white/10 bg-white/2 p-8">
               <div className="w-12 h-12 rounded-full bg-white/6 border border-white/10 flex items-center justify-center mb-4">
@@ -124,16 +133,6 @@ export default function Step1Domain({ state, updateState, goToStep }: StepProps)
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex justify-end mt-6 flex-shrink-0">
-        <button
-          onClick={() => goToStep(2)}
-          disabled={!state.domain}
-          className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
-        >
-          Next: Hardware →
-        </button>
-      </div>
     </div>
   )
 }

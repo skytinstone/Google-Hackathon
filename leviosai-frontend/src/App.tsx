@@ -31,7 +31,7 @@ import { addLog } from './utils/syslog'
 import { showToast } from './utils/toast'
 import { initTheme } from './utils/theme'
 import SystemLog from './components/SystemLog'
-import { VerticalWatermark, VerticalPageName, VerticalDateTime } from './components/PageDecorations'
+import { VerticalWatermark, VerticalPageName } from './components/PageDecorations'
 
 type ActiveTab = Tab
 
@@ -290,7 +290,6 @@ function MainPage({
       <TopNav activeTab={activeTab} onTabChange={handleTabChange} isAdmin={isAdmin} loggedInUser={loggedInUser} apiKeyConfirmed={apiKeyConfirmed} onApiKeyClick={() => setShowApiModal(true)} cartItemCount={shopCart.length} onLogout={handleLogout} />
       {activeTab !== 'shop' && <VerticalWatermark sidebarVisible={sidebarVisible} />}
       <VerticalPageName name={activeTab} chatOpen={chatOpen} />
-      {activeTab !== 'shop' && <VerticalDateTime sidebarVisible={sidebarVisible} />}
 
       <div className="flex h-screen bg-background overflow-hidden pt-16">
         <div
@@ -299,7 +298,7 @@ function MainPage({
             sidebarVisible ? 'w-64' : 'w-0',
           ].join(' ')}
         >
-          <Sidebar state={state} goToStep={goToStep} onLogout={handleLogout} />
+          <Sidebar state={state} goToStep={goToStep} />
         </div>
 
         <div
