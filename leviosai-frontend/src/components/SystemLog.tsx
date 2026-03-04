@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { subscribe, type LogEntry, type LogType } from '../utils/syslog'
+import { useTheme } from '../utils/theme'
 
-const TYPE_COLOR: Record<LogType, string> = {
+const TYPE_COLOR_DARK: Record<LogType, string> = {
   AUTH: '#4ade80',
   NAV:  '#6b96be',
   STEP: '#6b96be',
@@ -12,6 +13,17 @@ const TYPE_COLOR: Record<LogType, string> = {
   GEN:  '#facc15',
 }
 
+const TYPE_COLOR_LIGHT: Record<LogType, string> = {
+  AUTH: '#16a34a',
+  NAV:  '#2563eb',
+  STEP: '#2563eb',
+  ACT:  '#1a1a2e',
+  OK:   '#16a34a',
+  ERR:  '#dc2626',
+  INIT: '#ca8a04',
+  GEN:  '#ca8a04',
+}
+
 interface Props {
   position?: 'left' | 'right'
   sidebarVisible?: boolean
@@ -19,12 +31,15 @@ interface Props {
 
 export default function SystemLog({ position = 'left', sidebarVisible }: Props) {
   const [entries, setEntries] = useState<LogEntry[]>([])
+  const { theme } = useTheme()
 
   useEffect(() => subscribe(setEntries), [])
 
   if (entries.length === 0) return null
 
   const isRight = position === 'right'
+  const isLight = theme === 'light'
+  const TYPE_COLOR = isLight ? TYPE_COLOR_LIGHT : TYPE_COLOR_DARK
 
   // Position: center for login, left with sidebar offset for main
   const posStyle: React.CSSProperties = isRight
@@ -46,12 +61,12 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
           ].join(' ')}
           style={{ opacity: 1 - idx * 0.13 }}
         >
-          <span className="text-[11px] tabular-nums" style={{ color: '#4ade80' }}>{entry.time}</span>
+          <span className="text-[11px] tabular-nums" style={{ color: isLight ? '#16a34a' : '#4ade80' }}>{entry.time}</span>
           <span className="text-[11px] font-bold tracking-wider" style={{ color: TYPE_COLOR[entry.type] }}>
             {entry.type}
           </span>
-          <span className="text-white/50 text-[11px]">▸</span>
-          <span className="text-white/70 text-[11px] leading-tight truncate">{entry.message}</span>
+          <span className={`text-[11px] ${isLight ? 'text-black/40' : 'text-white/50'}`}>▸</span>
+          <span className={`text-[11px] leading-tight truncate ${isLight ? 'text-black/70' : 'text-white/70'}`}>{entry.message}</span>
         </div>
       ))}
     </div>

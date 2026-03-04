@@ -86,18 +86,30 @@ html {
   background: rgba(92, 107, 125, 0.45);
 }
 
-/* Text color overrides for light mode */
+/* Text color overrides for light mode — comprehensive */
 [data-theme="light"] .text-white {
   color: #1a1a2e;
+}
+[data-theme="light"] .text-white\/90 {
+  color: rgba(26, 26, 46, 0.9);
 }
 [data-theme="light"] .text-white\/80 {
   color: rgba(26, 26, 46, 0.8);
 }
+[data-theme="light"] .text-white\/70 {
+  color: rgba(26, 26, 46, 0.7);
+}
 [data-theme="light"] .text-white\/60 {
   color: rgba(26, 26, 46, 0.6);
 }
+[data-theme="light"] .text-white\/50 {
+  color: rgba(26, 26, 46, 0.5);
+}
 [data-theme="light"] .text-white\/40 {
   color: rgba(26, 26, 46, 0.4);
+}
+[data-theme="light"] .text-white\/15 {
+  color: rgba(26, 26, 46, 0.15);
 }
 
 /* Blinking cursor */
@@ -271,15 +283,56 @@ html {
 [data-theme="light"] .text-white\/\[0\.045\],
 [data-theme="light"] .text-white\/\[0\.03\],
 [data-theme="light"] .text-white\/\[0\.06\] {
-  color: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .text-white\/\[0\.12\] {
+  color: rgba(0, 0, 0, 0.12);
 }
 
 [data-theme="light"] .text-white\/30 {
-  color: rgba(0, 0, 0, 0.12);
+  color: rgba(0, 0, 0, 0.18);
 }
 
 [data-theme="light"] .text-white\/20 {
   color: rgba(0, 0, 0, 0.15);
+}
+
+/* Primary alpha text — ensure visible in light mode */
+[data-theme="light"] .text-primary\/30 {
+  color: rgba(26, 26, 46, 0.35);
+}
+[data-theme="light"] .text-primary\/40 {
+  color: rgba(26, 26, 46, 0.45);
+}
+[data-theme="light"] .text-primary\/50 {
+  color: rgba(26, 26, 46, 0.55);
+}
+
+/* White-alpha 2-3% backgrounds in light mode */
+[data-theme="light"] .bg-white\/2,
+[data-theme="light"] .bg-white\/3,
+[data-theme="light"] .bg-white\/4 {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+[data-theme="light"] .bg-white\/6 {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+[data-theme="light"] .bg-white\/15 {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Border dashed in light mode */
+[data-theme="light"] .border-dashed {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* White alpha opacity for decorative borders in light mode */
+[data-theme="light"] .border-white\/12 {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .border-white\/\[0\.03\] {
+  border-color: rgba(0, 0, 0, 0.06);
 }
 
 /* Accent-based borders */
