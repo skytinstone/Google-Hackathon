@@ -34,11 +34,11 @@ export function VerticalWatermark({ sidebarVisible }: { sidebarVisible?: boolean
 }
 
 // ── Vertical page name (top-right) ─────────────────────────
-export function VerticalPageName({ name }: { name: string }) {
+export function VerticalPageName({ name, chatOpen }: { name: string; chatOpen?: boolean }) {
   return (
     <div
-      className="fixed right-4 top-24 pointer-events-none select-none"
-      style={{ zIndex: 0 }}
+      className="fixed top-24 pointer-events-none select-none transition-all duration-300"
+      style={{ zIndex: 0, right: chatOpen ? '376px' : '16px' }}
     >
       <p
         className="text-[48px] font-black font-mono tracking-[0.18em] text-white/[0.03] leading-none uppercase"
@@ -67,10 +67,10 @@ export function VerticalDateTime({ sidebarVisible }: { sidebarVisible?: boolean 
       className="fixed top-20 pointer-events-none select-none transition-all duration-300"
       style={{ zIndex: 0, left: sidebarVisible ? '272px' : '16px' }}
     >
-      <p className="text-[34px] font-black font-mono tracking-[0.08em] text-white/[0.045] leading-[0.95]">
+      <p className="text-[34px] font-black font-mono tracking-[0.08em] text-white/30 leading-[0.95]">
         {dateStr}
       </p>
-      <p className="text-[34px] font-black font-mono tracking-[0.08em] text-white/[0.045] leading-[0.95]">
+      <p className="text-[34px] font-black font-mono tracking-[0.08em] text-white/30 leading-[0.95]">
         {timeStr}
       </p>
     </div>

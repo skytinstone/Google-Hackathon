@@ -48,13 +48,8 @@ export default function TypewriterText({
   return (
     <span className={className}>
       {displayed}
-      {showCursor && (
-        <span
-          className={[
-            'inline-block w-0.5 h-[0.85em] bg-accent align-middle ml-0.5',
-            done ? 'animate-cursor' : '',
-          ].join(' ')}
-        />
+      {showCursor && !done && (
+        <span className="inline-block w-0.5 h-[0.85em] bg-accent align-middle ml-0.5" />
       )}
     </span>
   )

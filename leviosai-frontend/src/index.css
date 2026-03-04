@@ -8,18 +8,96 @@
   --color-component: #0e1017;
 }
 
+/* ── Font-size scaling ────────────────────────────────────── */
+:root {
+  --font-size-base: 15px;
+}
+
+html {
+  font-size: var(--font-size-base);
+}
+
+/* ── Light theme override ─────────────────────────────────── */
+[data-theme="light"] {
+  --color-background: #f5f6fa;
+  --color-primary: #1a1a2e;
+  --color-secondary: #5c6b7d;
+  --color-accent: #4a7fb5;
+  --color-component: #ffffff;
+}
+
 /* Tech grid background */
 .bg-tech-grid {
-  background-color: #09090f;
+  background-color: var(--color-background);
   background-image:
     linear-gradient(rgba(107, 150, 190, 0.055) 1px, transparent 1px),
     linear-gradient(90deg, rgba(107, 150, 190, 0.055) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
+[data-theme="light"] .bg-tech-grid {
+  background-color: var(--color-background);
+  background-image:
+    linear-gradient(rgba(74, 127, 181, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 127, 181, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
 /* Glow effects */
 .glow-accent {
   box-shadow: 0 0 24px rgba(107, 150, 190, 0.18), 0 0 64px rgba(107, 150, 190, 0.05);
+}
+
+[data-theme="light"] .glow-accent {
+  box-shadow: 0 0 24px rgba(74, 127, 181, 0.12), 0 0 64px rgba(74, 127, 181, 0.04);
+}
+
+/* ── Light theme: border, bg, text overrides ──────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* White-alpha borders → dark-alpha in light mode */
+[data-theme="light"] .border-white\/5,
+[data-theme="light"] .border-white\/8,
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/15,
+[data-theme="light"] .border-white\/20,
+[data-theme="light"] .border-white\/30 {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* White-alpha backgrounds → dark-alpha */
+[data-theme="light"] .bg-white\/5,
+[data-theme="light"] .bg-white\/8,
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .bg-black\/60 {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Scrollbar for light mode */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(92, 107, 125, 0.25);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(92, 107, 125, 0.45);
+}
+
+/* Text color overrides for light mode */
+[data-theme="light"] .text-white {
+  color: #1a1a2e;
+}
+[data-theme="light"] .text-white\/80 {
+  color: rgba(26, 26, 46, 0.8);
+}
+[data-theme="light"] .text-white\/60 {
+  color: rgba(26, 26, 46, 0.6);
+}
+[data-theme="light"] .text-white\/40 {
+  color: rgba(26, 26, 46, 0.4);
 }
 
 /* Blinking cursor */
@@ -141,4 +219,94 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(92, 107, 125, 0.35) transparent;
+}
+
+/* ── Light theme: additional overrides ────────────────────── */
+
+/* Input fields */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  color: #1a1a2e;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: rgba(92, 107, 125, 0.5);
+}
+
+/* Hover backgrounds */
+[data-theme="light"] .hover\:bg-white\/4:hover,
+[data-theme="light"] .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Scan-lines lighter in light mode */
+[data-theme="light"] .scan-lines::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.02) 3px,
+    rgba(0, 0, 0, 0.02) 4px
+  );
+}
+
+/* Border-t, border-b with white alpha */
+[data-theme="light"] .border-white\/\[0\.04\] {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Background/60 variants */
+[data-theme="light"] .bg-background\/60 {
+  background-color: rgba(245, 246, 250, 0.6);
+}
+
+/* Shadow overrides */
+[data-theme="light"] .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Watermark/decoration text — white alpha → black alpha in light mode */
+[data-theme="light"] .text-white\/\[0\.045\],
+[data-theme="light"] .text-white\/\[0\.03\],
+[data-theme="light"] .text-white\/\[0\.06\] {
+  color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .text-white\/30 {
+  color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .text-white\/20 {
+  color: rgba(0, 0, 0, 0.15);
+}
+
+/* Accent-based borders */
+[data-theme="light"] .border-accent\/20 {
+  border-color: rgba(74, 127, 181, 0.25);
+}
+
+/* Component background alpha variants */
+[data-theme="light"] .bg-component\/95 {
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Secondary text alpha variants */
+[data-theme="light"] .text-secondary\/40,
+[data-theme="light"] .text-secondary\/50,
+[data-theme="light"] .text-secondary\/60,
+[data-theme="light"] .text-secondary\/70 {
+  color: rgba(92, 107, 125, 0.7);
+}
+
+[data-theme="light"] .text-secondary\/25,
+[data-theme="light"] .text-secondary\/30 {
+  color: rgba(92, 107, 125, 0.45);
+}
+
+/* Accent alpha text */
+[data-theme="light"] .text-accent\/60,
+[data-theme="light"] .text-accent\/70 {
+  color: rgba(74, 127, 181, 0.75);
 }

@@ -3,7 +3,37 @@ import type { WizardState, CartItem, ShopCategory, ShopProduct, SavedProject } f
 import { STORES, SHOP_CATEGORIES, PRODUCT_CATALOG, generateStoreUrl, generateBom, getProductById } from '../../data/shopData'
 import { useI18n } from '../../utils/i18n'
 import { showToast } from '../../utils/toast'
+import { subscribe as subscribeLogs, type LogEntry, type LogType } from '../../utils/syslog'
 import TypewriterText from '../TypewriterText'
+
+/* ── Inline System Log for sidebar ── */
+const LOG_STYLE: Record<LogType, string> = {
+  AUTH: 'text-green-400', NAV: 'text-accent', STEP: 'text-accent', ACT: 'text-primary/50',
+  OK: 'text-green-400', ERR: 'text-red-400', INIT: 'text-yellow-400', GEN: 'text-yellow-400',
+}
+
+function SidebarSystemLog() {
+  const [entries, setEntries] = useState<LogEntry[]>([])
+  useEffect(() => subscribeLogs(setEntries), [])
+  if (entries.length === 0) return null
+  return (
+    <div className="mt-auto pt-3 border-t border-white/8">
+      <p className="text-[9px] font-mono text-secondary/40 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+        Navigate Log
+      </p>
+      <div className="space-y-0.5 max-h-[140px] overflow-y-auto">
+        {entries.slice(0, 5).map((e, i) => (
+          <div key={e.id} className={`text-[9px] font-mono leading-tight ${i === 0 ? 'opacity-100' : 'opacity-60'}`}>
+            <span className="text-secondary/20 mr-1">{e.time}</span>
+            <span className={`${LOG_STYLE[e.type]} font-bold mr-1`}>{e.type}</span>
+            <span className="text-secondary/50">▸ {e.message}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 interface Props {
   state: WizardState
@@ -67,7 +97,7 @@ function ProductCard({ product, onAdd, isRecommended }: {
         </div>
         <button onClick={() => { onAdd(product.id, qty); showToast(`Added ${product.name}`, 'success') }}
           className="flex-1 py-1.5 text-[10px] font-mono font-bold text-accent border border-accent/30 rounded-lg hover:bg-accent/10 transition-colors">
-          Add to Cart
+          {t('shop.addToCart')}
         </button>
       </div>
     </div>
@@ -359,8 +389,8 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
         </div>
 
         <div className="p-6 rounded-xl border border-white/8 bg-component mb-4">
-          <p className="text-sm font-mono text-primary font-bold mb-4">Select a Project</p>
-          <p className="text-xs font-mono text-secondary mb-4">Choose a project to auto-generate a Bill of Materials (BOM) with recommended components.</p>
+          <p className="text-sm font-mono text-primary font-bold mb-4">{t('shop.selectProject')}</p>
+          <p className="text-xs font-mono text-secondary mb-4">{t('shop.selectProjectDesc')}</p>
 
           {state.projectName ? (
             <button onClick={() => setView('browse')}
@@ -378,7 +408,7 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
 
           {savedProjects && savedProjects.length > 0 && (
             <div className="mt-4 space-y-2">
-              <p className="text-[10px] font-mono text-secondary/50 uppercase tracking-widest">Saved Projects</p>
+              <p className="text-[10px] font-mono text-secondary/50 uppercase tracking-widest">{t('shop.savedProjects')}</p>
               {savedProjects.slice(0, 5).map(p => (
                 <button key={p.id} onClick={() => setView('browse')}
                   className="w-full p-3 rounded-xl border border-white/8 hover:border-accent/20 transition-colors text-left">
@@ -390,7 +420,7 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
           )}
 
           <button onClick={() => setView('browse')} className="mt-4 w-full py-2.5 text-xs font-mono text-secondary border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
-            Skip — Browse All Components
+            {t('shop.skipBrowse')}
           </button>
         </div>
       </div>
@@ -407,8 +437,8 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
     <div className="flex gap-6 h-[calc(100vh-8rem)]">
 
       {/* ── Left Sidebar (Categories) ── */}
-      <div className="w-48 flex-shrink-0 overflow-y-auto pr-2">
-        <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest mb-3">Categories</p>
+      <div className="w-48 flex-shrink-0 overflow-y-auto pr-2 flex flex-col">
+        <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest mb-3">{t('shop.categories')}</p>
         <button onClick={() => setSelectedCat('all')}
           className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono mb-1 transition-colors ${
             selectedCat === 'all' ? 'bg-accent/10 text-accent font-bold' : 'text-secondary hover:text-primary hover:bg-white/5'}`}>
@@ -441,18 +471,20 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
             </button>
           </>
         )}
+
+        <SidebarSystemLog />
       </div>
 
       {/* ── Main Content ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4 flex-shrink-0">
-          <button onClick={() => setView('select-project')} className="text-xs font-mono text-secondary hover:text-primary transition-colors">← Projects</button>
+          <button onClick={() => setView('select-project')} className="text-xs font-mono text-secondary hover:text-primary transition-colors">{t('shop.projects')}</button>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('shop.searchProducts')}
             className="flex-1 bg-background/60 border border-white/8 rounded-lg px-3 py-2 text-xs font-mono text-primary placeholder:text-secondary/30 focus:outline-none focus:border-accent/50" />
           <button onClick={() => setShowBot(b => !b)}
             className={`px-3 py-2 rounded-lg border text-xs font-mono font-bold transition-colors ${showBot ? 'border-accent/40 text-accent bg-accent/10' : 'border-white/10 text-secondary hover:text-primary'}`}>
-            AI Bot
+            {t('shop.aiBot')}
           </button>
           <button onClick={() => setShowCart(c => !c)}
             className="relative px-3 py-2 rounded-lg border border-white/10 text-xs font-mono text-secondary hover:text-primary transition-colors">
@@ -475,7 +507,7 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
             </div>
             {filtered.length === 0 && (
               <div className="text-center py-20">
-                <p className="text-secondary font-mono text-sm">No products found</p>
+                <p className="text-secondary font-mono text-sm">{t('shop.noProducts')}</p>
               </div>
             )}
           </div>
@@ -496,7 +528,7 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
                   <div className="flex-1 overflow-y-auto p-3 space-y-2">
                     {cartItems.length === 0 ? (
                       <p className="text-center text-xs font-mono text-secondary/40 py-8">{t('shop.emptyCart')}</p>
-                    ) : cartItems.map(c => {
+                   ) : cartItems.map(c => {
                       const p = getProductById(c.productId)
                       if (!p) return null
                       return (
@@ -524,7 +556,7 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
                       </div>
                       <button onClick={() => { setShowCart(false); setView('checkout') }}
                         className="w-full py-2.5 bg-accent text-background text-xs font-mono font-bold rounded-lg hover:bg-accent/80 transition-colors">
-                        Proceed to Checkout
+                        {t('shop.checkout')}
                       </button>
                       <button onClick={() => {
                         const csv = ['Product,Qty,Min Price,Max Price', ...cartItems.map(c => {
@@ -534,7 +566,7 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
                         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'leviosai_cart.csv'; a.click()
                         showToast('Cart exported', 'success')
                       }} className="w-full py-2 text-[10px] font-mono text-secondary border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
-                        Export Cart (CSV)
+                        {t('shop.exportCart')} (CSV)
                       </button>
                     </div>
                   )}

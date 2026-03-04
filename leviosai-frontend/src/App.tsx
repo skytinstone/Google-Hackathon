@@ -29,6 +29,7 @@ import { getApiKey } from './api/api'
 import type { WizardState, SavedProject, CartItem } from './types'
 import { addLog } from './utils/syslog'
 import { showToast } from './utils/toast'
+import { initTheme } from './utils/theme'
 import SystemLog from './components/SystemLog'
 import { VerticalWatermark, VerticalPageName, VerticalDateTime } from './components/PageDecorations'
 
@@ -287,9 +288,9 @@ function MainPage({
     <>
       <Toast />
       <TopNav activeTab={activeTab} onTabChange={handleTabChange} isAdmin={isAdmin} loggedInUser={loggedInUser} apiKeyConfirmed={apiKeyConfirmed} onApiKeyClick={() => setShowApiModal(true)} cartItemCount={shopCart.length} onLogout={handleLogout} />
-      <VerticalWatermark sidebarVisible={sidebarVisible} />
-      <VerticalPageName name={activeTab} />
-      <VerticalDateTime sidebarVisible={sidebarVisible} />
+      {activeTab !== 'shop' && <VerticalWatermark sidebarVisible={sidebarVisible} />}
+      <VerticalPageName name={activeTab} chatOpen={chatOpen} />
+      {activeTab !== 'shop' && <VerticalDateTime sidebarVisible={sidebarVisible} />}
 
       <div className="flex h-screen bg-background overflow-hidden pt-16">
         <div
@@ -350,7 +351,7 @@ function MainPage({
         state={state}
       />
 
-      {!sidebarVisible && <SystemLog />}
+      {activeTab !== 'shop' && <SystemLog position="left" sidebarVisible={sidebarVisible} />}
 
       {/* Keyboard shortcuts help modal */}
       {showShortcuts && (
@@ -384,13 +385,43 @@ function MainPage({
   )
 }
 
+// ── Mobile Guard ─────────────────────────────────────────────
+function MobileGuard() {
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-8 text-center">
+      <img src="/leviosai.png" alt="LeviosAI" className="w-20 h-20 object-contain mb-6 opacity-80" />
+      <h1 className="text-2xl font-bold font-mono text-primary tracking-tight mb-2">LeviosAI</h1>
+      <p className="text-xs font-mono text-accent/70 uppercase tracking-widest mb-6">Edge AI Optimization Platform</p>
+      <div className="p-5 rounded-2xl border border-white/10 bg-component max-w-sm">
+        <p className="text-sm font-mono text-primary mb-2">Desktop or Tablet Required</p>
+        <p className="text-xs font-mono text-secondary leading-relaxed">
+          LeviosAI is optimized for larger screens. Please access from a tablet (iPad) or desktop browser for the full experience.
+        </p>
+      </div>
+      <p className="text-[10px] font-mono text-secondary/30 mt-8">v0.9 · Google AI Hackathon 2026</p>
+    </div>
+  )
+}
+
 // ── Root App ──────────────────────────────────────────────────
 function App() {
+  const [isMobile, setIsMobile] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loggedInUser, setLoggedInUser] = useState('')
   const [transitioning, setTransitioning] = useState(false)
-  const [initialLoading, setInitialLoading] = useState(true)
   const [state, setState] = useState<WizardState>(initialState)
+
+  // Initialize theme + font size from localStorage
+  useEffect(() => { initTheme() }, [])
+
+  // Mobile detection: phones only (< 768px), tablets pass through
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>(() => {
     try {
@@ -414,10 +445,6 @@ function App() {
     localStorage.setItem('leviosai_shop_cart', JSON.stringify(shopCart))
   }, [shopCart])
 
-  const handleInitialLoadComplete = useCallback(() => {
-    setInitialLoading(false)
-  }, [])
-
   function handleLogin(username?: string) {
     setLoggedInUser(username || '')
     setTransitioning(true)
@@ -436,9 +463,7 @@ function App() {
     addLog('Session terminated · all clearances revoked', 'AUTH')
   }
 
-  if (initialLoading) {
-    return <LoadingScreen onComplete={handleInitialLoadComplete} duration={1800} />
-  }
+  if (isMobile) return <MobileGuard />
 
   return (
     <>

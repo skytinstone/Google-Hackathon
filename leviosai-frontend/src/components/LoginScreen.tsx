@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { api } from '../api/api'
+import { useI18n, setLocale, type Locale } from '../utils/i18n'
+import SystemLog from './SystemLog'
 
 interface LoginScreenProps {
   onLogin: (username?: string) => void
@@ -14,18 +16,13 @@ function injectKeyframes() {
   const style = document.createElement('style')
   style.id = STYLE_ID
   style.textContent = `
-    @keyframes pulseGlow {
-      0%, 100% { text-shadow: 0 0 20px rgba(255,255,255,0.1), 0 0 60px rgba(107,150,190,0.05); }
-      50%      { text-shadow: 0 0 40px rgba(255,255,255,0.15), 0 0 80px rgba(107,150,190,0.1); }
-    }
     @keyframes hintPulse {
       0%, 100% { opacity: 0.4; }
       50%      { opacity: 0.8; }
     }
     @keyframes cardSlideIn {
-      0%   { opacity:0; transform: translateX(80px) scale(0.95); filter: blur(10px); }
-      60%  { opacity:0.8; filter: blur(2px); }
-      100% { opacity:1; transform: translateX(0) scale(1); filter: blur(0); }
+      0%   { opacity:0; transform: translateX(40px); }
+      100% { opacity:1; transform: translateX(0); }
     }
     @keyframes fadeIn {
       0%   { opacity:0; }
@@ -74,8 +71,8 @@ function DateTimeDisplay() {
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id) }, [])
   return (
     <div className="fixed left-6 top-10 pointer-events-none select-none z-0 text-left">
-      <p className="text-[38px] font-black font-mono tracking-[0.1em] text-white/[0.045] leading-[0.9]">{now.toLocaleDateString('en-CA')}</p>
-      <p className="text-[38px] font-black font-mono tracking-[0.1em] text-white/[0.045] leading-[0.9]">{now.toLocaleTimeString('en-GB', { hour12: false })}</p>
+      <p className="text-[38px] font-black font-mono tracking-[0.1em] text-white/30 leading-[0.9]">{now.toLocaleDateString('en-CA')}</p>
+      <p className="text-[38px] font-black font-mono tracking-[0.1em] text-white/30 leading-[0.9]">{now.toLocaleTimeString('en-GB', { hour12: false })}</p>
     </div>
   )
 }
@@ -83,10 +80,30 @@ function DateTimeDisplay() {
 function IpCountryDisplay() {
   const [info, setInfo] = useState<{ ip: string; country: string } | null>(null)
   useEffect(() => {
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then(d => setInfo({ ip: d.ip ?? '0.0.0.0', country: d.country_name ?? 'Unknown' }))
-      .catch(() => setInfo({ ip: '0.0.0.0', country: 'Unknown' }))
+    // Try multiple APIs with fallback chain
+    const apis = [
+      { url: 'https://ipapi.co/json/', parse: (d: Record<string, string>) => ({ ip: d.ip, country: d.country_name }) },
+      { url: 'https://ipwho.is/', parse: (d: Record<string, string>) => ({ ip: d.ip, country: d.country }) },
+      { url: 'https://api.ipify.org?format=json', parse: (d: Record<string, string>) => ({ ip: d.ip, country: 'South Korea' }) },
+    ]
+    let cancelled = false
+    async function fetchIp() {
+      for (const api of apis) {
+        if (cancelled) return
+        try {
+          const res = await fetch(api.url, { signal: AbortSignal.timeout(3000) })
+          const data = await res.json()
+          if (!cancelled) {
+            const parsed = api.parse(data)
+            setInfo({ ip: parsed.ip || '0.0.0.0', country: parsed.country || 'Unknown' })
+            return
+          }
+        } catch { /* try next */ }
+      }
+      if (!cancelled) setInfo({ ip: '127.0.0.1', country: 'Local' })
+    }
+    fetchIp()
+    return () => { cancelled = true }
   }, [])
   if (!info) return null
   return (
@@ -162,6 +179,7 @@ function CornerDecor({ position }: { position: CornerPos }) {
    Main Login Screen
    ================================================================ */
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
+  const { t, locale } = useI18n()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
@@ -221,7 +239,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       onClick={handleScreenClick}
     >
       {/* Background layers */}
-      <div className="transition-opacity duration-[2000ms]" style={{ opacity: phase >= 1 ? 1 : 0 }}>
+      <div className="transition-opacity duration-700" style={{ opacity: phase >= 1 ? 1 : 0 }}>
         <VerticalWatermark />
         <DateTimeDisplay />
         <IpCountryDisplay />
@@ -234,20 +252,38 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       </div>
 
       {/* Ambient glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-accent/5 blur-3xl pointer-events-none transition-opacity duration-[2000ms]" style={{ opacity: phase >= 1 ? 1 : 0 }} />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-accent/5 blur-3xl pointer-events-none transition-opacity duration-700" style={{ opacity: phase >= 1 ? 1 : 0 }} />
+
+      {/* ── Language toggle — top-right ── */}
+      <div className="fixed top-6 right-6 z-40 flex items-center gap-2 pointer-events-auto" onClick={e => e.stopPropagation()}>
+        {([['en', 'English'], ['ko', '한국어']] as const).map(([code, label]) => (
+          <button
+            key={code}
+            onClick={() => setLocale(code as Locale)}
+            className={[
+              'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all',
+              locale === code
+                ? 'bg-white/10 text-primary border border-white/20'
+                : 'text-secondary/50 hover:text-primary hover:bg-white/5',
+            ].join(' ')}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* ═══ Main content area: side-by-side in phase 3 ═══ */}
       <div
-        className="relative z-20 flex items-center justify-center gap-12 w-full px-8"
+        className="relative z-20 flex items-center justify-center gap-16 w-full px-8"
         style={{
-          transition: phase >= 3 ? 'all 1s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
+          transition: phase >= 3 ? 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
         }}
       >
         {/* ── Brand (LEVIOSAI typewriter) ── */}
         <div
           className="flex flex-col items-center select-none pointer-events-none"
           style={{
-            transition: phase >= 3 ? 'all 1.8s cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
+            transition: phase >= 3 ? 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
             flex: phase >= 3 ? '0 0 auto' : '1 1 auto',
           }}
         >
@@ -255,23 +291,16 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             className="font-black font-mono tracking-[0.12em] text-primary leading-none relative whitespace-nowrap"
             style={{
               fontSize: phase >= 3 ? '64px' : 'clamp(80px, 12vw, 160px)',
-              transition: phase >= 3 ? 'font-size 1.8s cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
-              animation: typingDone ? 'pulseGlow 4s ease-in-out infinite' : 'none',
+              transition: phase >= 3 ? 'font-size 0.6s cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
+              animation: 'none',
             }}
           >
             {/* Typed characters */}
             {BRAND.slice(0, charCount)}
 
-            {/* Blinking cursor while typing or waiting */}
-            {phase >= 1 && phase < 3 && (
-              <span
-                className="text-accent/80 font-light"
-                style={{
-                  animation: typingDone ? 'cursorBlink 1s step-end infinite' : 'none',
-                }}
-              >
-                _
-              </span>
+            {/* Cursor only while actively typing */}
+            {phase >= 1 && !typingDone && (
+              <span className="text-accent/80 font-light">_</span>
             )}
           </h1>
 
@@ -281,31 +310,43 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               className="mt-8 text-sm font-mono text-secondary/60 tracking-[0.3em] uppercase"
               style={{ animation: 'hintPulse 2s ease-in-out infinite' }}
             >
-              Click anywhere to continue
+              {t('login.clickToContinue')}
             </p>
           )}
         </div>
+
+        {/* ── White vertical divider ── */}
+        {phase >= 3 && (
+          <div className="h-80 w-px bg-white/15 flex-shrink-0" style={{ animation: 'fadeIn 0.6s ease-out both' }} />
+        )}
 
         {/* ── Login card (phase 3, slides in from right) ── */}
         {phase >= 3 && (
           <div
             className="relative z-30 w-full max-w-md pointer-events-auto flex-shrink-0"
-            style={{ animation: 'cardSlideIn 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both' }}
+            style={{ animation: 'cardSlideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Top status bar */}
             <div className="flex items-center gap-2 mb-3 px-1">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="font-mono text-xs text-green-400 tracking-widest uppercase">System Online</span>
-              <span className="ml-auto font-mono text-xs text-secondary">v0.9</span>
+              <span className="font-mono text-xs text-green-400 tracking-widest uppercase">{t('login.systemOnline')}</span>
             </div>
 
             {/* Card */}
             <div className="bg-[#13131a]/90 backdrop-blur-sm border border-white/8 rounded-2xl p-8 glow-accent">
+              {/* Tagline — larger, i18n */}
+              <p className="text-center font-mono text-sm text-secondary/70 leading-relaxed mb-1">
+                {t('login.tagline1')}
+              </p>
+              <p className="text-center font-mono text-sm text-accent/80 leading-relaxed mb-6">
+                {t('login.tagline2')}
+              </p>
+
               {/* Divider */}
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex-1 h-px bg-white/8" />
-                <span className="font-mono text-xs text-secondary tracking-widest">AUTHENTICATE</span>
+                <span className="font-mono text-xs text-secondary tracking-widest">{t('login.authenticate')}</span>
                 <div className="flex-1 h-px bg-white/8" />
               </div>
 
@@ -315,7 +356,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   <label className="block font-mono text-xs text-secondary uppercase tracking-widest mb-2">User ID</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent font-mono text-sm select-none">&gt;_</span>
-                    <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="Enter your ID" autoComplete="username" required className="w-full bg-background/60 border border-white/10 text-primary font-mono text-sm rounded-lg pl-10 pr-4 py-3 placeholder:text-secondary/40 focus:outline-none focus:border-accent/60 focus:bg-background/80 transition-all" />
+                    <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder={t('login.enterUsername')} autoComplete="username" required className="w-full bg-background/60 border border-white/10 text-primary font-mono text-sm rounded-lg pl-10 pr-4 py-3 placeholder:text-secondary/40 focus:outline-none focus:border-accent/60 focus:bg-background/80 transition-all" />
                   </div>
                 </div>
 
@@ -323,7 +364,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   <label className="block font-mono text-xs text-secondary uppercase tracking-widest mb-2">Password</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent font-mono text-sm select-none">••</span>
-                    <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" autoComplete="current-password" required className="w-full bg-background/60 border border-white/10 text-primary font-mono text-sm rounded-lg pl-10 pr-12 py-3 placeholder:text-secondary/40 focus:outline-none focus:border-accent/60 focus:bg-background/80 transition-all" />
+                    <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={t('login.enterPassword')} autoComplete="current-password" required className="w-full bg-background/60 border border-white/10 text-primary font-mono text-sm rounded-lg pl-10 pr-12 py-3 placeholder:text-secondary/40 focus:outline-none focus:border-accent/60 focus:bg-background/80 transition-all" />
                     <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:text-primary transition-colors text-xs font-mono" tabIndex={-1}>{showPw ? 'HIDE' : 'SHOW'}</button>
                   </div>
                 </div>
@@ -339,11 +380,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Authenticating...
+                      {t('login.authenticating')}
                     </span>
                   ) : (
                     <span className="flex items-center justify-center gap-2">
-                      Initialize Session
+                      {t('login.submit')}
                       <span className="animate-blink">_</span>
                     </span>
                   )}
@@ -359,6 +400,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
         )}
       </div>
+
+      {/* Navigate Log — right side */}
+      <SystemLog position="right" />
     </div>
   )
 }

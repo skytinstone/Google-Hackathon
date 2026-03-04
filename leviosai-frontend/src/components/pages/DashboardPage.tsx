@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import TypewriterText from '../TypewriterText'
 import WorldMap from '../WorldMap'
+import { useI18n } from '../../utils/i18n'
 import type { SavedProject } from '../../types'
 
 interface Props {
@@ -145,6 +146,7 @@ function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: (p: S
 // ── Main component ─────────────────────────────────────────────────────────
 
 export default function DashboardPage({ projects, onOpenProject, onNewProject }: Props) {
+  const { t } = useI18n()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDomain, setFilterDomain] = useState<string | ''>('')
   const [filterHardware, setFilterHardware] = useState<string | ''>('')
@@ -205,21 +207,21 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
         <div>
           <div className="flex items-center gap-3 mb-2">
             <p className="text-[10px] font-semibold text-accent/70 uppercase tracking-[0.25em] font-mono">
-              LeviosAI · Operations Center
+              {t('dashboard.subtitle')}
             </p>
             <span className="flex items-center gap-1.5 text-[10px] font-mono text-green-400/80">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
-              LIVE
+              {t('dashboard.live')}
             </span>
           </div>
           <h2 className="text-3xl font-bold text-primary font-mono tracking-tight animate-flicker">
-            <TypewriterText text="Operations Center" speed={45} showCursor />
+            <TypewriterText text={t('dashboard.title')} speed={45} showCursor />
           </h2>
           <div className="flex items-center gap-4 mt-2">
             <p className="text-secondary text-sm font-mono">
               {projects.length > 0
-                ? `${projects.length} pipeline${projects.length !== 1 ? 's' : ''} · ${stats.domains.length} domain${stats.domains.length !== 1 ? 's' : ''} · ${stats.hardwares.length} hw config${stats.hardwares.length !== 1 ? 's' : ''}`
-                : 'No pipelines initialized'}
+                ? `${projects.length} ${t('dashboard.totalPipelines')} · ${stats.domains.length} ${t('dashboard.activeDomains')} · ${stats.hardwares.length} ${t('dashboard.hwConfigs')}`
+                : t('dashboard.noPipelines')}
             </p>
             <span className="text-[10px] font-mono text-secondary/30 hidden sm:block">
               {dateStr} · {timeStr}
@@ -234,7 +236,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
             className="flex items-center gap-2 px-5 py-2.5 bg-primary text-background font-semibold rounded-xl hover:bg-primary/85 transition-colors text-sm font-mono"
           >
             <span>+</span>
-            <span>New Pipeline</span>
+            <span>{t('dashboard.newPipeline')}</span>
           </button>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono text-secondary/40 border border-white/6 rounded px-2 py-0.5 bg-white/2">
@@ -249,10 +251,10 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
 
       {/* ── KPI Cards ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label="Total Pipelines"   value={projects.length}       accent />
-        <KpiCard label="Active Domains"    value={stats.domains.length}  />
-        <KpiCard label="Hardware Configs"  value={stats.hardwares.length} />
-        <KpiCard label="Models Deployed"   value={stats.models.length}   />
+        <KpiCard label={t('dashboard.totalPipelines')}  value={projects.length}       accent />
+        <KpiCard label={t('dashboard.activeDomains')}  value={stats.domains.length}  />
+        <KpiCard label={t('dashboard.hwConfigs')}      value={stats.hardwares.length} />
+        <KpiCard label={t('dashboard.modelsDeployed')} value={stats.models.length}   />
       </div>
 
       {/* ── Analytics (shown only when projects exist) ──────── */}
@@ -266,7 +268,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Analytics</p>
-                  <p className="text-sm font-bold text-primary mt-0.5 font-mono">Domain Distribution</p>
+                  <p className="text-sm font-bold text-primary mt-0.5 font-mono">{t('dashboard.domainDist')}</p>
                 </div>
                 <span className="text-[10px] font-mono text-secondary/30 border border-white/6 rounded px-2 py-0.5">
                   {projects.length} total
@@ -286,7 +288,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Timeline</p>
-                  <p className="text-sm font-bold text-primary mt-0.5 font-mono">Recent Activity</p>
+                  <p className="text-sm font-bold text-primary mt-0.5 font-mono">{t('dashboard.recentActivity')}</p>
                 </div>
                 <span className="flex items-center gap-1.5 text-[10px] font-mono text-green-400/70">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400/60 animate-pulse inline-block" />
@@ -330,7 +332,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
             <div className="p-5 rounded-2xl border border-white/8 bg-component">
               <div className="mb-5">
                 <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Infrastructure</p>
-                <p className="text-sm font-bold text-primary mt-0.5 font-mono">Hardware Utilization</p>
+                <p className="text-sm font-bold text-primary mt-0.5 font-mono">{t('dashboard.hwUtilization')}</p>
               </div>
               {Object.keys(stats.hwCounts).length > 0 ? (
                 <div className="space-y-4">
@@ -349,7 +351,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
             <div className="p-5 rounded-2xl border border-white/8 bg-component">
               <div className="mb-5">
                 <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Codegen</p>
-                <p className="text-sm font-bold text-primary mt-0.5 font-mono">Language Distribution</p>
+                <p className="text-sm font-bold text-primary mt-0.5 font-mono">{t('dashboard.langDist')}</p>
               </div>
               {Object.keys(stats.langCounts).length > 0 ? (
                 <div className="space-y-4">
@@ -367,7 +369,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
               {stats.allSensors.length > 0 && (
                 <div className="mt-5 pt-4 border-t border-white/6">
                   <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest mb-3">
-                    Sensor Coverage
+                    {t('dashboard.sensorCoverage')}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {stats.allSensors.map(s => (
@@ -422,16 +424,16 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
           <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-6">
             <img src="/leviosai.png" alt="" className="w-8 h-8 object-contain opacity-60" />
           </div>
-          <p className="text-primary font-bold text-lg mb-2 font-mono">No Pipelines Initialized</p>
+          <p className="text-primary font-bold text-lg mb-2 font-mono">{t('dashboard.noPipelines')}</p>
           <p className="text-secondary text-sm mb-6 text-center max-w-sm">
-            Configure the 7-step Edge AI pipeline and save your first project.
+            {t('dashboard.initPipeline')}
           </p>
           <button
             onClick={onNewProject}
             className="flex items-center gap-2 px-6 py-2.5 bg-primary text-background font-semibold rounded-xl hover:bg-primary/85 transition-colors font-mono"
           >
             <span>+</span>
-            <span>Initialize Pipeline</span>
+            <span>{t('dashboard.initPipeline')}</span>
           </button>
         </div>
       ) : (
@@ -443,7 +445,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
               <input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search pipelines..."
+                placeholder={t('dashboard.search')}
                 className="w-full bg-component border border-white/8 text-primary rounded-xl pl-9 pr-4 py-2.5 text-xs placeholder:text-secondary/30 focus:outline-none focus:border-accent/50 transition-colors font-mono"
               />
             </div>
@@ -453,7 +455,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
                 onChange={e => setFilterDomain(e.target.value)}
                 className="bg-component border border-white/8 text-primary rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer"
               >
-                <option value="">All Domains</option>
+                <option value="">{t('dashboard.allDomains')}</option>
                 {stats.domains.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             )}
@@ -463,14 +465,14 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
                 onChange={e => setFilterHardware(e.target.value)}
                 className="bg-component border border-white/8 text-primary rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer"
               >
-                <option value="">All Hardware</option>
+                <option value="">{t('dashboard.allHardware')}</option>
                 {stats.hardwares.map(h => <option key={h} value={h}>{h}</option>)}
               </select>
             )}
           </div>
 
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">All Pipelines</p>
+            <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">{t('dashboard.allPipelines')}</p>
             <p className="text-[10px] font-mono text-secondary/25">
               {filteredProjects.length}{filteredProjects.length !== projects.length ? ` / ${projects.length}` : ''} record{filteredProjects.length !== 1 ? 's' : ''}
             </p>
@@ -488,7 +490,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
                 <span className="text-secondary text-xl group-hover:text-accent transition-colors">+</span>
               </div>
               <p className="text-secondary text-sm font-mono group-hover:text-primary transition-colors">
-                New Pipeline
+                {t('dashboard.newPipeline')}
               </p>
             </button>
           </div>

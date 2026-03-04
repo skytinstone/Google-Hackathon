@@ -1,9 +1,11 @@
 import TypewriterText from '../TypewriterText'
+import { useI18n } from '../../utils/i18n'
 
 // TODO: Replace with your actual YouTube channel or video URL
 const YOUTUBE_URL = 'https://www.youtube.com/your-channel'
 
 export default function ContactPage() {
+  const { t } = useI18n()
   const team = [
     {
       name: 'Minseok Shin',
@@ -18,11 +20,11 @@ export default function ContactPage() {
     <div className="max-w-3xl mx-auto space-y-8">
       {/* Header */}
       <div>
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Contact</p>
+        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">{t('contact.title')}</p>
         <h2 className="text-3xl font-bold text-primary font-mono tracking-tight">
-          <TypewriterText text="Get in Touch" speed={45} />
+          <TypewriterText text={t('contact.subtitle')} speed={45} />
         </h2>
-        <p className="text-secondary mt-2">Questions, feedback, or collaboration inquiries</p>
+        <p className="text-secondary mt-2">{t('contact.subtitle')}</p>
       </div>
 
       {/* Contact email banner */}
@@ -31,7 +33,7 @@ export default function ContactPage() {
           <span className="text-accent text-xs font-mono font-bold">MAIL</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-mono text-accent/70 uppercase tracking-widest mb-0.5">Direct Contact</p>
+          <p className="text-[10px] font-mono text-accent/70 uppercase tracking-widest mb-0.5">{t('contact.email')}</p>
           <a href="mailto:stevenshin16@gmail.com" className="text-primary font-semibold hover:text-accent transition-colors">
             stevenshin16@gmail.com
           </a>
@@ -41,7 +43,7 @@ export default function ContactPage() {
           href="mailto:stevenshin16@gmail.com"
           className="flex-shrink-0 px-4 py-2 border border-accent/30 text-accent text-xs font-mono rounded-xl hover:bg-accent/10 transition-colors"
         >
-          Send Email
+          {t('contact.send')}
         </a>
       </div>
 
@@ -55,9 +57,7 @@ export default function ContactPage() {
           </div>
         </div>
         <p className="text-secondary text-sm leading-relaxed">
-          LeviosAI is an end-to-end Edge AI deployment platform built for the Google AI Hackathon.
-          It guides engineers through domain selection, hardware configuration, model optimization,
-          and automated code generation.
+          {t('contact.developerDesc')}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {['React + Vite', 'FastAPI', 'Tailwind CSS v4', 'TypeScript'].map(t => (

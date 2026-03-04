@@ -1,4 +1,5 @@
-import { useI18n } from '../utils/i18n'
+import { useI18n, setLocale, type Locale } from '../utils/i18n'
+import { useTheme } from '../utils/theme'
 
 export type Tab = 'dashboard' | 'project' | 'shop' | 'contact' | 'settings' | 'admin'
 
@@ -22,7 +23,8 @@ const TAB_KEYS: Record<string, string> = {
 }
 
 export default function TopNav({ activeTab, onTabChange, isAdmin, loggedInUser, apiKeyConfirmed, onApiKeyClick, cartItemCount, onLogout }: Props) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const { theme, setTheme } = useTheme()
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-component/95 backdrop-blur-md border-b border-white/8 flex items-center px-8">
@@ -108,6 +110,20 @@ export default function TopNav({ activeTab, onTabChange, isAdmin, loggedInUser, 
             <span>{apiKeyConfirmed ? 'API Key' : 'API Key'}</span>
           </button>
         )}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="px-2.5 py-1 rounded-lg border border-white/10 text-xs font-mono font-bold text-secondary hover:text-primary hover:bg-white/5 transition-colors"
+          title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        >
+          {theme === 'dark' ? '☀' : '◐'}
+        </button>
+        <button
+          onClick={() => setLocale(locale === 'en' ? 'ko' : 'en' as Locale)}
+          className="px-2.5 py-1 rounded-lg border border-white/10 text-xs font-mono font-bold text-secondary hover:text-primary hover:bg-white/5 transition-colors"
+          title="Toggle Language"
+        >
+          {locale === 'en' ? 'KO' : 'EN'}
+        </button>
         <span className="text-xs font-mono text-accent/60 border border-accent/20 rounded-lg px-2.5 py-1">v0.9</span>
         {onLogout && (
           <button

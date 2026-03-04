@@ -43,11 +43,11 @@ export default function CustomCursor() {
       className="fixed top-0 left-0 pointer-events-none"
       style={{ zIndex: 99999, transform: `translate(${pos.x + 16}px, ${pos.y + 4}px)` }}
     >
-      <div className="px-2 py-1 rounded bg-black/60 border border-white/15 backdrop-blur-sm">
-        <p className="text-white/80 text-[11px] font-mono font-bold tracking-wider leading-tight">
+      <div>
+        <p className="text-[11px] font-mono font-bold tracking-wider leading-tight text-white/70">
           X:{xStr}
         </p>
-        <p className="text-white/80 text-[11px] font-mono font-bold tracking-wider leading-tight">
+        <p className="text-[11px] font-mono font-bold tracking-wider leading-tight text-white/70">
           Y:{yStr}
         </p>
       </div>

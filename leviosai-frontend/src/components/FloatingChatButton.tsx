@@ -41,15 +41,16 @@ export default function FloatingChatButton({ isOpen, onToggle }: Props) {
       onMouseDown={handleMouseDown}
       onClick={handleClick}
       className={[
-        'fixed z-40 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-200',
+        'fixed z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-200',
         dragging ? 'cursor-grabbing scale-110' : 'cursor-grab hover:scale-110',
         isOpen
           ? 'bg-accent border-2 border-accent/60 shadow-[0_0_24px_rgba(107,150,190,0.4)]'
           : 'bg-component border-2 border-white/15 hover:border-accent/40 shadow-[0_0_20px_rgba(0,0,0,0.5)]',
       ].join(' ')}
       style={{
-        right: `${24 - pos.x}px`,
+        right: `${(isOpen ? 384 : 24) - pos.x}px`,
         bottom: `${24 - pos.y}px`,
+        transition: dragging ? 'none' : 'right 0.3s ease, bottom 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease',
       }}
       title="LeviosAI Assistant"
     >
