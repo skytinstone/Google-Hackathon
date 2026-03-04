@@ -17,7 +17,9 @@ app = FastAPI(title="Leviosai Backend", version="1.0.0")
 # SQLite Database
 # ============================================================
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "leviosai.db")
+# Use /tmp on Vercel (read-only filesystem), local dir otherwise
+_local_db = os.path.join(os.path.dirname(__file__), "leviosai.db")
+DB_PATH = "/tmp/leviosai.db" if os.environ.get("VERCEL") else _local_db
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)

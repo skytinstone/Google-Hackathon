@@ -7,7 +7,17 @@
       "Bash(npm --version)",
       "Bash(export PATH=\"$PATH:/c/Users/신민석/AppData/Roaming/npm\")",
       "Bash(cat d:/Google-Hackathon/leviosai-frontend/.env*)",
-      "Bash(ls d:/Google-Hackathon/leviosai-frontend/.env*)"
+      "Bash(ls d:/Google-Hackathon/leviosai-frontend/.env*)",
+      "Bash(npm install react-router-dom)",
+      "Bash(ls -la /Users/minseok/workspace/gemini3/무제/leviosai-frontend/*.config.*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(git add leviosai-frontend/src/App.tsx leviosai-frontend/src/components/LoginScreen.tsx leviosai-frontend/src/components/TopNav.tsx leviosai-frontend/src/components/PageDecorations.tsx leviosai-frontend/src/components/CustomCursor.tsx leviosai-frontend/src/components/FloatingChatButton.tsx leviosai-frontend/src/components/pages/AdminMainPage.tsx leviosai-frontend/src/components/pages/AdminPage.tsx leviosai-frontend/src/components/pages/SettingsPage.tsx leviosai-frontend/src/components/pages/ShopPage.tsx leviosai-frontend/src/components/ProjectDetailModal.tsx leviosai-frontend/src/components/ProjectTemplates.tsx leviosai-frontend/src/components/Toast.tsx leviosai-frontend/src/components/HardwareBenchmark.tsx leviosai-frontend/src/components/WorldMap.tsx leviosai-frontend/src/components/Sidebar.tsx leviosai-frontend/src/components/ChatBot.tsx leviosai-frontend/src/components/NewProjectModal.tsx leviosai-frontend/src/components/steps/Step1Domain.tsx leviosai-frontend/src/components/steps/Step2Hardware.tsx leviosai-frontend/src/components/steps/Step3HardwareConfig.tsx leviosai-frontend/src/components/steps/Step3Model.tsx leviosai-frontend/src/components/steps/Step4Technique.tsx leviosai-frontend/src/components/steps/Step5CodeGen.tsx leviosai-frontend/src/components/steps/Step7Complete.tsx leviosai-frontend/src/components/pages/ContactPage.tsx leviosai-frontend/src/components/pages/DashboardPage.tsx leviosai-frontend/src/types/index.ts leviosai-frontend/src/utils/i18n.ts leviosai-frontend/src/utils/shortcuts.ts leviosai-frontend/src/utils/toast.ts leviosai-frontend/src/data/ leviosai-frontend/src/index.css leviosai-frontend/src/api/api.ts leviosai-backend/main.py)",
+      "Bash(git commit:*)",
+      "Bash(git push origin main)",
+      "Bash(npx vite build)",
+      "Bash(pnpm build)",
+      "Bash(git add leviosai-frontend/src/App.tsx leviosai-frontend/src/components/LoadingScreen.tsx leviosai-frontend/src/components/SystemLog.tsx leviosai-frontend/src/components/pages/DashboardPage.tsx leviosai-frontend/src/components/pages/SettingsPage.tsx leviosai-frontend/src/index.css leviosai-frontend/src/utils/i18n.ts)",
+      "Bash(git add leviosai-backend/main.py leviosai-frontend/src/App.tsx leviosai-frontend/src/api/api.ts leviosai-frontend/src/components/ProfileModal.tsx leviosai-frontend/src/components/TopNav.tsx leviosai-frontend/src/components/pages/DashboardPage.tsx leviosai-frontend/src/utils/notifications.ts leviosai-frontend/dist/)"
     ]
   }
 }
