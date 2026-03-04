@@ -105,11 +105,6 @@ export default function Sidebar({ state, goToStep }: SidebarProps) {
           </nav>
         </div>
 
-        {/* LEVIOSAI Brand */}
-        <div className="p-4 border-t border-white/5 flex items-center justify-center gap-2">
-          <img src="/leviosai.png" alt="LeviosAI" className="w-5 h-5 object-contain opacity-40" />
-          <span className="font-mono text-primary/30 font-bold tracking-[0.15em] text-sm">LEVIOSAI</span>
-        </div>
       </aside>
     </>
   )

@@ -44,14 +44,12 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
 
   // Position: center for login, top-right for main, left fallback
   const posStyle: React.CSSProperties = isTopRight
-    ? { left: '4px', top: '500px' }
+    ? { left: '285px', bottom: '40px' }
     : isRight
       ? { left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }
       : { left: sidebarVisible ? '272px' : '100px' }
 
-  const fixedClass = isTopRight
-    ? 'fixed z-40 font-mono select-none pointer-events-none transition-all duration-300'
-    : 'fixed bottom-6 z-40 font-mono select-none pointer-events-none transition-all duration-300'
+  const fixedClass = 'fixed z-40 font-mono select-none pointer-events-none transition-all duration-300'
 
   return (
     <div

@@ -201,11 +201,20 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="mb-6 flex-shrink-0">
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 2 of 7</p>
-        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Select Target Hardware" speed={40} /></h2>
-        <p className="text-secondary mt-2">Choose the edge device and peripheral sensors for your AI deployment</p>
+      {/* Header + Next button */}
+      <div className="mb-6 flex-shrink-0 flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 2 of 7</p>
+          <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Select Target Hardware" speed={40} /></h2>
+          <p className="text-secondary mt-2">Choose the edge device and peripheral sensors for your AI deployment</p>
+        </div>
+        <button
+          onClick={() => goToStep(3)}
+          disabled={!state.hardware}
+          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+        >
+          Next: HW Config →
+        </button>
       </div>
 
       {/* Split layout */}
@@ -301,19 +310,12 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
       <HardwareBenchmark selectedDevice={state.hardware?.device} />
 
       {/* Navigation */}
-      <div className="flex justify-between mt-6 flex-shrink-0">
+      <div className="flex mt-6 flex-shrink-0">
         <button
           onClick={() => goToStep(1)}
           className="px-6 py-2.5 border border-white/10 text-secondary font-semibold rounded-lg hover:border-white/20 hover:text-primary transition-colors"
         >
           ← Back
-        </button>
-        <button
-          onClick={() => goToStep(3)}
-          disabled={!state.hardware}
-          className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
-        >
-          Next: HW Config →
         </button>
       </div>
     </div>

@@ -3,37 +3,7 @@ import type { WizardState, CartItem, ShopCategory, ShopProduct, SavedProject } f
 import { STORES, SHOP_CATEGORIES, PRODUCT_CATALOG, generateStoreUrl, generateBom, getProductById } from '../../data/shopData'
 import { useI18n } from '../../utils/i18n'
 import { showToast } from '../../utils/toast'
-import { subscribe as subscribeLogs, type LogEntry, type LogType } from '../../utils/syslog'
 import TypewriterText from '../TypewriterText'
-
-/* ── Inline System Log for sidebar ── */
-const LOG_STYLE: Record<LogType, string> = {
-  AUTH: 'text-green-400', NAV: 'text-accent', STEP: 'text-accent', ACT: 'text-primary/50',
-  OK: 'text-green-400', ERR: 'text-red-400', INIT: 'text-yellow-400', GEN: 'text-yellow-400',
-}
-
-function SidebarSystemLog() {
-  const [entries, setEntries] = useState<LogEntry[]>([])
-  useEffect(() => subscribeLogs(setEntries), [])
-  if (entries.length === 0) return null
-  return (
-    <div className="mt-auto pt-3 border-t border-white/8">
-      <p className="text-[9px] font-mono text-secondary/40 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-        Navigate Log
-      </p>
-      <div className="space-y-0.5 max-h-[140px] overflow-y-auto">
-        {entries.slice(0, 5).map((e, i) => (
-          <div key={e.id} className={`text-[9px] font-mono leading-tight ${i === 0 ? 'opacity-100' : 'opacity-60'}`}>
-            <span className="text-secondary/20 mr-1">{e.time}</span>
-            <span className={`${LOG_STYLE[e.type]} font-bold mr-1`}>{e.type}</span>
-            <span className="text-secondary/50">▸ {e.message}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 interface Props {
   state: WizardState
@@ -356,6 +326,8 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
   const [search, setSearch] = useState('')
   const [showCart, setShowCart] = useState(false)
   const [showBot, setShowBot] = useState(false)
+  const [page, setPage] = useState(1)
+  const ITEMS_PER_PAGE = 9
 
   const bom = useMemo(() => state.hardware ? generateBom(state) : [], [state])
   const bomProductIds = useMemo(() => new Set(bom.map(b => b.productId)), [bom])
@@ -368,6 +340,13 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
     }
     return list
   }, [selectedCat, search])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+  const currentPage = Math.min(page, totalPages)
+  const paginatedItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1) }, [selectedCat, search])
 
   const cartTotal = cartItems.reduce((s, c) => {
     const p = getProductById(c.productId)
@@ -473,7 +452,6 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
           </>
         )}
 
-        <SidebarSystemLog />
       </div>
 
       {/* ── Main Content ── */}
@@ -500,15 +478,49 @@ export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCa
 
         <div className="flex-1 flex gap-4 overflow-hidden">
           {/* Product Grid */}
-          <div className="flex-1 overflow-y-auto pr-2">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-              {filtered.map(p => (
+          <div className="flex-1 overflow-y-auto pr-2 flex flex-col">
+            <div className="grid grid-cols-3 gap-3 flex-1">
+              {paginatedItems.map(p => (
                 <ProductCard key={p.id} product={p} onAdd={handleAdd} isRecommended={bomProductIds.has(p.id)} />
               ))}
             </div>
             {filtered.length === 0 && (
               <div className="text-center py-20">
                 <p className="text-secondary font-mono text-sm">{t('shop.noProducts')}</p>
+              </div>
+            )}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/6 flex-shrink-0">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-2.5 py-1.5 text-[10px] font-mono text-secondary border border-white/8 rounded-lg hover:border-white/20 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  ←
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setPage(n)}
+                    className={[
+                      'min-w-[28px] py-1.5 text-[10px] font-mono font-bold rounded-lg transition-colors',
+                      n === currentPage
+                        ? 'bg-accent/20 text-accent border border-accent/30'
+                        : 'text-secondary border border-white/8 hover:border-white/20 hover:text-primary',
+                    ].join(' ')}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-2.5 py-1.5 text-[10px] font-mono text-secondary border border-white/8 rounded-lg hover:border-white/20 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  →
+                </button>
+                <span className="ml-2 text-[9px] font-mono text-secondary/40">{currentPage} / {totalPages}</span>
               </div>
             )}
           </div>

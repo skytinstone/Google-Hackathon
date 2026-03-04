@@ -276,11 +276,20 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="mb-4 flex-shrink-0">
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 6 of 7</p>
-        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Generate Code" speed={40} /></h2>
-        <p className="text-secondary mt-1">Edit configuration inline · generate · download</p>
+      {/* Header + Next button */}
+      <div className="mb-4 flex-shrink-0 flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 6 of 7</p>
+          <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Generate Code" speed={40} /></h2>
+          <p className="text-secondary mt-1">Edit configuration inline · generate · download</p>
+        </div>
+        <button
+          onClick={() => goToStep(7)}
+          disabled={!state.generatedCode}
+          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+        >
+          Next: Complete →
+        </button>
       </div>
 
       {/* Split layout */}
@@ -365,19 +374,12 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-between mt-4 flex-shrink-0">
+      <div className="flex mt-4 flex-shrink-0">
         <button
           onClick={() => goToStep(5)}
           className="px-6 py-2.5 border border-white/10 text-secondary font-semibold rounded-lg hover:border-white/20 hover:text-primary transition-colors"
         >
           ← Back
-        </button>
-        <button
-          onClick={() => goToStep(7)}
-          disabled={!state.generatedCode}
-          className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
-        >
-          Next: Complete →
         </button>
       </div>
     </div>

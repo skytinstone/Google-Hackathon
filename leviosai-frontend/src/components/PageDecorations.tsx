@@ -18,7 +18,7 @@ export function VerticalWatermark({ sidebarVisible }: { sidebarVisible?: boolean
   return (
     <div
       className="fixed bottom-10 pointer-events-none select-none transition-all duration-300"
-      style={{ zIndex: 0, left: sidebarVisible ? '272px' : '16px' }}
+      style={{ zIndex: 0, left: '12px' }}
     >
       <p
         className="text-[72px] font-black font-mono tracking-[0.18em] text-white/[0.045] leading-none"

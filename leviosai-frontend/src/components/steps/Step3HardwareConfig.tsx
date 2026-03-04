@@ -245,13 +245,22 @@ export default function Step3HardwareConfig({ state, updateState, goToStep }: St
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="mb-6 flex-shrink-0">
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 3 of 7</p>
-        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Hardware Configuration" speed={40} /></h2>
-        <p className="text-secondary mt-2">
-          Your pipeline configuration — hover nodes for specs, drag to reorder sensors
-        </p>
+      {/* Header + Next button */}
+      <div className="mb-6 flex-shrink-0 flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 3 of 7</p>
+          <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Hardware Configuration" speed={40} /></h2>
+          <p className="text-secondary mt-2">
+            Your pipeline configuration — hover nodes for specs, drag to reorder sensors
+          </p>
+        </div>
+        <button
+          onClick={() => goToStep(4)}
+          disabled={!state.hardware}
+          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+        >
+          Next: AI Model →
+        </button>
       </div>
 
       {/* Pipeline Diagram */}
@@ -348,13 +357,12 @@ export default function Step3HardwareConfig({ state, updateState, goToStep }: St
         >
           ← Back
         </button>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              const hw = state.hardware
-              if (!hw) return
-              const sensors = state.sensors
-              const html = `<!DOCTYPE html><html><head><title>Hardware Configuration - LeviosAI</title>
+        <button
+          onClick={() => {
+            const hw = state.hardware
+            if (!hw) return
+            const sensors = state.sensors
+            const html = `<!DOCTYPE html><html><head><title>Hardware Configuration - LeviosAI</title>
 <style>body{font-family:monospace;padding:40px;color:#222;max-width:800px;margin:0 auto}
 h1{font-size:24px;border-bottom:2px solid #6b96be;padding-bottom:8px}
 h2{font-size:16px;color:#6b96be;margin-top:24px}
@@ -375,22 +383,14 @@ ${sensors.map((s, i) => `<tr><td>${i + 1}</td><td>${s.name}</td><td>${s.type}</t
 </table>` : '<h2>Sensors</h2><p>No sensors configured</p>'}
 ${state.domain ? `<h2>Domain</h2><p><span class="badge">${state.domain}</span></p>` : ''}
 <div class="footer">LeviosAI · Edge AI Optimization Platform</div></body></html>`
-              const w = window.open('', '_blank')
-              if (w) { w.document.write(html); w.document.close(); w.print() }
-            }}
-            disabled={!state.hardware}
-            className="px-4 py-2.5 border border-accent/30 text-accent font-mono text-xs rounded-lg hover:bg-accent/10 transition-colors disabled:opacity-30"
-          >
-            PDF Download
-          </button>
-          <button
-            onClick={() => goToStep(4)}
-            disabled={!state.hardware}
-            className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
-          >
-            Next: AI Model →
-          </button>
-        </div>
+            const w = window.open('', '_blank')
+            if (w) { w.document.write(html); w.document.close(); w.print() }
+          }}
+          disabled={!state.hardware}
+          className="px-4 py-2.5 border border-accent/30 text-accent font-mono text-xs rounded-lg hover:bg-accent/10 transition-colors disabled:opacity-30"
+        >
+          PDF Download
+        </button>
       </div>
     </div>
   )

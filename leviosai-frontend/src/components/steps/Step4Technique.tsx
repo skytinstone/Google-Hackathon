@@ -64,16 +64,25 @@ export default function Step4Technique({ state, updateState, goToStep, onApiKeyN
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 5 of 7</p>
-        <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Optimization Techniques" speed={40} /></h2>
-        <p className="text-secondary mt-2">
-          {state.domain
-            ? <><span className="text-accent">{state.domain}</span>-specific techniques for <span className="text-accent">{state.model?.name}</span></>
-            : <>Select one or more techniques to apply to <span className="text-accent">{state.model?.name}</span></>
-          }
-        </p>
+      {/* Header + Next button */}
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 5 of 7</p>
+          <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Optimization Techniques" speed={40} /></h2>
+          <p className="text-secondary mt-2">
+            {state.domain
+              ? <><span className="text-accent">{state.domain}</span>-specific techniques for <span className="text-accent">{state.model?.name}</span></>
+              : <>Select one or more techniques to apply to <span className="text-accent">{state.model?.name}</span></>
+            }
+          </p>
+        </div>
+        <button
+          onClick={() => goToStep(6)}
+          disabled={!canProceed}
+          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+        >
+          Next: Generate Code →
+        </button>
       </div>
 
       {/* Recommend button */}
@@ -186,19 +195,12 @@ export default function Step4Technique({ state, updateState, goToStep, onApiKeyN
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="flex">
         <button
           onClick={() => goToStep(4)}
           className="px-6 py-2.5 border border-white/10 text-secondary font-semibold rounded-lg hover:border-white/20 hover:text-primary transition-colors"
         >
           ← Back
-        </button>
-        <button
-          onClick={() => goToStep(6)}
-          disabled={!canProceed}
-          className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
-        >
-          Next: Generate Code →
         </button>
       </div>
     </div>

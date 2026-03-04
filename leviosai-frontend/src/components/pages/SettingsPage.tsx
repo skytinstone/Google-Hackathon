@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import TypewriterText from '../TypewriterText'
 import { showToast } from '../../utils/toast'
 import { addLog } from '../../utils/syslog'
+import { setApiKey as saveApiKey, validateApiKey } from '../../api/api'
 import { useI18n, setLocale as setI18nLocale } from '../../utils/i18n'
 import { useTheme, type ThemeMode, type FontSize, type ZoomLevel } from '../../utils/theme'
 
@@ -24,6 +25,9 @@ export default function SettingsPage() {
   const { theme, fontSize, zoom, setTheme: applyTheme, setFontSize: applyFontSize, setZoom: applyZoom } = useTheme()
   const [apiKey, setApiKey] = useState('')
   const [apiKeyMasked, setApiKeyMasked] = useState('')
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [apiKeySaving, setApiKeySaving] = useState(false)
+  const [apiKeyShowInput, setApiKeyShowInput] = useState(false)
   const [accentColor, setAccentColor] = useState('#6b96be')
   const [language, setLanguage] = useState<'en' | 'ko'>('en')
 
@@ -73,6 +77,30 @@ export default function SettingsPage() {
     setApiKeyMasked('')
     showToast('API Key removed', 'info')
     addLog('API Key cleared from local storage', 'ACT')
+  }
+
+  async function handleSaveApiKey() {
+    const trimmed = apiKeyInput.trim()
+    if (!trimmed) return
+    setApiKeySaving(true)
+    try {
+      const err = await validateApiKey(trimmed)
+      if (err) {
+        showToast(err, 'error')
+        setApiKeySaving(false)
+        return
+      }
+    } catch {
+      // Validation endpoint may not exist — save anyway
+    }
+    saveApiKey(trimmed)
+    setApiKey(trimmed)
+    setApiKeyMasked(trimmed.slice(0, 4) + '•'.repeat(Math.max(0, trimmed.length - 8)) + trimmed.slice(-4))
+    setApiKeyInput('')
+    setApiKeyShowInput(false)
+    setApiKeySaving(false)
+    showToast('API Key saved', 'success')
+    addLog('API Key updated', 'OK')
   }
 
   function handleExportProjects() {
@@ -151,8 +179,46 @@ export default function SettingsPage() {
                   {t('settings.removeKey')}
                 </button>
               </div>
+            ) : apiKeyShowInput ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={e => setApiKeyInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSaveApiKey() }}
+                    placeholder="AIza..."
+                    autoFocus
+                    className="flex-1 bg-background/60 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-primary placeholder:text-secondary/30 focus:outline-none focus:border-accent/50 transition-colors"
+                  />
+                  <button
+                    onClick={handleSaveApiKey}
+                    disabled={!apiKeyInput.trim() || apiKeySaving}
+                    className="px-4 py-2 text-xs font-mono font-bold bg-accent/20 text-accent border border-accent/30 rounded-lg hover:bg-accent/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    {apiKeySaving ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => { setApiKeyShowInput(false); setApiKeyInput('') }}
+                    className="px-3 py-2 text-xs font-mono text-secondary border border-white/10 rounded-lg hover:border-white/20 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="text-[10px] font-mono text-secondary/40">
+                  Get your key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-accent/60 hover:text-accent underline">aistudio.google.com</a> · Stored in localStorage only
+                </p>
+              </div>
             ) : (
-              <p className="text-xs text-secondary/50 font-mono">{t('settings.apiKeyDesc')}</p>
+              <div className="space-y-3">
+                <p className="text-xs text-secondary/50 font-mono">{t('settings.apiKeyDesc')}</p>
+                <button
+                  onClick={() => setApiKeyShowInput(true)}
+                  className="px-4 py-2 text-xs font-mono font-bold text-accent border border-accent/30 rounded-lg hover:bg-accent/10 transition-colors"
+                >
+                  {t('settings.enterKey')}
+                </button>
+              </div>
             )}
           </div>
         </div>
