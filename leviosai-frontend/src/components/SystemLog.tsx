@@ -46,7 +46,7 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
           ].join(' ')}
           style={{ opacity: 1 - idx * 0.13 }}
         >
-          <span className="text-white/20 text-[11px] tabular-nums">{entry.time}</span>
+          <span className="text-[11px] tabular-nums" style={{ color: '#4ade80' }}>{entry.time}</span>
           <span className="text-[11px] font-bold tracking-wider" style={{ color: TYPE_COLOR[entry.type] }}>
             {entry.type}
           </span>
