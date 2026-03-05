@@ -35,6 +35,11 @@ import { showToast } from './utils/toast'
 import { initTheme } from './utils/theme'
 import SystemLog from './components/SystemLog'
 import { VerticalWatermark, VerticalPageName } from './components/PageDecorations'
+import RotatingGlobe from './components/RotatingGlobe'
+import MiniCalendar from './components/MiniCalendar'
+import Calculator from './components/Calculator'
+import CommandTerminal from './components/CommandTerminal'
+import QuickNotes from './components/QuickNotes'
 
 type ActiveTab = Tab
 
@@ -318,6 +323,7 @@ function MainPage({
         onOpenProject={(project) => setDetailProject(project)}
         onNewProject={handleNewProject}
         onNavigate={handleTabChange}
+        chatOpen={chatOpen}
       />
     )
     if (activeTab === 'shop') return (
@@ -329,6 +335,8 @@ function MainPage({
         onUpdateQuantity={updateCartQuantity}
         onClearCart={clearCart}
         savedProjects={savedProjects}
+        onNavigate={handleTabChange}
+        chatOpen={chatOpen}
       />
     )
     if (activeTab === 'deploy') return (
@@ -336,6 +344,8 @@ function MainPage({
         state={state}
         savedProjects={savedProjects}
         onGoToProject={() => handleTabChange('project')}
+        onNavigate={handleTabChange}
+        chatOpen={chatOpen}
       />
     )
     if (activeTab === 'launch') return (
@@ -343,9 +353,11 @@ function MainPage({
         state={state}
         savedProjects={savedProjects}
         onGoToProject={() => handleTabChange('project')}
+        onNavigate={handleTabChange}
+        chatOpen={chatOpen}
       />
     )
-    if (activeTab === 'contact') return <ContactPage />
+    if (activeTab === 'contact') return <ContactPage chatOpen={chatOpen} onNavigate={handleTabChange} />
     if (activeTab === 'settings') return <SettingsPage />
     if (activeTab === 'admin' && isAdmin) return <AdminPage />
     return renderStep()
@@ -355,7 +367,7 @@ function MainPage({
     <>
       <Toast />
       <TopNav activeTab={activeTab} onTabChange={handleTabChange} isAdmin={isAdmin} loggedInUser={loggedInUser} onProfileClick={() => { setShowProfile(true); addLog('Profile panel accessed', 'NAV') }} profilePhoto={profilePhoto} />
-      {activeTab !== 'shop' && <VerticalWatermark sidebarVisible={sidebarVisible} />}
+      <VerticalWatermark sidebarVisible={sidebarVisible} />
       <VerticalPageName name={activeTab} chatOpen={chatOpen} />
 
       <div className="flex h-screen bg-background overflow-hidden pt-16">
@@ -372,9 +384,34 @@ function MainPage({
           className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out"
           style={{ marginRight: chatOpen ? '360px' : '0px' }}
         >
-          <main className="flex-1 overflow-y-auto p-8">
+          <main
+            className="flex-1 overflow-y-auto p-8 relative"
+            style={{
+              backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
+            }}
+          >
             {renderContent()}
           </main>
+        </div>
+
+        {/* Widget area background panel */}
+        <div
+          className="fixed pointer-events-none"
+          style={{
+            right: 100,
+            top: 86,
+            width: 320,
+            bottom: 40,
+            zIndex: 9,
+            transition: 'opacity 0.5s ease, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s ease',
+            opacity: chatOpen ? 0 : 1,
+            transform: chatOpen ? 'translateX(80px) scaleX(0.9)' : 'translateX(0) scaleX(1)',
+            filter: chatOpen ? 'blur(8px)' : 'blur(0px)',
+          }}
+        >
+          <span className="text-xs font-mono font-bold text-white/30 uppercase tracking-widest mb-1.5 block">Widget</span>
+          <div className="rounded-xl border border-white/6 bg-[#0a0c14]/85 backdrop-blur-sm h-full" />
         </div>
 
         {showApiModal && <ApiKeyModal onClose={() => setShowApiModal(false)} />}
@@ -414,6 +451,14 @@ function MainPage({
           />
         )}
       </div>
+
+      <RotatingGlobe chatOpen={chatOpen} />
+
+      {/* Widgets — rendered outside overflow-hidden container for proper fixed positioning */}
+      <MiniCalendar chatOpen={chatOpen} />
+      <Calculator chatOpen={chatOpen} />
+      <CommandTerminal onNavigate={handleTabChange} currentTab={activeTab} chatOpen={chatOpen} />
+      <QuickNotes chatOpen={chatOpen} />
 
       {transitioning && (
         <LoadingScreen onComplete={handleTransitionComplete} duration={700} hasBackdrop />

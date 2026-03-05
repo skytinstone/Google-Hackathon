@@ -31,7 +31,7 @@ interface Props {
 
 export default function SystemLog({ position = 'left', sidebarVisible }: Props) {
   const [entries, setEntries] = useState<LogEntry[]>([])
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const { theme } = useTheme()
 
   useEffect(() => subscribe(setEntries), [])
@@ -47,7 +47,7 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
     ? { left: '4px', bottom: '500px' }
     : { left: sidebarVisible ? '272px' : '100px' }
 
-  const shown = expanded ? entries.slice(0, 8) : entries.slice(0, 2)
+  const shown = expanded ? entries.slice(0, 10) : entries.slice(0, 2)
   const hasMore = entries.length > 2
 
   return (

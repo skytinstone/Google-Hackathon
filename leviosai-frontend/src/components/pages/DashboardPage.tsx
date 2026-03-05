@@ -10,6 +10,7 @@ interface Props {
   onOpenProject: (project: SavedProject) => void
   onNewProject: () => void
   onNavigate: (tab: import('../TopNav').Tab) => void
+  chatOpen?: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -288,7 +289,7 @@ function ProjectCard({ project, stage, score, onOpen }: {
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export default function DashboardPage({ projects, onOpenProject, onNewProject, onNavigate }: Props) {
+export default function DashboardPage({ projects, onOpenProject, onNewProject, onNavigate, chatOpen }: Props) {
   const { t } = useI18n()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDomain, setFilterDomain] = useState<string | ''>('')
@@ -354,9 +355,13 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject, o
     .slice(0, 6)
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 relative">
-      {/* ── System Info (fixed top-left) ──────────────────────── */}
+    <div className="relative">
+      {/* ── System Info + Widgets (fixed) ──────────────────────── */}
       <SystemInfoPanel />
+
+
+      {/* Content panel with semi-transparent background over grid */}
+      <div className="rounded-xl border border-white/6 bg-[#0a0c14]/85 backdrop-blur-sm p-6 space-y-8" style={{ width: '63%', marginLeft: 'calc(2% + 290px)', marginRight: 'auto', marginTop: '5px' }}>
 
       {/* ── Header ────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
@@ -574,6 +579,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject, o
           </div>
         </div>
       )}
+      </div>{/* end content panel */}
     </div>
   )
 }

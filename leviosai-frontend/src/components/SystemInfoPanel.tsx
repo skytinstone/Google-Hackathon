@@ -4,6 +4,10 @@ function formatTz(tz: string, now: Date): string {
   return now.toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
 }
 
+function formatDate(now: Date): string {
+  return now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+}
+
 interface NetInfo { ip: string; country: string; city: string }
 
 export default function SystemInfoPanel() {
@@ -60,6 +64,7 @@ export default function SystemInfoPanel() {
         {/* Time */}
         <div>
           <p className={`${L} ${D} uppercase tracking-widest mb-1`}>Time</p>
+          <p className={`${L}`}><span className={T}>Date: </span><span className={V}>{formatDate(liveNow)}</span></p>
           <p className={`${L}`}><span className={T}>Seoul &nbsp;&nbsp;</span><span className={V}>{formatTz('Asia/Seoul', liveNow)}</span></p>
           <p className={`${L}`}><span className={T}>NYC &nbsp;&nbsp;&nbsp;&nbsp;</span><span className={V}>{formatTz('America/New_York', liveNow)}</span></p>
           <p className={`${L}`}><span className={T}>London &nbsp;</span><span className={V}>{formatTz('Europe/London', liveNow)}</span></p>

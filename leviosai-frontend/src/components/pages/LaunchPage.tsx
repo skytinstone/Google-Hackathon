@@ -25,6 +25,8 @@ interface Props {
   state: WizardState
   savedProjects: SavedProject[]
   onGoToProject: () => void
+  onNavigate?: (tab: string) => void
+  chatOpen?: boolean
 }
 
 type LaunchTab = 'overview' | 'deploy' | 'performance' | 'notes' | 'media'
@@ -1089,7 +1091,7 @@ function MediaTab({ project }: { project: SavedProject }) {
 /* ================================================================
    MAIN: LaunchPage
    ================================================================ */
-export default function LaunchPage({ state, savedProjects, onGoToProject }: Props) {
+export default function LaunchPage({ state, savedProjects, onGoToProject, onNavigate, chatOpen }: Props) {
   const { t } = useI18n()
   const { theme } = useTheme()
   const isLight = theme === 'light'
@@ -1123,6 +1125,9 @@ export default function LaunchPage({ state, savedProjects, onGoToProject }: Prop
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <SystemInfoPanel />
+
+      {/* Content panel with semi-transparent background over grid */}
+      <div className="flex flex-col flex-1 overflow-hidden mt-2 mb-2 rounded-xl border border-white/6 bg-[#0a0c14]/85 backdrop-blur-sm" style={{ width: '63%', marginLeft: 'calc(2% + 290px)', marginRight: 'auto', marginTop: '5px' }}>
       <div className="px-6 py-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
@@ -1175,6 +1180,7 @@ export default function LaunchPage({ state, savedProjects, onGoToProject }: Prop
           {activeTab === 'media' && <MediaTab project={selectedProject} />}
         </div>
       </div>
+      </div>{/* end content panel */}
     </div>
   )
 }
