@@ -8,7 +8,7 @@ interface Props {
   projects: SavedProject[]
   onOpenProject: (project: SavedProject) => void
   onNewProject: () => void
-  onNavigate: (tab: string) => void
+  onNavigate: (tab: import('../TopNav').Tab) => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

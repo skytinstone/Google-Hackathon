@@ -179,14 +179,14 @@ function HardwareAssemblyDiagramCompact({ pinMap, steps, checkedSteps, onToggleS
       <div className={`flex-shrink-0 rounded-xl border p-3 ${isLight ? 'bg-gray-50 border-black/8' : 'bg-[#060810] border-white/6'}`}>
         <svg viewBox={`0 0 ${pinMap.boardW} ${pinMap.boardH}`} className="w-60 h-auto">
           <rect x="2" y="2" width={pinMap.boardW - 4} height={pinMap.boardH - 4} rx="8" fill={isLight ? '#f3f4f6' : '#111827'} stroke={isLight ? '#d1d5db' : '#374151'} strokeWidth="1.5" />
-          <text x={pinMap.boardW / 2} y="18" textAnchor="middle" fill={isLight ? '#111' : '#fff'} fontSize="9" fontFamily="monospace" fontWeight="bold">{pinMap.name}</text>
+          <text x={pinMap.boardW / 2} y="18" textAnchor="middle" fill={isLight ? '#111' : '#fff'} fontSize="9" fontFamily="monospace" fontWeight="bold">{pinMap.category}</text>
           {pinMap.connectors.map(c => (
             <g key={c.id}>
               <rect x={c.x} y={c.y} width={c.w} height={c.h} rx="3" fill={isLight ? '#dbeafe' : '#1e3a5f'} stroke={isLight ? '#93c5fd' : '#60a5fa'} strokeWidth="0.8" />
               <text x={c.x + c.w / 2} y={c.y + c.h / 2 + 3} textAnchor="middle" fill={isLight ? '#1d4ed8' : '#93c5fd'} fontSize="6" fontFamily="monospace">{c.label}</text>
             </g>
           ))}
-          {pinMap.wires.map((w, i) => {
+          {pinMap.sensorWires.map((w: import('../../data/deployData').SensorWire, i: number) => {
             const conn = pinMap.connectors.find(c => c.id === w.connectorId)
             if (!conn) return null
             const sx = conn.x + conn.w / 2; const sy = conn.y
@@ -470,7 +470,7 @@ function DeployTab({ project, state }: { project: SavedProject; state: WizardSta
     if (!abortRef.current) {
       setDeployStatus('success')
       showToast('Deployment simulation complete', 'success')
-      addLog(`Deploy simulation complete for "${project.name}"`, 'SYS')
+      addLog(`Deploy simulation complete for "${project.name}"`, 'OK')
     }
   }, [project])
 

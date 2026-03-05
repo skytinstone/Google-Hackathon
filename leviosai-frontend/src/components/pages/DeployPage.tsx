@@ -168,7 +168,7 @@ function HardwareTab({ project, state }: { project: SavedProject; state: WizardS
       setForm(EMPTY_FORM)
       setShowForm(false)
       showToast('Part added', 'success')
-      addLog(`Part added: ${created.name}`, 'SYS')
+      addLog(`Part added: ${created.name}`, 'ACT')
     } catch {
       showToast('Failed to save — saved locally', 'error')
       const local: import('../../api/api').PartData = {
