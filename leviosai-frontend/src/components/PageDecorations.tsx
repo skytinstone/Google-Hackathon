@@ -44,7 +44,7 @@ export function VerticalPageName({ name, chatOpen }: { name: string; chatOpen?: 
         className="text-[48px] font-black font-mono tracking-[0.18em] text-white/[0.03] leading-none uppercase"
         style={{ writingMode: 'vertical-rl' }}
       >
-        {name}
+        {name === 'deploy' ? 'build' : name}
       </p>
     </div>
   )
