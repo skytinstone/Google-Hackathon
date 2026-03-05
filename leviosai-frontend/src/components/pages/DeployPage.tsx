@@ -599,7 +599,7 @@ export default function DeployPage({ state, savedProjects, onGoToProject }: Prop
   if (!selectedProject) {
     return (
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
             <p className="text-[10px] font-semibold text-accent/70 uppercase tracking-[0.25em] font-mono mb-2">LeviosAI · Build Console</p>
             <h2 className="text-3xl font-bold text-primary font-mono tracking-tight">
@@ -615,7 +615,7 @@ export default function DeployPage({ state, savedProjects, onGoToProject }: Prop
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="px-6 py-4 flex-shrink-0">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
             <p className="text-[10px] font-mono text-accent uppercase tracking-widest mb-1">Build</p>
             <h1 className="text-2xl font-bold text-primary font-mono tracking-tight">
@@ -633,7 +633,7 @@ export default function DeployPage({ state, savedProjects, onGoToProject }: Prop
       </div>
 
       <div className={`border-b flex-shrink-0 ${isLight ? 'border-black/8' : 'border-white/6'}`}>
-        <div className="max-w-5xl mx-auto flex items-center gap-1 px-6 pb-3">
+        <div className="max-w-6xl mx-auto flex items-center gap-1 px-6 pb-3">
           {TAB_LIST.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-mono font-bold transition-all ${
@@ -649,7 +649,7 @@ export default function DeployPage({ state, savedProjects, onGoToProject }: Prop
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {activeTab === 'hardware' && <HardwareTab project={selectedProject} state={state} />}
           {activeTab === 'software' && <SoftwareTab project={selectedProject} state={state} />}
         </div>
