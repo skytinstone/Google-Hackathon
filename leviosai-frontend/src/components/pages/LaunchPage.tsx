@@ -1021,7 +1021,15 @@ export default function LaunchPage({ state, savedProjects, onGoToProject }: Prop
   if (!selectedProject) {
     return (
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        <ProjectSelector projects={savedProjects} onSelect={handleSelectProject} onGoToProject={onGoToProject} />
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <p className="text-[10px] font-semibold text-accent/70 uppercase tracking-[0.25em] font-mono mb-2">LeviosAI · Launch Console</p>
+            <h2 className="text-3xl font-bold text-primary font-mono tracking-tight">
+              <TypewriterText text="Launch Console" speed={45} showCursor />
+            </h2>
+          </div>
+          <ProjectSelector projects={savedProjects} onSelect={handleSelectProject} onGoToProject={onGoToProject} />
+        </div>
       </div>
     )
   }
@@ -1029,7 +1037,7 @@ export default function LaunchPage({ state, savedProjects, onGoToProject }: Prop
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="px-6 py-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
             <p className="text-[10px] font-mono text-accent uppercase tracking-widest mb-1">{t('launch.pageTitle')}</p>
             <h1 className="text-2xl font-bold text-primary font-mono tracking-tight">
@@ -1047,30 +1055,36 @@ export default function LaunchPage({ state, savedProjects, onGoToProject }: Prop
       </div>
 
       {/* Quick Actions Bar */}
-      <QuickActionsBar project={selectedProject} state={state} />
+      <div className="max-w-5xl mx-auto w-full">
+        <QuickActionsBar project={selectedProject} state={state} />
+      </div>
 
       {/* Tab Bar */}
-      <div className={`flex items-center gap-1 px-6 pb-3 pt-2 border-b flex-shrink-0 ${isLight ? 'border-black/8' : 'border-white/6'}`}>
-        {TAB_LIST.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-mono font-bold transition-all ${
-              activeTab === tab.id
-                ? 'bg-accent/15 text-accent border border-accent/30'
-                : isLight ? 'text-black/40 border border-transparent hover:bg-black/5' : 'text-secondary/40 border border-transparent hover:bg-white/5'
-            }`}>
-            <span className="text-[10px]">{tab.icon}</span>
-            {t(tab.key)}
-          </button>
-        ))}
+      <div className={`border-b flex-shrink-0 ${isLight ? 'border-black/8' : 'border-white/6'}`}>
+        <div className="max-w-5xl mx-auto flex items-center gap-1 px-6 pb-3 pt-2">
+          {TAB_LIST.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-mono font-bold transition-all ${
+                activeTab === tab.id
+                  ? 'bg-accent/15 text-accent border border-accent/30'
+                  : isLight ? 'text-black/40 border border-transparent hover:bg-black/5' : 'text-secondary/40 border border-transparent hover:bg-white/5'
+              }`}>
+              <span className="text-[10px]">{tab.icon}</span>
+              {t(tab.key)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {activeTab === 'overview' && <OverviewTab project={selectedProject} state={state} />}
-        {activeTab === 'deploy' && <DeployTab project={selectedProject} state={state} />}
-        {activeTab === 'performance' && <PerformanceTab project={selectedProject} state={state} />}
-        {activeTab === 'notes' && <AiNotesTab project={selectedProject} />}
-        {activeTab === 'media' && <MediaTab project={selectedProject} />}
+        <div className="max-w-5xl mx-auto">
+          {activeTab === 'overview' && <OverviewTab project={selectedProject} state={state} />}
+          {activeTab === 'deploy' && <DeployTab project={selectedProject} state={state} />}
+          {activeTab === 'performance' && <PerformanceTab project={selectedProject} state={state} />}
+          {activeTab === 'notes' && <AiNotesTab project={selectedProject} />}
+          {activeTab === 'media' && <MediaTab project={selectedProject} />}
+        </div>
       </div>
     </div>
   )
