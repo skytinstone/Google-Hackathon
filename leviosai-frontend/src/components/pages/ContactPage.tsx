@@ -6,9 +6,6 @@ import WorldMap from '../WorldMap'
 // TODO: Replace with your actual YouTube channel or video URL
 const YOUTUBE_URL = 'https://www.youtube.com/your-channel'
 
-interface Props {
-}
-
 export default function ContactPage() {
   const { t } = useI18n()
   const team = [

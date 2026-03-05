@@ -105,7 +105,7 @@ const QUOTES = [
 ]
 
 interface Props {
-  onNavigate?: (tab: string) => void
+  onNavigate?: (tab: import('./TopNav').Tab) => void
   currentTab?: string
   chatOpen?: boolean
 }
@@ -188,10 +188,10 @@ export default function CommandTerminal({ onNavigate, currentTab, chatOpen }: Pr
               hist.pop()
               const prev = hist[hist.length - 1]
               add([{ type: 'output', text: `← back to ${prev}` }])
-              onNavigate(prev)
+              onNavigate(prev as import('./TopNav').Tab)
             } else {
               add([{ type: 'output', text: '← back to dashboard' }])
-              onNavigate('dashboard')
+              onNavigate('dashboard' as import('./TopNav').Tab)
             }
           } else {
             add([{ type: 'error', text: 'Navigation not available' }])
@@ -202,7 +202,7 @@ export default function CommandTerminal({ onNavigate, currentTab, chatOpen }: Pr
         if (resolved) {
           if (onNavigate) {
             add([{ type: 'output', text: `→ navigating to ${resolved}` }])
-            onNavigate(resolved)
+            onNavigate(resolved as import('./TopNav').Tab)
           } else {
             add([{ type: 'error', text: 'Navigation not available' }])
           }
