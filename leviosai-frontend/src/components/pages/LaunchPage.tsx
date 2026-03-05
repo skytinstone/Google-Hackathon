@@ -105,7 +105,7 @@ function ArcGauge({ label, value, max, unit, color }: { label: string; value: nu
 
   return (
     <div className="flex flex-col items-center">
-      <svg viewBox="0 0 100 100" className="w-20 h-20">
+      <svg viewBox="0 0 100 100" className="w-28 h-28">
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={isLight ? '#e5e7eb' : '#ffffff0a'} strokeWidth="6"
           strokeDasharray={`${arcLength} ${circumference}`}
           strokeDashoffset="0" strokeLinecap="round"
@@ -115,10 +115,10 @@ function ArcGauge({ label, value, max, unit, color }: { label: string; value: nu
           strokeDashoffset="0" strokeLinecap="round"
           transform={`rotate(${startAngle + 180} ${cx} ${cy})`}
           className="animate-arc-fill" />
-        <text x={cx} y={cy - 2} textAnchor="middle" className="text-[13px] font-mono font-bold" fill="currentColor">{Math.round(value)}</text>
-        <text x={cx} y={cy + 10} textAnchor="middle" className="text-[7px] font-mono" fill={isLight ? '#888' : '#666'}>{unit}</text>
+        <text x={cx} y={cy - 2} textAnchor="middle" className="text-[13px] font-mono font-bold" fill={isLight ? '#111' : '#e5e7eb'}>{Math.round(value)}</text>
+        <text x={cx} y={cy + 10} textAnchor="middle" className="text-[7px] font-mono" fill={isLight ? '#888' : '#a1a1aa'}>{unit}</text>
       </svg>
-      <span className="text-[9px] font-mono text-secondary/50 mt-1">{label}</span>
+      <span className="text-[10px] font-mono text-secondary/70 mt-1">{label}</span>
     </div>
   )
 }
@@ -166,49 +166,117 @@ function TerminalBlock({ title, subtitle, commands, estimatedTime }: {
 }
 
 /* ================================================================
-   Reusable: Assembly Diagram Compact (SVG)
+   Reusable: Board SVG (shared between inline + modal)
    ================================================================ */
-function HardwareAssemblyDiagramCompact({ pinMap, steps, checkedSteps, onToggleStep }: {
-  pinMap: HardwarePinMap; steps: AssemblyStep[]; checkedSteps: Set<string>; onToggleStep: (id: string) => void
+function BoardSvg({ pinMap, className }: { pinMap: HardwarePinMap; className?: string }) {
+  const { theme } = useTheme()
+  const isLight = theme === 'light'
+  return (
+    <svg viewBox={`0 0 ${pinMap.boardW} ${pinMap.boardH}`} className={className}>
+      <rect x="2" y="2" width={pinMap.boardW - 4} height={pinMap.boardH - 4} rx="8" fill={isLight ? '#f3f4f6' : '#111827'} stroke={isLight ? '#d1d5db' : '#374151'} strokeWidth="1.5" />
+      <text x={pinMap.boardW / 2} y="18" textAnchor="middle" fill={isLight ? '#111' : '#fff'} fontSize="9" fontFamily="monospace" fontWeight="bold">{pinMap.category}</text>
+      {pinMap.connectors.map(c => (
+        <g key={c.id}>
+          <rect x={c.x} y={c.y} width={c.w} height={c.h} rx="3" fill={isLight ? '#dbeafe' : '#1e3a5f'} stroke={isLight ? '#93c5fd' : '#60a5fa'} strokeWidth="0.8" />
+          <text x={c.x + c.w / 2} y={c.y + c.h / 2 + 3} textAnchor="middle" fill={isLight ? '#1d4ed8' : '#93c5fd'} fontSize="6" fontFamily="monospace">{c.label}</text>
+        </g>
+      ))}
+      {pinMap.sensorWires.map((w: import('../../data/deployData').SensorWire, i: number) => {
+        const conn = pinMap.connectors.find(c => c.id === w.connectorId)
+        if (!conn) return null
+        const sx = conn.x + conn.w / 2; const sy = conn.y
+        return (
+          <line key={i} x1={sx} y1={sy} x2={sx} y2={sy - 20} stroke={w.wireColor} strokeWidth="2" strokeDasharray="4 2" className="animate-dash-flow" opacity="0.7" />
+        )
+      })}
+    </svg>
+  )
+}
+
+/* ================================================================
+   Reusable: Assembly Diagram Compact (SVG) + Fullscreen Modal
+   ================================================================ */
+function HardwareAssemblyDiagramCompact({ pinMap, steps, checkedSteps, onToggleStep, customSteps, onAddCustom, onRemoveCustom }: {
+  pinMap: HardwarePinMap
+  steps: AssemblyStep[]
+  checkedSteps: Set<string>
+  onToggleStep: (id: string) => void
+  customSteps: { id: string; label: string }[]
+  onAddCustom: (label: string) => void
+  onRemoveCustom: (id: string) => void
 }) {
   const { theme } = useTheme()
   const isLight = theme === 'light'
+  const [showModal, setShowModal] = useState(false)
+  const [newItem, setNewItem] = useState('')
 
-  return (
-    <div className="flex flex-col lg:flex-row gap-4">
-      <div className={`flex-shrink-0 rounded-xl border p-3 ${isLight ? 'bg-gray-50 border-black/8' : 'bg-[#060810] border-white/6'}`}>
-        <svg viewBox={`0 0 ${pinMap.boardW} ${pinMap.boardH}`} className="w-60 h-auto">
-          <rect x="2" y="2" width={pinMap.boardW - 4} height={pinMap.boardH - 4} rx="8" fill={isLight ? '#f3f4f6' : '#111827'} stroke={isLight ? '#d1d5db' : '#374151'} strokeWidth="1.5" />
-          <text x={pinMap.boardW / 2} y="18" textAnchor="middle" fill={isLight ? '#111' : '#fff'} fontSize="9" fontFamily="monospace" fontWeight="bold">{pinMap.category}</text>
-          {pinMap.connectors.map(c => (
-            <g key={c.id}>
-              <rect x={c.x} y={c.y} width={c.w} height={c.h} rx="3" fill={isLight ? '#dbeafe' : '#1e3a5f'} stroke={isLight ? '#93c5fd' : '#60a5fa'} strokeWidth="0.8" />
-              <text x={c.x + c.w / 2} y={c.y + c.h / 2 + 3} textAnchor="middle" fill={isLight ? '#1d4ed8' : '#93c5fd'} fontSize="6" fontFamily="monospace">{c.label}</text>
-            </g>
-          ))}
-          {pinMap.sensorWires.map((w: import('../../data/deployData').SensorWire, i: number) => {
-            const conn = pinMap.connectors.find(c => c.id === w.connectorId)
-            if (!conn) return null
-            const sx = conn.x + conn.w / 2; const sy = conn.y
-            return (
-              <line key={i} x1={sx} y1={sy} x2={sx} y2={sy - 20} stroke={w.wireColor} strokeWidth="2" strokeDasharray="4 2" className="animate-dash-flow" opacity="0.7" />
-            )
-          })}
-        </svg>
-      </div>
-      <div className="lg:w-64 space-y-1">
-        {steps.map(step => {
-          const isChecked = checkedSteps.has(step.id)
-          return (
-            <button key={step.id} onClick={() => onToggleStep(step.id)}
-              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all ${isChecked ? (isLight ? 'border-green-200 bg-green-50' : 'border-green-500/20 bg-green-500/5') : (isLight ? 'border-black/6' : 'border-white/6')}`}>
-              <span className={`w-4 h-4 rounded flex items-center justify-center text-[8px] flex-shrink-0 ${isChecked ? 'bg-green-500 text-white' : (isLight ? 'border border-black/15' : 'border border-white/15')}`}>{isChecked ? '✓' : ''}</span>
-              <span className={`text-[10px] font-mono truncate ${isChecked ? 'text-primary' : 'text-secondary/60'}`}>{step.label}</span>
+  const allSteps = [...steps, ...customSteps.map(c => ({ ...c, detail: '', connectorId: '' }))]
+
+  function handleAdd() {
+    if (!newItem.trim()) return
+    onAddCustom(newItem.trim())
+    setNewItem('')
+  }
+
+  const checklistUi = (
+    <div className="space-y-1.5">
+      {allSteps.map(step => {
+        const isChecked = checkedSteps.has(step.id)
+        const isCustom = customSteps.some(c => c.id === step.id)
+        return (
+          <div key={step.id} className="flex items-center gap-1">
+            <button onClick={() => onToggleStep(step.id)}
+              className={`flex-1 flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left transition-all ${isChecked ? (isLight ? 'border-green-200 bg-green-50' : 'border-green-500/20 bg-green-500/5') : (isLight ? 'border-black/6' : 'border-white/6')}`}>
+              <span className={`w-5 h-5 rounded flex items-center justify-center text-[10px] flex-shrink-0 ${isChecked ? 'bg-green-500 text-white' : (isLight ? 'border border-black/15' : 'border border-white/15')}`}>{isChecked ? '✓' : ''}</span>
+              <span className={`text-xs font-mono ${isChecked ? 'text-primary' : (isLight ? 'text-black/50' : 'text-white/50')}`}>{step.label}</span>
             </button>
-          )
-        })}
+            {isCustom && (
+              <button onClick={() => onRemoveCustom(step.id)}
+                className="text-red-400/50 hover:text-red-400 text-xs px-1 transition-colors flex-shrink-0">✕</button>
+            )}
+          </div>
+        )
+      })}
+      <div className="flex items-center gap-2 mt-2">
+        <input value={newItem} onChange={e => setNewItem(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          placeholder="Add custom step..."
+          className={`flex-1 px-3 py-2 rounded-lg border text-xs font-mono ${isLight ? 'bg-white border-black/10' : 'bg-[#060810] border-white/10'} text-primary placeholder:text-secondary/30 focus:outline-none focus:border-accent/50`} />
+        <button onClick={handleAdd}
+          className="px-3 py-2 rounded-lg text-xs font-mono font-bold text-accent border border-accent/30 hover:bg-accent/10 transition-colors">+</button>
       </div>
     </div>
+  )
+
+  return (
+    <>
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Enlarged SVG — click to open fullscreen */}
+        <button onClick={() => setShowModal(true)}
+          className={`flex-shrink-0 rounded-xl border p-4 cursor-pointer hover:border-accent/30 transition-colors ${isLight ? 'bg-gray-50 border-black/8' : 'bg-[#060810] border-white/6'}`}>
+          <BoardSvg pinMap={pinMap} className="w-[480px] h-auto" />
+          <p className={`text-[9px] font-mono text-center mt-2 ${isLight ? 'text-black/30' : 'text-white/30'}`}>Click to enlarge</p>
+        </button>
+        <div className="flex-1 min-w-0">
+          {checklistUi}
+        </div>
+      </div>
+
+      {/* Fullscreen Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowModal(false)}>
+          <div className={`relative rounded-2xl border p-6 max-w-[90vw] max-h-[90vh] overflow-auto ${isLight ? 'bg-white border-black/10' : 'bg-[#0a0c14] border-white/10'}`}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-mono font-bold text-primary">{pinMap.category} — Hardware Diagram</p>
+              <button onClick={() => setShowModal(false)}
+                className={`px-3 py-1 rounded-lg text-xs font-mono ${isLight ? 'text-black/40 hover:bg-black/5' : 'text-white/40 hover:bg-white/5'} transition-colors`}>✕ Close</button>
+            </div>
+            <BoardSvg pinMap={pinMap} className="w-full max-w-[800px] h-auto mx-auto" />
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -281,13 +349,29 @@ function OverviewTab({ project, state }: { project: SavedProject; state: WizardS
     const saved = loadJson<string[]>(`leviosai_launch_checks_${project.id}`, [])
     return new Set(saved)
   })
+  const [customSteps, setCustomSteps] = useState<{ id: string; label: string }[]>(() =>
+    loadJson<{ id: string; label: string }[]>(`leviosai_launch_custom_steps_${project.id}`, [])
+  )
 
   useEffect(() => {
     saveJson(`leviosai_launch_checks_${project.id}`, [...checkedSteps])
   }, [checkedSteps, project.id])
 
+  useEffect(() => {
+    saveJson(`leviosai_launch_custom_steps_${project.id}`, customSteps)
+  }, [customSteps, project.id])
+
   function toggleStep(id: string) {
     setCheckedSteps(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+  }
+
+  function addCustomStep(label: string) {
+    setCustomSteps(prev => [...prev, { id: `custom_${Date.now()}`, label }])
+  }
+
+  function removeCustomStep(id: string) {
+    setCustomSteps(prev => prev.filter(s => s.id !== id))
+    setCheckedSteps(prev => { const s = new Set(prev); s.delete(id); return s })
   }
 
   const benchmark = useMemo(() => {
@@ -334,7 +418,7 @@ function OverviewTab({ project, state }: { project: SavedProject; state: WizardS
       {/* Assembly Diagram */}
       <div>
         <p className="text-[10px] font-mono text-accent uppercase tracking-widest mb-3">Assembly Checklist</p>
-        <HardwareAssemblyDiagramCompact pinMap={pinMap} steps={steps} checkedSteps={checkedSteps} onToggleStep={toggleStep} />
+        <HardwareAssemblyDiagramCompact pinMap={pinMap} steps={steps} checkedSteps={checkedSteps} onToggleStep={toggleStep} customSteps={customSteps} onAddCustom={addCustomStep} onRemoveCustom={removeCustomStep} />
       </div>
 
       {/* QR Code */}
