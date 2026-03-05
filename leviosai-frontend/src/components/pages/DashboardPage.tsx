@@ -1,7 +1,8 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import TypewriterText from '../TypewriterText'
 import { useI18n } from '../../utils/i18n'
 import { getBenchmarkResult } from '../../data/deployData'
+import SystemInfoPanel from '../SystemInfoPanel'
 import type { SavedProject } from '../../types'
 
 interface Props {
@@ -282,92 +283,6 @@ function ProjectCard({ project, stage, score, onOpen }: {
         <span className="text-secondary/30 text-xs group-hover:text-accent transition-colors">↗</span>
       </div>
     </button>
-  )
-}
-
-// ── System Info Panel (fixed position) ─────────────────────────────────────
-
-function formatTz(tz: string, now: Date): string {
-  return now.toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
-}
-
-interface NetInfo { ip: string; country: string; city: string }
-
-function SystemInfoPanel() {
-  const [tick, setTick] = useState(0)
-  const [net, setNet] = useState<NetInfo | null>(null)
-  const [weather, setWeather] = useState<{ temp: string; desc: string; icon: string } | null>(null)
-
-  // 1-second clock tick
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  // Fetch IP info once
-  useEffect(() => {
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then((d: { ip: string; country_name: string; city: string; latitude: number; longitude: number }) => {
-        setNet({ ip: d.ip, country: d.country_name, city: d.city })
-        // Fetch weather using coords
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${d.latitude}&longitude=${d.longitude}&current=temperature_2m,weather_code&timezone=auto`)
-          .then(r => r.json())
-          .then((w: { current: { temperature_2m: number; weather_code: number } }) => {
-            const code = w.current.weather_code
-            let desc = 'Clear'; let icon = '☀'
-            if (code >= 1 && code <= 3) { desc = 'Cloudy'; icon = '⛅' }
-            else if (code >= 45 && code <= 48) { desc = 'Foggy'; icon = '🌫' }
-            else if (code >= 51 && code <= 67) { desc = 'Rainy'; icon = '🌧' }
-            else if (code >= 71 && code <= 77) { desc = 'Snowy'; icon = '❄' }
-            else if (code >= 80 && code <= 99) { desc = 'Stormy'; icon = '⛈' }
-            setWeather({ temp: `${w.current.temperature_2m}°C`, desc, icon })
-          })
-          .catch(() => setWeather({ temp: '—', desc: 'Unavailable', icon: '—' }))
-      })
-      .catch(() => setNet({ ip: '—', country: '—', city: '—' }))
-  }, [])
-
-  // tick forces re-render every second for live clocks
-  const liveNow = new Date(Date.now() + tick * 0)
-
-  const trafficKb = 128 + Math.floor(Math.sin(tick * 0.3) * 40 + Math.random() * 20)
-
-  const G = 'text-green-400' // green font color
-  const D = 'text-green-400/50' // dim green
-  const L = 'text-[10px] font-mono leading-relaxed'
-
-  return (
-    <div className="fixed pointer-events-none select-none" style={{ left: 6, top: 90, zIndex: 1 }}>
-      <div className="space-y-4">
-        {/* Network Info */}
-        <div>
-          <p className={`${L} ${D} uppercase tracking-widest mb-1`}>Network Info</p>
-          <p className={`${L} ${G}`}>IP: {net?.ip ?? '...'}</p>
-          <p className={`${L} ${G}`}>Location: {net ? `${net.city}, ${net.country}` : '...'}</p>
-          <p className={`${L} ${G}`}>Traffic: {trafficKb} KB/s</p>
-        </div>
-
-        {/* Time */}
-        <div>
-          <p className={`${L} ${D} uppercase tracking-widest mb-1`}>Time</p>
-          <p className={`${L} ${G}`}>Seoul &nbsp;&nbsp; {formatTz('Asia/Seoul', liveNow)}</p>
-          <p className={`${L} ${G}`}>NYC &nbsp;&nbsp;&nbsp;&nbsp;{formatTz('America/New_York', liveNow)}</p>
-          <p className={`${L} ${G}`}>London &nbsp;{formatTz('Europe/London', liveNow)}</p>
-        </div>
-
-        {/* Weather */}
-        <div>
-          <p className={`${L} ${D} uppercase tracking-widest mb-1`}>Local Weather</p>
-          {weather ? (
-            <p className={`${L} ${G}`}>{weather.icon} {weather.temp} · {weather.desc}</p>
-          ) : (
-            <p className={`${L} ${G} animate-pulse`}>Loading...</p>
-          )}
-          {net?.city && <p className={`${L} text-green-400/30`}>{net.city}</p>}
-        </div>
-      </div>
-    </div>
   )
 }
 

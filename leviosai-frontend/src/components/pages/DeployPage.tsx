@@ -7,6 +7,7 @@ import { showToast } from '../../utils/toast'
 import { generateBom, getProductById } from '../../data/shopData'
 import TypewriterText from '../TypewriterText'
 import { getSdkSteps } from '../../data/deployData'
+import SystemInfoPanel from '../SystemInfoPanel'
 
 interface Props {
   state: WizardState
@@ -599,6 +600,7 @@ export default function DeployPage({ state, savedProjects, onGoToProject }: Prop
   if (!selectedProject) {
     return (
       <div className="flex-1 overflow-y-auto px-6 py-4">
+        <SystemInfoPanel />
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8">
             <p className="text-[10px] font-semibold text-accent/70 uppercase tracking-[0.25em] font-mono mb-2">LeviosAI · Build Console</p>
@@ -614,6 +616,7 @@ export default function DeployPage({ state, savedProjects, onGoToProject }: Prop
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <SystemInfoPanel />
       <div className="px-6 py-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>

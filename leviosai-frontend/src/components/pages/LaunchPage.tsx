@@ -6,6 +6,7 @@ import { addLog } from '../../utils/syslog'
 import { showToast } from '../../utils/toast'
 import { callGeminiDirect, hasApiKey } from '../../api/api'
 import TypewriterText from '../TypewriterText'
+import SystemInfoPanel from '../SystemInfoPanel'
 import {
   getPinMap,
   getAssemblySteps,
@@ -1105,6 +1106,7 @@ export default function LaunchPage({ state, savedProjects, onGoToProject }: Prop
   if (!selectedProject) {
     return (
       <div className="flex-1 overflow-y-auto px-6 py-4">
+        <SystemInfoPanel />
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8">
             <p className="text-[10px] font-semibold text-accent/70 uppercase tracking-[0.25em] font-mono mb-2">LeviosAI · Launch Console</p>
@@ -1120,6 +1122,7 @@ export default function LaunchPage({ state, savedProjects, onGoToProject }: Prop
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <SystemInfoPanel />
       <div className="px-6 py-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
