@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { useDraggable } from '../hooks/useDraggable'
 
 const STORAGE_KEY = 'leviosai_quick_notes'
 const PINS_KEY = 'leviosai_pinned_items'
@@ -20,8 +19,6 @@ interface Props {
 }
 
 export default function QuickNotes({ chatOpen }: Props) {
-  const zoom = parseFloat(document.documentElement.style.zoom || '1') || 1
-  const { pos, onMouseDown } = useDraggable('QuickNotes', window.innerWidth / zoom - 400, 556)
   const [collapsed, setCollapsed] = useState(false)
   const [userCollapsed, setUserCollapsed] = useState(false)
   const [notes, setNotes] = useState(() => localStorage.getItem(STORAGE_KEY) ?? '')
@@ -85,16 +82,18 @@ export default function QuickNotes({ chatOpen }: Props) {
     <div
       className="fixed select-none"
       style={{
-        left: pos.x, top: pos.y, zIndex: 10, width: 280,
+        right: 120, top: 630, zIndex: 10, width: 280,
         opacity: chatOpen ? 0 : 1,
         pointerEvents: chatOpen ? 'none' : 'auto',
+        transition: 'opacity 0.4s ease 0.1s, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s, filter 0.4s ease 0.1s',
+        transform: chatOpen ? 'translateX(80px) scale(0.95)' : 'translateX(0) scale(1)',
+        filter: chatOpen ? 'blur(6px)' : 'blur(0px)',
       }}
     >
-      {/* Header — drag handle */}
+      {/* Header */}
       <div
-        onMouseDown={onMouseDown}
         onClick={handleToggle}
-        className="w-full flex items-center justify-between px-3 py-1.5 rounded-t-lg bg-white/5 border border-white/15 border-b-0 cursor-grab hover:bg-white/10 transition-colors active:cursor-grabbing"
+        className="w-full flex items-center justify-between px-3 py-1.5 rounded-t-lg bg-white/5 border border-white/15 border-b-0 cursor-pointer hover:bg-white/10 transition-colors"
         style={collapsed ? { borderRadius: '8px' } : undefined}
       >
         <div className="flex items-center gap-2">
