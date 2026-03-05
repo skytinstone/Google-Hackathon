@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { api } from '../api/api'
 import { useI18n, setLocale, type Locale } from '../utils/i18n'
 import { addLog } from '../utils/syslog'
+import { getGeoInfo, type GeoInfo } from '../utils/geoInfo'
 import SystemLog from './SystemLog'
 
 interface LoginScreenProps {
@@ -67,50 +68,80 @@ function VerticalWatermark() {
   )
 }
 
-function DateTimeDisplay() {
-  const [now, setNow] = useState(new Date())
-  useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id) }, [])
-  return (
-    <div className="fixed left-6 top-10 pointer-events-none select-none z-0 text-left">
-      <p className="text-[38px] font-black font-mono tracking-[0.1em] text-white/30 leading-[0.9]">{now.toLocaleDateString('en-CA')}</p>
-      <p className="text-[38px] font-black font-mono tracking-[0.1em] text-white/30 leading-[0.9]">{now.toLocaleTimeString('en-GB', { hour12: false })}</p>
-    </div>
-  )
-}
+function LoginInfoPanel() {
+  const [tick, setTick] = useState(0)
+  const [geo, setGeo] = useState<GeoInfo | null>(null)
+  const [weather, setWeather] = useState<{ temp: string; desc: string; icon: string } | null>(null)
 
-function IpCountryDisplay() {
-  const [info, setInfo] = useState<{ ip: string; country: string } | null>(null)
   useEffect(() => {
-    // Try multiple APIs with fallback chain
-    const apis = [
-      { url: 'https://ipapi.co/json/', parse: (d: Record<string, string>) => ({ ip: d.ip, country: d.country_name }) },
-      { url: 'https://ipwho.is/', parse: (d: Record<string, string>) => ({ ip: d.ip, country: d.country }) },
-      { url: 'https://api.ipify.org?format=json', parse: (d: Record<string, string>) => ({ ip: d.ip, country: 'South Korea' }) },
-    ]
-    let cancelled = false
-    async function fetchIp() {
-      for (const api of apis) {
-        if (cancelled) return
-        try {
-          const res = await fetch(api.url, { signal: AbortSignal.timeout(3000) })
-          const data = await res.json()
-          if (!cancelled) {
-            const parsed = api.parse(data)
-            setInfo({ ip: parsed.ip || '0.0.0.0', country: parsed.country || 'Unknown' })
-            return
-          }
-        } catch { /* try next */ }
-      }
-      if (!cancelled) setInfo({ ip: '127.0.0.1', country: 'Local' })
-    }
-    fetchIp()
-    return () => { cancelled = true }
+    const id = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(id)
   }, [])
-  if (!info) return null
+
+  useEffect(() => {
+    getGeoInfo().then(info => {
+      setGeo(info)
+      if (info.latitude && info.longitude) {
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${info.latitude}&longitude=${info.longitude}&current=temperature_2m,weather_code&timezone=auto`)
+          .then(r => r.json())
+          .then((w: { current: { temperature_2m: number; weather_code: number } }) => {
+            const code = w.current.weather_code
+            let desc = 'Clear'; let icon = '☀'
+            if (code >= 1 && code <= 3) { desc = 'Cloudy'; icon = '⛅' }
+            else if (code >= 45 && code <= 48) { desc = 'Foggy'; icon = '🌫' }
+            else if (code >= 51 && code <= 67) { desc = 'Rainy'; icon = '🌧' }
+            else if (code >= 71 && code <= 77) { desc = 'Snowy'; icon = '❄' }
+            else if (code >= 80 && code <= 99) { desc = 'Stormy'; icon = '⛈' }
+            setWeather({ temp: `${w.current.temperature_2m}°C`, desc, icon })
+          })
+          .catch(() => setWeather({ temp: '—', desc: 'Unavailable', icon: '—' }))
+      }
+    })
+  }, [])
+
+  const now = new Date(Date.now() + tick * 0)
+  const fmtTz = (tz: string) => now.toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+
+  const T = 'text-green-400'
+  const V = 'text-white/80'
+  const D = 'text-green-400/50'
+  const L = 'text-[10px] font-mono leading-relaxed'
+
   return (
-    <div className="fixed right-4 top-28 pointer-events-none select-none z-0">
-      <p className="text-[20px] font-mono font-bold tracking-[0.18em] text-white/[0.12] leading-tight" style={{ writingMode: 'vertical-rl' }}>{info.ip} · {info.country}</p>
-    </div>
+    <>
+      {/* Top-left: System info (IP, Location, Weather, Time) */}
+      <div className="fixed left-6 top-10 pointer-events-none select-none z-0">
+        <div className="space-y-3">
+          <div>
+            <p className={`${L} ${D} uppercase tracking-widest mb-0.5`}>Network</p>
+            <p className={L}><span className={T}>IP: </span><span className={V}>{geo?.ip ?? '...'}</span></p>
+            <p className={L}><span className={T}>Location: </span><span className={V}>{geo ? `${geo.city}, ${geo.country}` : '...'}</span></p>
+          </div>
+          <div>
+            <p className={`${L} ${D} uppercase tracking-widest mb-0.5`}>Weather</p>
+            {weather ? (
+              <p className={L}><span className={V}>{weather.icon} {weather.temp} · {weather.desc}</span></p>
+            ) : (
+              <p className={`${L} ${V} animate-pulse`}>Loading...</p>
+            )}
+          </div>
+          <div>
+            <p className={`${L} ${D} uppercase tracking-widest mb-0.5`}>Time</p>
+            <p className={L}><span className={T}>Date: </span><span className={V}>{now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span></p>
+            <p className={L}><span className={T}>Seoul &nbsp;&nbsp;</span><span className={V}>{fmtTz('Asia/Seoul')}</span></p>
+            <p className={L}><span className={T}>NYC &nbsp;&nbsp;&nbsp;&nbsp;</span><span className={V}>{fmtTz('America/New_York')}</span></p>
+            <p className={L}><span className={T}>London &nbsp;</span><span className={V}>{fmtTz('Europe/London')}</span></p>
+          </div>
+        </div>
+      </div>
+
+      {/* Top-right vertical: IP · Country (decorative) */}
+      {geo && (
+        <div className="fixed right-4 top-28 pointer-events-none select-none z-0">
+          <p className="text-[20px] font-mono font-bold tracking-[0.18em] text-white/[0.12] leading-tight" style={{ writingMode: 'vertical-rl' }}>{geo.ip} · {geo.country}</p>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -270,8 +301,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       {/* Background layers */}
       <div className="transition-opacity duration-700" style={{ opacity: phase >= 1 ? 1 : 0 }}>
         <VerticalWatermark />
-        <DateTimeDisplay />
-        <IpCountryDisplay />
+        <LoginInfoPanel />
         <VersionDisplay />
         <MatrixGrid />
         <CornerDecor position="top-left" />

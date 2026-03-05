@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getGeoInfo, type GeoInfo } from '../utils/geoInfo'
 
 function formatTz(tz: string, now: Date): string {
   return now.toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
@@ -8,11 +9,9 @@ function formatDate(now: Date): string {
   return now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-interface NetInfo { ip: string; country: string; city: string }
-
 export default function SystemInfoPanel() {
   const [tick, setTick] = useState(0)
-  const [net, setNet] = useState<NetInfo | null>(null)
+  const [net, setNet] = useState<GeoInfo | null>(null)
   const [weather, setWeather] = useState<{ temp: string; desc: string; icon: string } | null>(null)
 
   useEffect(() => {
@@ -21,11 +20,10 @@ export default function SystemInfoPanel() {
   }, [])
 
   useEffect(() => {
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then((d: { ip: string; country_name: string; city: string; latitude: number; longitude: number }) => {
-        setNet({ ip: d.ip, country: d.country_name, city: d.city })
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${d.latitude}&longitude=${d.longitude}&current=temperature_2m,weather_code&timezone=auto`)
+    getGeoInfo().then(geo => {
+      setNet(geo)
+      if (geo.latitude && geo.longitude) {
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current=temperature_2m,weather_code&timezone=auto`)
           .then(r => r.json())
           .then((w: { current: { temperature_2m: number; weather_code: number } }) => {
             const code = w.current.weather_code
@@ -38,8 +36,8 @@ export default function SystemInfoPanel() {
             setWeather({ temp: `${w.current.temperature_2m}°C`, desc, icon })
           })
           .catch(() => setWeather({ temp: '—', desc: 'Unavailable', icon: '—' }))
-      })
-      .catch(() => setNet({ ip: '—', country: '—', city: '—' }))
+      }
+    })
   }, [])
 
   const liveNow = new Date(Date.now() + tick * 0)
