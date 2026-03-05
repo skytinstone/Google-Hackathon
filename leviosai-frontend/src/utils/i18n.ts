@@ -171,8 +171,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'login.enterPassword': 'Enter password',
     'login.authenticating': 'Authenticating...',
     'login.clickToContinue': 'Click anywhere to continue',
-    'login.tagline1': 'Ready to ship your Edge AI device to the world?',
-    'login.tagline2': 'Step inside. The pipeline awaits.',
+    'login.tagline1': 'Create your own Edge AI device.',
+    'login.tagline2': 'Integrate. Build. Deploy.',
 
     // Contact
     'contact.title': 'Contact',
@@ -510,8 +510,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'login.enterPassword': '비밀번호를 입력하세요',
     'login.authenticating': '인증 중...',
     'login.clickToContinue': '계속하려면 화면을 클릭하세요',
-    'login.tagline1': '당신의 Edge AI 디바이스를 세상에 내보낼 준비가 되셨나요?',
-    'login.tagline2': '파이프라인이 기다리고 있습니다.',
+    'login.tagline1': '나만의 Edge AI 디바이스를 만들어보세요.',
+    'login.tagline2': '통합. 빌드. 배포.',
 
     // Contact — 제목 영어, 설명 한국어
     'contact.title': 'Contact',

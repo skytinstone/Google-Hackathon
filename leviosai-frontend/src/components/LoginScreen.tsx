@@ -149,7 +149,7 @@ function VersionDisplay() {
   return (
     <div className="fixed right-6 bottom-6 pointer-events-none select-none z-0 text-right">
       <p className="text-[20px] font-mono font-bold tracking-[0.15em] text-white/[0.12] leading-relaxed">Version 0.9</p>
-      <p className="text-[20px] font-mono font-bold tracking-[0.15em] text-white/[0.12] leading-relaxed">Updated 2026.03.04</p>
+      <p className="text-[20px] font-mono font-bold tracking-[0.15em] text-white/[0.12] leading-relaxed">Updated 2026.03.05</p>
     </div>
   )
 }
