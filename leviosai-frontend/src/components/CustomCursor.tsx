@@ -35,13 +35,18 @@ export default function CustomCursor() {
 
   if (!visible) return null
 
+  // Compensate for CSS zoom on <html> so label sticks to the real cursor
+  const zoom = parseFloat(document.documentElement.style.zoom || '1') || 1
+  const x = pos.x / zoom
+  const y = pos.y / zoom
+
   const xStr = String(Math.round(pos.x)).padStart(4, '0')
   const yStr = String(Math.round(pos.y)).padStart(4, '0')
 
   return (
     <div
       className="fixed top-0 left-0 pointer-events-none"
-      style={{ zIndex: 99999, transform: `translate(${pos.x + 16}px, ${pos.y + 4}px)` }}
+      style={{ zIndex: 99999, transform: `translate(${x + 16}px, ${y + 4}px)` }}
     >
       <div>
         <p className="text-[11px] font-mono font-bold tracking-wider leading-tight text-white/70">
