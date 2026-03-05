@@ -1,23 +1,54 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import TypewriterText from '../TypewriterText'
-import WorldMap from '../WorldMap'
 import { useI18n } from '../../utils/i18n'
+import { getBenchmarkResult } from '../../data/deployData'
 import type { SavedProject } from '../../types'
 
 interface Props {
   projects: SavedProject[]
   onOpenProject: (project: SavedProject) => void
   onNewProject: () => void
+  onNavigate: (tab: string) => void
 }
 
-// ── Constants ──────────────────────────────────────────────────────────────
-
-const CHART_COLORS = [
-  '#6b96be', '#4ade80', '#f59e0b', '#ef4444',
-  '#a78bfa', '#f472b6', '#06b6d4', '#84cc16',
-]
-
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+function loadJson<T>(key: string, fallback: T): T {
+  try { return JSON.parse(localStorage.getItem(key) ?? '') as T }
+  catch { return fallback }
+}
+
+function getGrade(score: number): { letter: string; color: string } {
+  if (score >= 90) return { letter: 'A+', color: '#4ade80' }
+  if (score >= 80) return { letter: 'A',  color: '#22c55e' }
+  if (score >= 70) return { letter: 'B',  color: '#6b96be' }
+  if (score >= 60) return { letter: 'C',  color: '#f59e0b' }
+  if (score >= 50) return { letter: 'D',  color: '#f97316' }
+  return { letter: 'F', color: '#ef4444' }
+}
+
+interface ProjectStage {
+  pipeline: boolean
+  shop: boolean
+  build: boolean
+  launch: boolean
+}
+
+function getProjectStage(p: SavedProject): ProjectStage {
+  const pipeline = true
+  const shop = !!(p.hardware && p.sensors.length > 0)
+  const build = loadJson<unknown[]>(`leviosai_deploy_parts_${p.id}`, []).length > 0
+  const launch = loadJson<unknown[]>(`leviosai_deploy_media_${p.id}`, []).length > 0
+    || loadJson<unknown[]>(`leviosai_launch_checks_${p.id}`, []).length > 0
+  return { pipeline, shop, build, launch }
+}
+
+function getProjectScore(p: SavedProject): number | null {
+  if (!p.hardware) return null
+  const techniques = p.techniques.map(t => ({ id: t, name: t }))
+  const result = getBenchmarkResult(p.hardware, techniques)
+  return result.efficiencyScore
+}
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -28,6 +59,10 @@ function relativeTime(iso: string): string {
   if (h < 24) return `${h}h ago`
   const d = Math.floor(h / 24)
   return `${d}d ago`
+}
+
+function countStages(stage: ProjectStage): number {
+  return [stage.pipeline, stage.shop, stage.build, stage.launch].filter(Boolean).length
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
@@ -53,7 +88,7 @@ function SectionHeader({ tag, title, badge, live }: { tag: string; title: string
   )
 }
 
-function KpiCard({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+function KpiCard({ label, value, suffix, accent }: { label: string; value: string | number; suffix?: string; accent?: boolean }) {
   return (
     <div
       className={[
@@ -65,369 +100,135 @@ function KpiCard({ label, value, accent }: { label: string; value: number; accen
     >
       <p className={`text-3xl font-bold font-mono tabular-nums ${accent ? 'text-accent' : 'text-primary'}`}>
         {value}
+        {suffix && <span className="text-base text-secondary/40 ml-0.5">{suffix}</span>}
       </p>
       <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-[0.18em] mt-2">{label}</p>
     </div>
   )
 }
 
-function BarRow({
-  label, count, total, colorClass = 'bg-accent',
-}: { label: string; count: number; total: number; colorClass?: string }) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0
+// ── Stage Progress Bar ────────────────────────────────────────────────────
+
+const STAGE_KEYS: (keyof ProjectStage)[] = ['pipeline', 'shop', 'build', 'launch']
+
+function StageProgressBar({ project, stage, score, onClick, t }: {
+  project: SavedProject
+  stage: ProjectStage
+  score: number | null
+  onClick: () => void
+  t: (key: string) => string
+}) {
+  const grade = score != null ? getGrade(score) : null
+
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-mono text-secondary/80 truncate">{label}</span>
-        <span className="text-xs font-mono text-primary tabular-nums flex-shrink-0">
-          {count}
-          <span className="text-secondary/40 ml-1">({pct}%)</span>
+    <button
+      onClick={onClick}
+      className="w-full text-left p-4 rounded-xl border border-white/8 bg-component hover:border-accent/30 hover:bg-accent/3 transition-all group"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {grade && (
+            <span
+              className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
+              style={{ backgroundColor: grade.color + '22', color: grade.color, border: `1px solid ${grade.color}44` }}
+            >
+              {grade.letter}
+            </span>
+          )}
+          <p className="text-sm font-mono text-primary truncate group-hover:text-accent transition-colors">
+            {project.name}
+          </p>
+        </div>
+        <span className="text-[10px] font-mono text-secondary/30 flex-shrink-0">
+          {score != null ? `${score}/100` : '—'}
         </span>
       </div>
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${colorClass} rounded-full animate-bar`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  )
-}
-
-// ── Donut Chart ────────────────────────────────────────────────────────────
-
-function DonutChart({ data, total, label }: {
-  data: { name: string; count: number; color: string }[]
-  total: number
-  label: string
-}) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { const id = setTimeout(() => setMounted(true), 50); return () => clearTimeout(id) }, [])
-
-  const R = 48, CX = 60, CY = 60, STROKE = 12
-  const C = 2 * Math.PI * R
-
-  if (data.length === 0) {
-    return (
-      <div className="flex flex-col items-center py-6">
-        <svg viewBox="0 0 120 120" className="w-28 h-28">
-          <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={STROKE} />
-          <text x={CX} y={CY + 2} textAnchor="middle" fill="currentColor" className="text-secondary/30" style={{ fontSize: '16px', fontFamily: 'monospace' }}>0</text>
-        </svg>
-        <p className="text-[10px] font-mono text-secondary/30 mt-2">No data</p>
-      </div>
-    )
-  }
-
-  let cumOffset = 0
-
-  return (
-    <div className="flex flex-col items-center">
-      <svg viewBox="0 0 120 120" className="w-28 h-28">
-        <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={STROKE} />
-        {data.map((seg, i) => {
-          const segLen = total > 0 ? (seg.count / total) * C : 0
-          const dashOffset = C - cumOffset
-          cumOffset += segLen
-          return (
-            <circle
-              key={i}
-              cx={CX} cy={CY} r={R}
-              fill="none"
-              stroke={seg.color}
-              strokeWidth={STROKE}
-              strokeDasharray={`${segLen} ${C - segLen}`}
-              strokeDashoffset={dashOffset}
-              transform={`rotate(-90 ${CX} ${CY})`}
-              style={{
-                opacity: mounted ? 1 : 0,
-                transition: `opacity 0.6s ease ${i * 0.1}s`,
-              }}
-              strokeLinecap="butt"
+      <div className="flex gap-1">
+        {STAGE_KEYS.map(key => (
+          <div key={key} className="flex-1 flex flex-col items-center gap-1">
+            <div
+              className={`w-full h-1.5 rounded-full transition-colors ${
+                stage[key] ? 'bg-accent' : 'bg-white/8'
+              }`}
             />
-          )
-        })}
-        <text x={CX} y={CY - 2} textAnchor="middle" fill="currentColor" className="text-primary" style={{ fontSize: '20px', fontFamily: 'monospace', fontWeight: 700 }}>
-          {total}
-        </text>
-        <text x={CX} y={CY + 13} textAnchor="middle" fill="currentColor" className="text-secondary/50" style={{ fontSize: '7px', fontFamily: 'monospace', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-          {label}
-        </text>
-      </svg>
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 justify-center">
-        {data.map((seg, i) => (
-          <span key={i} className="flex items-center gap-1 text-[10px] font-mono text-secondary/70">
-            <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: seg.color }} />
-            {seg.name} ({seg.count})
-          </span>
+            <span className={`text-[8px] font-mono uppercase tracking-wider ${
+              stage[key] ? 'text-accent/70' : 'text-secondary/30'
+            }`}>
+              {t(`dashboard.stage.${key}`)}
+            </span>
+          </div>
         ))}
       </div>
-    </div>
+    </button>
   )
 }
 
-// ── Activity Heatmap ───────────────────────────────────────────────────────
+// ── Quick Action Card ─────────────────────────────────────────────────────
 
-function ActivityHeatmap({ projects }: { projects: SavedProject[] }) {
-  const { t } = useI18n()
-
-  const { cells, totalInWindow } = useMemo(() => {
-    const map = new Map<string, number>()
-    projects.forEach(p => {
-      const d = new Date(p.createdAt).toISOString().slice(0, 10)
-      map.set(d, (map.get(d) ?? 0) + 1)
-    })
-
-    const today = new Date()
-    const result: { date: string; count: number; week: number; day: number }[] = []
-    let total = 0
-
-    for (let w = 11; w >= 0; w--) {
-      for (let d = 0; d < 7; d++) {
-        const date = new Date(today)
-        date.setDate(date.getDate() - (w * 7 + (6 - d)))
-        const key = date.toISOString().slice(0, 10)
-        const count = map.get(key) ?? 0
-        total += count
-        result.push({ date: key, count, week: 11 - w, day: d })
-      }
-    }
-
-    return { cells: result, totalInWindow: total }
-  }, [projects])
-
-  const cellSize = 10, gap = 2, labelW = 24
-  const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', '']
-
+function QuickActionCard({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-mono text-secondary/40">
-          {totalInWindow} pipeline{totalInWindow !== 1 ? 's' : ''} in 12 weeks
-        </p>
-        <div className="flex items-center gap-1 text-[10px] font-mono text-secondary/30">
-          <span>Less</span>
-          {[0.04, 0.2, 0.4, 0.7].map((opacity, i) => (
-            <span key={i} className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: i === 0 ? 'rgba(255,255,255,0.04)' : `rgba(107,150,190,${opacity})` }} />
-          ))}
-          <span>More</span>
-        </div>
-      </div>
-      {totalInWindow === 0 ? (
-        <p className="text-xs font-mono text-secondary/30 text-center py-4">{t('dashboard.noActivity')}</p>
-      ) : (
-        <svg viewBox={`0 0 ${labelW + 12 * (cellSize + gap)} ${7 * (cellSize + gap)}`} className="w-full h-auto">
-          {dayLabels.map((label, i) =>
-            label ? (
-              <text key={i} x={labelW - 4} y={i * (cellSize + gap) + cellSize - 1} textAnchor="end" fill="currentColor" className="text-secondary/40" style={{ fontSize: '7px', fontFamily: 'monospace' }}>
-                {label}
-              </text>
-            ) : null
-          )}
-          {cells.map((cell, i) => (
-            <rect
-              key={i}
-              x={labelW + cell.week * (cellSize + gap)}
-              y={cell.day * (cellSize + gap)}
-              width={cellSize}
-              height={cellSize}
-              rx={2}
-              fill={
-                cell.count === 0 ? 'rgba(255,255,255,0.04)'
-                : cell.count === 1 ? 'rgba(107,150,190,0.3)'
-                : cell.count === 2 ? 'rgba(107,150,190,0.5)'
-                : 'rgba(107,150,190,0.7)'
-              }
-              className="animate-heatmap-cell"
-              style={{ animationDelay: `${i * 4}ms` }}
-            >
-              <title>{cell.date}: {cell.count} pipeline(s)</title>
-            </rect>
-          ))}
-        </svg>
-      )}
-    </div>
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-2 p-4 rounded-xl border border-white/8 bg-component hover:border-accent/30 hover:bg-accent/5 transition-all group"
+    >
+      <span className="text-xl group-hover:scale-110 transition-transform">{icon}</span>
+      <span className="text-[10px] font-mono text-secondary/70 group-hover:text-accent transition-colors text-center leading-tight">
+        {label}
+      </span>
+    </button>
   )
 }
 
-// ── System Health Panel ────────────────────────────────────────────────────
+// ── Performance Rank Row ──────────────────────────────────────────────────
 
-function SystemHealthPanel() {
-  const { t } = useI18n()
-  const [tick, setTick] = useState(0)
-
-  useEffect(() => {
-    const id = setInterval(() => setTick(v => v + 1), 3000)
-    return () => clearInterval(id)
-  }, [])
-
-  const cpu = 42 + ((tick % 7) * 5)
-  const gpu = 58 + ((tick % 5) * 6)
-  const mem = 35 + ((tick % 6) * 4)
-
-  const gauges = [
-    { label: 'CPU', value: cpu },
-    { label: 'GPU', value: gpu },
-    { label: 'MEM', value: mem },
-  ]
-
-  function gaugeColor(v: number) {
-    if (v < 60) return '#4ade80'
-    if (v < 80) return '#f59e0b'
-    return '#ef4444'
-  }
-
-  const R = 30, CX = 36, CY = 36, SW = 5
-  const C = 2 * Math.PI * R
-
-  const uptimeMs = Date.now() - 1709510400000
-  const days = Math.floor(uptimeMs / 86400000)
-  const hrs = Math.floor((uptimeMs % 86400000) / 3600000)
-  const mins = Math.floor((uptimeMs % 3600000) / 60000)
-
+function PerformanceRankRow({ rank, project, score, onClick }: {
+  rank: number
+  project: SavedProject
+  score: number
+  onClick: () => void
+}) {
+  const grade = getGrade(score)
   return (
-    <div>
-      <div className="grid grid-cols-3 gap-2">
-        {gauges.map(g => {
-          const filled = (g.value / 100) * C
-          return (
-            <div key={g.label} className="flex flex-col items-center">
-              <svg viewBox="0 0 72 72" className="w-16 h-16">
-                <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={SW} />
-                <circle
-                  cx={CX} cy={CY} r={R}
-                  fill="none"
-                  stroke={gaugeColor(g.value)}
-                  strokeWidth={SW}
-                  strokeDasharray={`${filled} ${C - filled}`}
-                  transform={`rotate(-90 ${CX} ${CY})`}
-                  strokeLinecap="round"
-                  style={{ transition: 'stroke-dasharray 1.5s ease, stroke 0.5s ease' }}
-                />
-                <text x={CX} y={CY + 2} textAnchor="middle" fill="currentColor" className="text-primary" style={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 700 }}>
-                  {g.value}%
-                </text>
-              </svg>
-              <p className="text-[10px] font-mono text-secondary/50 uppercase tracking-widest mt-0.5">{g.label}</p>
-            </div>
-          )
-        })}
-      </div>
-      <div className="mt-3 pt-3 border-t border-white/6 text-center">
-        <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest mb-1">
-          {t('dashboard.uptime')}
-        </p>
-        <p className="text-sm font-mono text-primary tabular-nums animate-gauge-tick">
-          {days}d {String(hrs).padStart(2, '0')}:{String(mins).padStart(2, '0')}
-        </p>
-      </div>
-    </div>
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 py-2 px-1 hover:bg-white/3 rounded-lg transition-colors group"
+    >
+      <span className={`text-xs font-mono tabular-nums w-5 text-right ${rank <= 3 ? 'text-accent font-bold' : 'text-secondary/40'}`}>
+        #{rank}
+      </span>
+      <span
+        className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded flex-shrink-0"
+        style={{ backgroundColor: grade.color + '22', color: grade.color, border: `1px solid ${grade.color}44` }}
+      >
+        {grade.letter}
+      </span>
+      <span className="text-xs font-mono text-primary truncate flex-1 group-hover:text-accent transition-colors">
+        {project.name}
+      </span>
+      <span className="text-xs font-mono text-secondary/50 tabular-nums flex-shrink-0">
+        {score}
+      </span>
+    </button>
   )
 }
 
-// ── Sensor × Hardware Matrix ───────────────────────────────────────────────
+// ── Project Card (simplified) ─────────────────────────────────────────────
 
-function SensorHardwareMatrix({ projects }: { projects: SavedProject[] }) {
-  const { sensors, hardwares, pairs } = useMemo(() => {
-    const pairSet = new Set<string>()
-    const sensorSet = new Set<string>()
-    const hwSet = new Set<string>()
-
-    projects.forEach(p => {
-      if (p.hardware) {
-        hwSet.add(p.hardware)
-        p.sensors.forEach(s => {
-          sensorSet.add(s)
-          pairSet.add(`${s}|${p.hardware}`)
-        })
-      }
-    })
-
-    return {
-      sensors: Array.from(sensorSet).slice(0, 8),
-      hardwares: Array.from(hwSet).slice(0, 6),
-      pairs: pairSet,
-    }
-  }, [projects])
-
-  if (sensors.length === 0 || hardwares.length === 0) {
-    return <p className="text-xs font-mono text-secondary/30 py-4 text-center">No sensor-hardware data</p>
-  }
-
-  const cellSize = 24
-  const labelLeft = 80
-  const labelTop = 50
-  const svgW = labelLeft + hardwares.length * cellSize + 8
-  const svgH = labelTop + sensors.length * cellSize + 8
-
-  return (
-    <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-auto">
-      {/* Column headers */}
-      {hardwares.map((hw, i) => (
-        <text
-          key={hw}
-          x={labelLeft + i * cellSize + cellSize / 2}
-          y={labelTop - 8}
-          textAnchor="end"
-          fill="currentColor"
-          className="text-secondary/50"
-          style={{ fontSize: '6px', fontFamily: 'monospace' }}
-          transform={`rotate(-45, ${labelLeft + i * cellSize + cellSize / 2}, ${labelTop - 8})`}
-        >
-          {hw.length > 12 ? hw.slice(0, 12) + '…' : hw}
-        </text>
-      ))}
-      {/* Row headers + dots */}
-      {sensors.map((sensor, row) => (
-        <g key={sensor}>
-          <text
-            x={labelLeft - 6}
-            y={labelTop + row * cellSize + cellSize / 2 + 3}
-            textAnchor="end"
-            fill="currentColor"
-            className="text-secondary/50"
-            style={{ fontSize: '7px', fontFamily: 'monospace' }}
-          >
-            {sensor.length > 12 ? sensor.slice(0, 12) + '…' : sensor}
-          </text>
-          {hardwares.map((hw, col) => {
-            const exists = pairs.has(`${sensor}|${hw}`)
-            return (
-              <circle
-                key={hw}
-                cx={labelLeft + col * cellSize + cellSize / 2}
-                cy={labelTop + row * cellSize + cellSize / 2}
-                r={exists ? 5 : 3}
-                fill={exists ? '#6b96be' : 'rgba(255,255,255,0.06)'}
-                style={{ transition: 'fill 0.3s, r 0.3s' }}
-              >
-                <title>{sensor} × {hw}</title>
-              </circle>
-            )
-          })}
-        </g>
-      ))}
-    </svg>
-  )
-}
-
-// ── Project Card ───────────────────────────────────────────────────────────
-
-function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: (p: SavedProject) => void }) {
-  const displayDate = project.customDate
-    ? new Date(project.customDate + 'T00:00:00').toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-      })
-    : new Date(project.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-      })
+function ProjectCard({ project, stage, score, onOpen }: {
+  project: SavedProject
+  stage: ProjectStage
+  score: number | null
+  onOpen: (p: SavedProject) => void
+}) {
+  const grade = score != null ? getGrade(score) : null
+  const stageCount = countStages(stage)
 
   return (
     <button
       onClick={() => onOpen(project)}
       className="text-left p-5 rounded-2xl border border-white/8 bg-component hover:border-accent/40 hover:bg-accent/5 transition-all duration-200 group"
     >
-      <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0 flex-1">
           <span className="text-[10px] font-mono text-secondary/40">
             No.{String(project.projectNo ?? 1).padStart(3, '0')}
@@ -435,26 +236,23 @@ function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: (p: S
           <p className="text-primary font-bold text-base group-hover:text-accent transition-colors truncate mt-0.5">
             {project.name}
           </p>
-          <p className="text-xs text-secondary/60 font-mono mt-0.5">
-            {displayDate} · {project.author || 'Unknown'}
-          </p>
-          {project.description && (
-            <p className="text-xs text-secondary/50 mt-1.5 line-clamp-2 leading-relaxed">
-              {project.description}
-            </p>
-          )}
         </div>
-        <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 group-hover:border-accent/40 transition-colors">
-          <span className="text-accent text-base">◈</span>
-        </div>
+        {grade ? (
+          <span
+            className="text-xs font-mono font-bold px-2 py-1 rounded-lg flex-shrink-0"
+            style={{ backgroundColor: grade.color + '22', color: grade.color, border: `1px solid ${grade.color}44` }}
+          >
+            {grade.letter}
+          </span>
+        ) : (
+          <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 group-hover:border-accent/40 transition-colors">
+            <span className="text-accent text-base">◈</span>
+          </div>
+        )}
       </div>
 
+      {/* Tags */}
       <div className="flex flex-wrap gap-1.5 mb-3">
-        {project.domain && (
-          <span className="text-[10px] px-2 py-0.5 bg-accent/10 border border-accent/20 text-accent rounded-full font-mono">
-            {project.domain}
-          </span>
-        )}
         {project.hardware && (
           <span className="text-[10px] px-2 py-0.5 bg-white/6 border border-white/10 text-secondary rounded-full font-mono">
             ⬡ {project.hardware}
@@ -467,22 +265,19 @@ function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: (p: S
         )}
       </div>
 
-      {project.sensors.length > 0 && (
-        <p className="text-xs text-secondary/60 font-mono mb-1">
-          <span className="text-secondary/40">Sensors: </span>
-          {project.sensors.join(', ')}
-        </p>
-      )}
-      {project.techniques.length > 0 && (
-        <p className="text-xs text-secondary/60 font-mono">
-          <span className="text-secondary/40">Tech: </span>
-          {project.techniques.join(', ')}
-        </p>
-      )}
+      {/* Mini stage bar */}
+      <div className="flex gap-1 mb-2">
+        {STAGE_KEYS.map(key => (
+          <div
+            key={key}
+            className={`flex-1 h-1 rounded-full ${stage[key] ? 'bg-accent' : 'bg-white/8'}`}
+          />
+        ))}
+      </div>
 
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-        <span className="text-[10px] font-mono text-secondary/50 uppercase tracking-wider">
-          {project.language}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-mono text-secondary/40">
+          {stageCount}/4 stages
         </span>
         <span className="text-secondary/30 text-xs group-hover:text-accent transition-colors">↗</span>
       </div>
@@ -492,41 +287,46 @@ function ProjectCard({ project, onOpen }: { project: SavedProject; onOpen: (p: S
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export default function DashboardPage({ projects, onOpenProject, onNewProject }: Props) {
+export default function DashboardPage({ projects, onOpenProject, onNewProject, onNavigate }: Props) {
   const { t } = useI18n()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDomain, setFilterDomain] = useState<string | ''>('')
   const [filterHardware, setFilterHardware] = useState<string | ''>('')
 
   const stats = useMemo(() => {
-    const domains   = Array.from(new Set(projects.map(p => p.domain).filter(Boolean)))   as string[]
+    const domains   = Array.from(new Set(projects.map(p => p.domain).filter(Boolean))) as string[]
     const hardwares = Array.from(new Set(projects.map(p => p.hardware).filter(Boolean))) as string[]
-    const models    = Array.from(new Set(projects.map(p => p.model).filter(Boolean)))    as string[]
 
-    const domainCounts: Record<string, number> = {}
-    const hwCounts:     Record<string, number> = {}
-    const langCounts:   Record<string, number> = {}
-    const modelCounts:  Record<string, number> = {}
-    const techniqueCounts: Record<string, number> = {}
+    // Parts & Packages from localStorage
+    let totalParts = 0
+    let totalPackages = 0
+    const stageMap = new Map<string, ProjectStage>()
+    const scoreMap = new Map<string, number | null>()
 
     projects.forEach(p => {
-      if (p.domain)    domainCounts[p.domain]    = (domainCounts[p.domain]    ?? 0) + 1
-      if (p.hardware)  hwCounts[p.hardware]      = (hwCounts[p.hardware]      ?? 0) + 1
-      if (p.language)  langCounts[p.language]    = (langCounts[p.language]    ?? 0) + 1
-      if (p.model)     modelCounts[p.model]      = (modelCounts[p.model]      ?? 0) + 1
-      p.techniques.forEach(tech => {
-        techniqueCounts[tech] = (techniqueCounts[tech] ?? 0) + 1
-      })
+      totalParts += loadJson<unknown[]>(`leviosai_deploy_parts_${p.id}`, []).length
+      totalPackages += loadJson<unknown[]>(`leviosai_deploy_packages_${p.id}`, []).length
+      stageMap.set(p.id, getProjectStage(p))
+      scoreMap.set(p.id, getProjectScore(p))
     })
 
+    // Average score
+    const scores = Array.from(scoreMap.values()).filter((s): s is number => s != null)
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null
+
+    // Recent projects (by createdAt desc)
     const recent = [...projects]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 6)
+      .slice(0, 8)
 
-    const allSensors = Array.from(new Set(projects.flatMap(p => p.sensors)))
-    const allTechniques = Array.from(new Set(projects.flatMap(p => p.techniques)))
+    // Ranked by score desc
+    const ranked = [...projects]
+      .map(p => ({ project: p, score: scoreMap.get(p.id) }))
+      .filter((r): r is { project: SavedProject; score: number } => r.score != null)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
 
-    return { domains, hardwares, models, domainCounts, hwCounts, langCounts, modelCounts, techniqueCounts, recent, allSensors, allTechniques }
+    return { domains, hardwares, totalParts, totalPackages, avgScore, stageMap, scoreMap, recent, ranked }
   }, [projects])
 
   const filteredProjects = useMemo(() => {
@@ -547,15 +347,15 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
   const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
   const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 
+  // Pipeline progress — top 6 projects by creation date
+  const progressProjects = [...projects]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 6)
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 relative">
-      {/* World map background */}
-      <div className="absolute -top-8 -left-8 -right-8 h-[400px] overflow-hidden rounded-2xl">
-        <WorldMap />
-      </div>
-
       {/* ── Header ────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4 relative" style={{ zIndex: 1 }}>
+      <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <p className="text-[10px] font-semibold text-accent/70 uppercase tracking-[0.25em] font-mono">
@@ -572,7 +372,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
           <div className="flex items-center gap-4 mt-2">
             <p className="text-secondary text-sm font-mono">
               {projects.length > 0
-                ? `${projects.length} ${t('dashboard.totalPipelines')} · ${stats.domains.length} ${t('dashboard.activeDomains')} · ${stats.hardwares.length} ${t('dashboard.hwConfigs')}`
+                ? `${projects.length} ${t('dashboard.totalPipelines')} · ${stats.domains.length} ${t('dashboard.activeDomains')}`
                 : t('dashboard.noPipelines')}
             </p>
             <span className="text-[10px] font-mono text-secondary/30 hidden sm:block">
@@ -592,46 +392,72 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
         </div>
       </div>
 
-      {/* ── KPI Cards (6) ────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard label={t('dashboard.totalPipelines')}    value={projects.length}             accent />
-        <KpiCard label={t('dashboard.activeDomains')}     value={stats.domains.length}        />
-        <KpiCard label={t('dashboard.hwConfigs')}         value={stats.hardwares.length}      />
-        <KpiCard label={t('dashboard.modelsDeployed')}    value={stats.models.length}         />
-        <KpiCard label={t('dashboard.sensorsActive')}     value={stats.allSensors.length}     />
-        <KpiCard label={t('dashboard.techniquesApplied')} value={stats.allTechniques.length}  />
+      {/* ── KPI Cards (4) ────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard label={t('dashboard.totalPipelines')} value={projects.length} accent />
+        <KpiCard label={t('dashboard.partsTracked')}   value={stats.totalParts} />
+        <KpiCard label={t('dashboard.packages')}       value={stats.totalPackages} />
+        <KpiCard label={t('dashboard.avgScore')}       value={stats.avgScore ?? '—'} suffix={stats.avgScore != null ? '/100' : undefined} />
       </div>
 
-      {/* ── Analytics (shown only when projects exist) ──────── */}
+      {/* ── Content (only when projects exist) ───────────────── */}
       {projects.length > 0 && (
         <>
-          {/* Row A: Domain Donut + Hardware Donut + Recent Activity */}
+          {/* Pipeline Progress */}
+          <div className="p-5 rounded-2xl border border-white/8 bg-component">
+            <SectionHeader tag="Progress" title={t('dashboard.pipelineProgress')} badge={`${projects.length} total`} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {progressProjects.map(p => (
+                <StageProgressBar
+                  key={p.id}
+                  project={p}
+                  stage={stats.stageMap.get(p.id) ?? { pipeline: true, shop: false, build: false, launch: false }}
+                  score={stats.scoreMap.get(p.id) ?? null}
+                  onClick={() => onOpenProject(p)}
+                  t={t}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 3-column grid: Quick Actions / Performance Ranking / Activity Feed */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Quick Actions */}
             <div className="p-5 rounded-2xl border border-white/8 bg-component">
-              <SectionHeader tag="Analytics" title={t('dashboard.domainDist')} badge={`${projects.length} total`} />
-              <DonutChart
-                data={Object.entries(stats.domainCounts)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([name, count], i) => ({ name, count, color: CHART_COLORS[i % CHART_COLORS.length] }))}
-                total={projects.length}
-                label={t('dashboard.totalPipelines')}
-              />
+              <SectionHeader tag="Actions" title={t('dashboard.quickActions')} />
+              <div className="grid grid-cols-2 gap-3">
+                <QuickActionCard icon="+" label={t('dashboard.createPipeline')} onClick={onNewProject} />
+                <QuickActionCard icon="⚙" label={t('dashboard.goToBuild')} onClick={() => onNavigate('deploy')} />
+                <QuickActionCard icon="▶" label={t('dashboard.goToLaunch')} onClick={() => onNavigate('launch')} />
+                <QuickActionCard icon="◈" label={t('dashboard.goToShop')} onClick={() => onNavigate('shop')} />
+              </div>
             </div>
 
+            {/* Performance Ranking */}
             <div className="p-5 rounded-2xl border border-white/8 bg-component">
-              <SectionHeader tag="Infrastructure" title={t('dashboard.hwUtilization')} />
-              <DonutChart
-                data={Object.entries(stats.hwCounts)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([name, count], i) => ({ name, count, color: CHART_COLORS[(i + 3) % CHART_COLORS.length] }))}
-                total={projects.length}
-                label={t('dashboard.hwConfigs')}
-              />
+              <SectionHeader tag="Ranking" title={t('dashboard.performanceRanking')} badge={`${stats.ranked.length} scored`} />
+              {stats.ranked.length > 0 ? (
+                <div className="space-y-0.5">
+                  {stats.ranked.map((r, i) => (
+                    <PerformanceRankRow
+                      key={r.project.id}
+                      rank={i + 1}
+                      project={r.project}
+                      score={r.score}
+                      onClick={() => onOpenProject(r.project)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs font-mono text-secondary/30 text-center py-6">
+                  No scored projects yet
+                </p>
+              )}
             </div>
 
-            {/* Recent Activity */}
+            {/* Activity Feed */}
             <div className="p-5 rounded-2xl border border-white/8 bg-component">
-              <SectionHeader tag="Timeline" title={t('dashboard.recentActivity')} live />
+              <SectionHeader tag="Timeline" title={t('dashboard.activityFeed')} live />
               <div className="space-y-0">
                 {stats.recent.map((p, i) => (
                   <div key={p.id} className="flex items-start gap-3">
@@ -658,107 +484,10 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
               </div>
             </div>
           </div>
-
-          {/* Row B: Activity Heatmap */}
-          <div className="p-5 rounded-2xl border border-white/8 bg-component">
-            <SectionHeader tag="Activity" title={t('dashboard.activityHeatmap')} />
-            <ActivityHeatmap projects={projects} />
-          </div>
-
-          {/* Row C: Technique Usage + Language Distribution + System Health */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Technique Usage */}
-            <div className="p-5 rounded-2xl border border-white/8 bg-component">
-              <SectionHeader tag="Optimization" title={t('dashboard.techniqueUsage')} />
-              {Object.keys(stats.techniqueCounts).length > 0 ? (
-                <div className="space-y-4">
-                  {Object.entries(stats.techniqueCounts)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([tech, count], i) => (
-                      <BarRow key={tech} label={tech} count={count} total={projects.length} colorClass={i === 0 ? 'bg-accent' : i === 1 ? 'bg-green-400/50' : 'bg-primary/40'} />
-                    ))}
-                </div>
-              ) : (
-                <p className="text-xs font-mono text-secondary/30">No techniques applied</p>
-              )}
-            </div>
-
-            {/* Language Distribution */}
-            <div className="p-5 rounded-2xl border border-white/8 bg-component">
-              <SectionHeader tag="Codegen" title={t('dashboard.langDist')} />
-              {Object.keys(stats.langCounts).length > 0 ? (
-                <div className="space-y-4">
-                  {Object.entries(stats.langCounts)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([lang, count]) => (
-                      <BarRow key={lang} label={lang} count={count} total={projects.length} colorClass="bg-blue-400/50" />
-                    ))}
-                </div>
-              ) : (
-                <p className="text-xs font-mono text-secondary/30">No language data</p>
-              )}
-
-              {/* Sensor coverage tags */}
-              {stats.allSensors.length > 0 && (
-                <div className="mt-5 pt-4 border-t border-white/6">
-                  <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest mb-3">
-                    {t('dashboard.sensorCoverage')}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {stats.allSensors.map(s => (
-                      <span
-                        key={s}
-                        className="text-[10px] px-2.5 py-1 bg-white/4 border border-white/8 text-secondary/70 rounded font-mono hover:border-accent/25 hover:text-secondary transition-colors"
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* System Health */}
-            <div className="p-5 rounded-2xl border border-white/8 bg-component">
-              <SectionHeader tag="System" title={t('dashboard.systemHealth')} live />
-              <SystemHealthPanel />
-            </div>
-          </div>
-
-          {/* Row D: Deployed Models + Sensor-Hardware Matrix */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Deployed Models */}
-            {Object.keys(stats.modelCounts).length > 0 && (
-              <div className="p-5 rounded-2xl border border-white/8 bg-component">
-                <SectionHeader tag="AI" title="Deployed Models" badge={`${stats.models.length} unique`} />
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {Object.entries(stats.modelCounts)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([model, count]) => (
-                      <div
-                        key={model}
-                        className="p-3 rounded-xl border border-white/6 bg-white/2 hover:border-accent/20 transition-colors"
-                      >
-                        <p className="text-xs font-mono text-primary truncate">{model}</p>
-                        <p className="text-[10px] font-mono text-secondary/40 mt-1">
-                          {count} deployment{count !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Sensor × Hardware Matrix */}
-            <div className="p-5 rounded-2xl border border-white/8 bg-component">
-              <SectionHeader tag="Coverage" title={t('dashboard.sensorMatrix')} />
-              <SensorHardwareMatrix projects={projects} />
-            </div>
-          </div>
         </>
       )}
 
-      {/* ── Pipeline grid ──────────────────────────────────── */}
+      {/* ── Pipeline Grid ──────────────────────────────────── */}
       {projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 rounded-2xl border border-dashed border-white/10 bg-white/1">
           <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-6">
@@ -819,7 +548,13 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject }:
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredProjects.map(project => (
-              <ProjectCard key={project.id} project={project} onOpen={onOpenProject} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                stage={stats.stageMap.get(project.id) ?? { pipeline: true, shop: false, build: false, launch: false }}
+                score={stats.scoreMap.get(project.id) ?? null}
+                onOpen={onOpenProject}
+              />
             ))}
             <button
               onClick={onNewProject}

@@ -16,6 +16,7 @@ import AdminPage from './components/pages/AdminPage'
 import AdminMainPage from './components/pages/AdminMainPage'
 import ShopPage from './components/pages/ShopPage'
 import DeployPage from './components/pages/DeployPage'
+import LaunchPage from './components/pages/LaunchPage'
 import Toast from './components/Toast'
 import ProjectDetailModal from './components/ProjectDetailModal'
 import ProfileModal from './components/ProfileModal'
@@ -59,8 +60,9 @@ const initialState: WizardState = {
 const TAB_TO_PATH: Record<ActiveTab, string> = {
   dashboard: '/dashboard',
   project:   '/project',
-  shop:      '/procurement',
-  deploy:    '/deploy',
+  shop:      '/shop',
+  deploy:    '/build',
+  launch:    '/launch',
   contact:   '/contact',
   settings:  '/settings',
   admin:     '/admin',
@@ -68,8 +70,9 @@ const TAB_TO_PATH: Record<ActiveTab, string> = {
 
 function pathToTab(pathname: string): ActiveTab {
   if (pathname.startsWith('/project'))     return 'project'
-  if (pathname.startsWith('/procurement')) return 'shop'
-  if (pathname.startsWith('/deploy'))      return 'deploy'
+  if (pathname.startsWith('/shop') || pathname.startsWith('/procurement')) return 'shop'
+  if (pathname.startsWith('/build') || pathname.startsWith('/deploy')) return 'deploy'
+  if (pathname.startsWith('/launch'))      return 'launch'
   if (pathname.startsWith('/contact'))     return 'contact'
   if (pathname.startsWith('/settings'))    return 'settings'
   if (pathname.startsWith('/admin'))       return 'admin'
@@ -150,8 +153,9 @@ function MainPage({
       else if (ctrl && e.key === '2') { e.preventDefault(); handleTabChange('project') }
       else if (ctrl && e.key === '3') { e.preventDefault(); handleTabChange('shop') }
       else if (ctrl && e.key === '4') { e.preventDefault(); handleTabChange('deploy') }
-      else if (ctrl && e.key === '5') { e.preventDefault(); handleTabChange('contact') }
-      else if (ctrl && e.key === '6') { e.preventDefault(); handleTabChange('settings') }
+      else if (ctrl && e.key === '5') { e.preventDefault(); handleTabChange('launch') }
+      else if (ctrl && e.key === '6') { e.preventDefault(); handleTabChange('contact') }
+      else if (ctrl && e.key === '7') { e.preventDefault(); handleTabChange('settings') }
       else if (ctrl && e.key === 'n') { e.preventDefault(); handleNewProject() }
       else if (ctrl && e.key === '/') { e.preventDefault(); setShowShortcuts(v => !v) }
       else if (e.key === 'Escape') {
@@ -251,8 +255,9 @@ function MainPage({
     const tabLogs: Record<string, string> = {
       dashboard: 'Loading ops dashboard · fetching telemetry',
       project:   'Pipeline wizard engaged · awaiting configuration',
-      shop:      'Component procurement · scanning inventory',
-      deploy:    'Deploy console · hardware flash sequence initialized',
+      shop:      'Component shop · scanning inventory',
+      deploy:    'Build console · assembly & environment setup',
+      launch:    'Launch pad · benchmark & validation',
       contact:   'Opening comms channel · signal strength optimal',
       settings:  'Opening system configuration · preferences panel',
       admin:     'Admin console accessed · elevated privileges',
@@ -312,6 +317,7 @@ function MainPage({
         projects={savedProjects}
         onOpenProject={(project) => setDetailProject(project)}
         onNewProject={handleNewProject}
+        onNavigate={handleTabChange}
       />
     )
     if (activeTab === 'shop') return (
@@ -327,6 +333,13 @@ function MainPage({
     )
     if (activeTab === 'deploy') return (
       <DeployPage
+        state={state}
+        savedProjects={savedProjects}
+        onGoToProject={() => handleTabChange('project')}
+      />
+    )
+    if (activeTab === 'launch') return (
+      <LaunchPage
         state={state}
         savedProjects={savedProjects}
         onGoToProject={() => handleTabChange('project')}
@@ -430,10 +443,12 @@ function MainPage({
             <div className="space-y-2">
               {[
                 ['⌘/Ctrl + 1', 'Dashboard'],
-                ['⌘/Ctrl + 2', 'Project'],
-                ['⌘/Ctrl + 3', 'Procurement'],
-                ['⌘/Ctrl + 4', 'Contact'],
-                ['⌘/Ctrl + 5', 'Settings'],
+                ['⌘/Ctrl + 2', 'Pipeline'],
+                ['⌘/Ctrl + 3', 'Shop'],
+                ['⌘/Ctrl + 4', 'Build'],
+                ['⌘/Ctrl + 5', 'Launch'],
+                ['⌘/Ctrl + 6', 'Contact'],
+                ['⌘/Ctrl + 7', 'Settings'],
                 ['⌘/Ctrl + N', 'New Pipeline'],
                 ['⌘/Ctrl + /', 'Toggle Shortcuts'],
                 ['Escape', 'Close Modal'],

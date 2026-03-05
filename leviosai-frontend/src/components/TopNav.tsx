@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useI18n } from '../utils/i18n'
 import { useNotifications, type Notification } from '../utils/notifications'
 
-export type Tab = 'dashboard' | 'project' | 'shop' | 'deploy' | 'contact' | 'settings' | 'admin'
+export type Tab = 'dashboard' | 'project' | 'shop' | 'deploy' | 'launch' | 'contact' | 'settings' | 'admin'
 
 interface Props {
   activeTab: Tab
@@ -13,12 +13,13 @@ interface Props {
   profilePhoto?: string | null
 }
 
-const TAB_IDS: Tab[] = ['dashboard', 'project', 'shop', 'deploy', 'contact']
+const TAB_IDS: Tab[] = ['dashboard', 'project', 'shop', 'deploy', 'launch', 'contact']
 const TAB_KEYS: Record<string, string> = {
   dashboard: 'nav.dashboard',
-  project:   'nav.project',
+  project:   'nav.pipeline',
   shop:      'nav.shop',
-  deploy:    'nav.deploy',
+  deploy:    'nav.build',
+  launch:    'nav.launch',
   contact:   'nav.contact',
 }
 

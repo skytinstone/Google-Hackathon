@@ -39,6 +39,39 @@ def init_db():
             photo TEXT
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS parts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id TEXT NOT NULL,
+            name TEXT NOT NULL DEFAULT '',
+            manufacturer TEXT NOT NULL DEFAULT '',
+            part_number TEXT NOT NULL DEFAULT '',
+            category TEXT NOT NULL DEFAULT 'Accessory',
+            qty INTEGER NOT NULL DEFAULT 1,
+            unit_price REAL NOT NULL DEFAULT 0.0,
+            supplier TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'ordered',
+            datasheet TEXT NOT NULL DEFAULT '',
+            memo TEXT NOT NULL DEFAULT '',
+            image TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_parts_project ON parts(project_id)")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS packages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id TEXT NOT NULL,
+            name TEXT NOT NULL DEFAULT '',
+            version TEXT NOT NULL DEFAULT '',
+            latest TEXT NOT NULL DEFAULT '',
+            category TEXT NOT NULL DEFAULT 'runtime',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_packages_project ON packages(project_id)")
     conn.commit()
     conn.close()
 
@@ -244,6 +277,50 @@ class ProfileUpdate(BaseModel):
     github: str = ''
     role: str = ''
     photo: Optional[str] = None
+
+
+class PartCreate(BaseModel):
+    project_id: str
+    name: str
+    manufacturer: str = ''
+    part_number: str = ''
+    category: str = 'Accessory'
+    qty: int = 1
+    unit_price: float = 0.0
+    supplier: str = ''
+    status: str = 'ordered'
+    datasheet: str = ''
+    memo: str = ''
+    image: Optional[str] = None
+
+
+class PartUpdate(BaseModel):
+    name: Optional[str] = None
+    manufacturer: Optional[str] = None
+    part_number: Optional[str] = None
+    category: Optional[str] = None
+    qty: Optional[int] = None
+    unit_price: Optional[float] = None
+    supplier: Optional[str] = None
+    status: Optional[str] = None
+    datasheet: Optional[str] = None
+    memo: Optional[str] = None
+    image: Optional[str] = None
+
+
+class PackageCreate(BaseModel):
+    project_id: str
+    name: str
+    version: str = ''
+    latest: str = ''
+    category: str = 'runtime'
+
+
+class PackageUpdate(BaseModel):
+    name: Optional[str] = None
+    version: Optional[str] = None
+    latest: Optional[str] = None
+    category: Optional[str] = None
 
 
 # ============================================================
@@ -563,3 +640,175 @@ Return ONLY the raw code. Do NOT wrap it in markdown code blocks."""
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
+
+
+# ============================================================
+# Routes — Parts CRUD
+# ============================================================
+
+
+@app.get("/api/parts/{project_id}")
+def list_parts(project_id: str):
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM parts WHERE project_id = ? ORDER BY created_at ASC",
+        (project_id,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/parts", status_code=201)
+def create_part(data: PartCreate):
+    conn = get_db()
+    cur = conn.execute(
+        """INSERT INTO parts (project_id, name, manufacturer, part_number, category, qty, unit_price, supplier, status, datasheet, memo, image)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (data.project_id, data.name, data.manufacturer, data.part_number,
+         data.category, data.qty, data.unit_price, data.supplier,
+         data.status, data.datasheet, data.memo, data.image),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM parts WHERE id = ?", (cur.lastrowid,)).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@app.put("/api/parts/{part_id}")
+def update_part_endpoint(part_id: int, data: PartUpdate):
+    conn = get_db()
+    existing = conn.execute("SELECT * FROM parts WHERE id = ?", (part_id,)).fetchone()
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Part not found")
+
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not updates:
+        conn.close()
+        return dict(existing)
+
+    set_clause = ", ".join(f"{k} = ?" for k in updates)
+    set_clause += ", updated_at = datetime('now')"
+    values = list(updates.values())
+    values.append(part_id)
+
+    conn.execute(f"UPDATE parts SET {set_clause} WHERE id = ?", values)
+    conn.commit()
+    row = conn.execute("SELECT * FROM parts WHERE id = ?", (part_id,)).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@app.delete("/api/parts/{part_id}")
+def delete_part(part_id: int):
+    conn = get_db()
+    existing = conn.execute("SELECT * FROM parts WHERE id = ?", (part_id,)).fetchone()
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Part not found")
+    conn.execute("DELETE FROM parts WHERE id = ?", (part_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "deleted", "id": part_id}
+
+
+@app.post("/api/parts/bulk/{project_id}", status_code=201)
+def bulk_create_parts(project_id: str, items: List[PartCreate]):
+    conn = get_db()
+    created = []
+    for data in items:
+        cur = conn.execute(
+            """INSERT INTO parts (project_id, name, manufacturer, part_number, category, qty, unit_price, supplier, status, datasheet, memo, image)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (project_id, data.name, data.manufacturer, data.part_number,
+             data.category, data.qty, data.unit_price, data.supplier,
+             data.status, data.datasheet, data.memo, data.image),
+        )
+        row = conn.execute("SELECT * FROM parts WHERE id = ?", (cur.lastrowid,)).fetchone()
+        created.append(dict(row))
+    conn.commit()
+    conn.close()
+    return created
+
+
+# ============================================================
+# Routes — Packages CRUD
+# ============================================================
+
+
+@app.get("/api/packages/{project_id}")
+def list_packages(project_id: str):
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM packages WHERE project_id = ? ORDER BY created_at ASC",
+        (project_id,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/packages", status_code=201)
+def create_package(data: PackageCreate):
+    conn = get_db()
+    cur = conn.execute(
+        "INSERT INTO packages (project_id, name, version, latest, category) VALUES (?, ?, ?, ?, ?)",
+        (data.project_id, data.name, data.version, data.latest, data.category),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM packages WHERE id = ?", (cur.lastrowid,)).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@app.put("/api/packages/{pkg_id}")
+def update_package(pkg_id: int, data: PackageUpdate):
+    conn = get_db()
+    existing = conn.execute("SELECT * FROM packages WHERE id = ?", (pkg_id,)).fetchone()
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Package not found")
+
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not updates:
+        conn.close()
+        return dict(existing)
+
+    set_clause = ", ".join(f"{k} = ?" for k in updates)
+    set_clause += ", updated_at = datetime('now')"
+    values = list(updates.values())
+    values.append(pkg_id)
+
+    conn.execute(f"UPDATE packages SET {set_clause} WHERE id = ?", values)
+    conn.commit()
+    row = conn.execute("SELECT * FROM packages WHERE id = ?", (pkg_id,)).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@app.delete("/api/packages/{pkg_id}")
+def delete_package(pkg_id: int):
+    conn = get_db()
+    existing = conn.execute("SELECT * FROM packages WHERE id = ?", (pkg_id,)).fetchone()
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Package not found")
+    conn.execute("DELETE FROM packages WHERE id = ?", (pkg_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "deleted", "id": pkg_id}
+
+
+@app.post("/api/packages/bulk/{project_id}", status_code=201)
+def bulk_create_packages(project_id: str, items: List[PackageCreate]):
+    conn = get_db()
+    created = []
+    for data in items:
+        cur = conn.execute(
+            "INSERT INTO packages (project_id, name, version, latest, category) VALUES (?, ?, ?, ?, ?)",
+            (project_id, data.name, data.version, data.latest, data.category),
+        )
+        row = conn.execute("SELECT * FROM packages WHERE id = ?", (cur.lastrowid,)).fetchone()
+        created.append(dict(row))
+    conn.commit()
+    conn.close()
+    return created

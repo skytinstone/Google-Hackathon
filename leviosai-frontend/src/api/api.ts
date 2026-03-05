@@ -101,6 +101,42 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+// ── Part types ───────────────────────────────────────────────
+export interface PartData {
+  id: number
+  project_id: string
+  name: string
+  manufacturer: string
+  part_number: string
+  category: string
+  qty: number
+  unit_price: number
+  supplier: string
+  status: string
+  datasheet: string
+  memo: string
+  image: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type PartCreateData = Omit<PartData, 'id' | 'created_at' | 'updated_at'>
+export type PartUpdateData = Partial<Omit<PartData, 'id' | 'project_id' | 'created_at' | 'updated_at'>>
+
+export interface PackageData {
+  id: number
+  project_id: string
+  name: string
+  version: string
+  latest: string
+  category: string
+  created_at: string
+  updated_at: string
+}
+
+export type PackageCreateData = Omit<PackageData, 'id' | 'created_at' | 'updated_at'>
+export type PackageUpdateData = Partial<Omit<PackageData, 'id' | 'project_id' | 'created_at' | 'updated_at'>>
+
 // ── Profile types ────────────────────────────────────────────
 export interface ProfileData {
   username?: string
@@ -146,6 +182,56 @@ export const api = {
     fetchJSON(`${API_BASE}/api/profile/${encodeURIComponent(username)}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+    }),
+
+  // Parts CRUD
+  listParts: (projectId: string): Promise<PartData[]> =>
+    fetchJSON(`${API_BASE}/api/parts/${encodeURIComponent(projectId)}`),
+
+  createPart: (data: PartCreateData): Promise<PartData> =>
+    fetchJSON(`${API_BASE}/api/parts`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  updatePart: (partId: number, data: PartUpdateData): Promise<PartData> =>
+    fetchJSON(`${API_BASE}/api/parts/${partId}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  deletePart: (partId: number): Promise<{ status: string; id: number }> =>
+    fetchJSON(`${API_BASE}/api/parts/${partId}`, { method: 'DELETE' }),
+
+  bulkCreateParts: (projectId: string, items: PartCreateData[]): Promise<PartData[]> =>
+    fetchJSON(`${API_BASE}/api/parts/bulk/${encodeURIComponent(projectId)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items),
+    }),
+
+  // Packages CRUD
+  listPackages: (projectId: string): Promise<PackageData[]> =>
+    fetchJSON(`${API_BASE}/api/packages/${encodeURIComponent(projectId)}`),
+
+  createPackage: (data: PackageCreateData): Promise<PackageData> =>
+    fetchJSON(`${API_BASE}/api/packages`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  updatePackage: (pkgId: number, data: PackageUpdateData): Promise<PackageData> =>
+    fetchJSON(`${API_BASE}/api/packages/${pkgId}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  deletePackage: (pkgId: number): Promise<{ status: string; id: number }> =>
+    fetchJSON(`${API_BASE}/api/packages/${pkgId}`, { method: 'DELETE' }),
+
+  bulkCreatePackages: (projectId: string, items: PackageCreateData[]): Promise<PackageData[]> =>
+    fetchJSON(`${API_BASE}/api/packages/bulk/${encodeURIComponent(projectId)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items),
     }),
 }
 

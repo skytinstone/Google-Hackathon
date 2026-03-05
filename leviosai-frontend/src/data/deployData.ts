@@ -372,7 +372,7 @@ export function getSdkSteps(category: string, language: string): SdkStep[] {
    Benchmark Profiles
    ================================================================ */
 
-const BENCHMARK_PROFILES: BenchmarkProfile[] = [
+export const BENCHMARK_PROFILES: BenchmarkProfile[] = [
   { hardware: 'Jetson Thor', baseLatencyMs: 8, baseFps: 125, baseMemoryMb: 2400, basePowerW: 25, baseAccuracy: 92.5 },
   { hardware: 'Jetson AGX Orin', baseLatencyMs: 14, baseFps: 71, baseMemoryMb: 1800, basePowerW: 18, baseAccuracy: 91.0 },
   { hardware: 'Hailo-8', baseLatencyMs: 6, baseFps: 166, baseMemoryMb: 512, basePowerW: 2.5, baseAccuracy: 88.5 },
@@ -386,7 +386,7 @@ const BENCHMARK_PROFILES: BenchmarkProfile[] = [
 ]
 
 // Optimization reduction multipliers
-const TECHNIQUE_EFFECTS: Record<string, { latency: number; memory: number; fps: number; power: number; accuracyDrop: number }> = {
+export const TECHNIQUE_EFFECTS: Record<string, { latency: number; memory: number; fps: number; power: number; accuracyDrop: number }> = {
   quantization:           { latency: 0.55, memory: 0.45, fps: 1.8,  power: 0.70, accuracyDrop: 1.5 },
   pruning:                { latency: 0.70, memory: 0.60, fps: 1.4,  power: 0.80, accuracyDrop: 0.8 },
   'knowledge distillation': { latency: 0.65, memory: 0.55, fps: 1.5,  power: 0.75, accuracyDrop: 0.5 },
