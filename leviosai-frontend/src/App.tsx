@@ -323,7 +323,6 @@ function MainPage({
         onOpenProject={(project) => setDetailProject(project)}
         onNewProject={handleNewProject}
         onNavigate={handleTabChange}
-        chatOpen={chatOpen}
       />
     )
     if (activeTab === 'shop') return (
@@ -335,8 +334,6 @@ function MainPage({
         onUpdateQuantity={updateCartQuantity}
         onClearCart={clearCart}
         savedProjects={savedProjects}
-        onNavigate={handleTabChange}
-        chatOpen={chatOpen}
       />
     )
     if (activeTab === 'deploy') return (
@@ -344,8 +341,6 @@ function MainPage({
         state={state}
         savedProjects={savedProjects}
         onGoToProject={() => handleTabChange('project')}
-        onNavigate={handleTabChange}
-        chatOpen={chatOpen}
       />
     )
     if (activeTab === 'launch') return (
@@ -353,11 +348,9 @@ function MainPage({
         state={state}
         savedProjects={savedProjects}
         onGoToProject={() => handleTabChange('project')}
-        onNavigate={handleTabChange}
-        chatOpen={chatOpen}
       />
     )
-    if (activeTab === 'contact') return <ContactPage chatOpen={chatOpen} onNavigate={handleTabChange} />
+    if (activeTab === 'contact') return <ContactPage />
     if (activeTab === 'settings') return <SettingsPage />
     if (activeTab === 'admin' && isAdmin) return <AdminPage />
     return renderStep()

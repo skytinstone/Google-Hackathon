@@ -25,8 +25,6 @@ interface Props {
   state: WizardState
   savedProjects: SavedProject[]
   onGoToProject: () => void
-  onNavigate?: (tab: string) => void
-  chatOpen?: boolean
 }
 
 type LaunchTab = 'overview' | 'deploy' | 'performance' | 'notes' | 'media'
@@ -1091,7 +1089,7 @@ function MediaTab({ project }: { project: SavedProject }) {
 /* ================================================================
    MAIN: LaunchPage
    ================================================================ */
-export default function LaunchPage({ state, savedProjects, onGoToProject, onNavigate, chatOpen }: Props) {
+export default function LaunchPage({ state, savedProjects, onGoToProject }: Props) {
   const { t } = useI18n()
   const { theme } = useTheme()
   const isLight = theme === 'light'

@@ -10,7 +10,6 @@ interface Props {
   onOpenProject: (project: SavedProject) => void
   onNewProject: () => void
   onNavigate: (tab: import('../TopNav').Tab) => void
-  chatOpen?: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -289,7 +288,7 @@ function ProjectCard({ project, stage, score, onOpen }: {
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export default function DashboardPage({ projects, onOpenProject, onNewProject, onNavigate, chatOpen }: Props) {
+export default function DashboardPage({ projects, onOpenProject, onNewProject, onNavigate }: Props) {
   const { t } = useI18n()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDomain, setFilterDomain] = useState<string | ''>('')

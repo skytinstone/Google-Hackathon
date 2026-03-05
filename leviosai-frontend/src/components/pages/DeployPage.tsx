@@ -13,8 +13,6 @@ interface Props {
   state: WizardState
   savedProjects: SavedProject[]
   onGoToProject: () => void
-  onNavigate?: (tab: string) => void
-  chatOpen?: boolean
 }
 
 type BuildTab = 'hardware' | 'software'
@@ -585,7 +583,7 @@ function SoftwareTab({ project, state }: { project: SavedProject; state: WizardS
 /* ================================================================
    MAIN: DeployPage (Build)
    ================================================================ */
-export default function DeployPage({ state, savedProjects, onGoToProject, onNavigate, chatOpen }: Props) {
+export default function DeployPage({ state, savedProjects, onGoToProject }: Props) {
   const { t } = useI18n()
   const { theme } = useTheme()
   const isLight = theme === 'light'

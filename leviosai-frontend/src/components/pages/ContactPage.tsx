@@ -7,11 +7,9 @@ import WorldMap from '../WorldMap'
 const YOUTUBE_URL = 'https://www.youtube.com/your-channel'
 
 interface Props {
-  chatOpen?: boolean
-  onNavigate?: (tab: string) => void
 }
 
-export default function ContactPage({ chatOpen, onNavigate }: Props) {
+export default function ContactPage() {
   const { t } = useI18n()
   const team = [
     {

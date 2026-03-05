@@ -14,8 +14,6 @@ interface Props {
   onUpdateQuantity: (productId: string, quantity: number) => void
   onClearCart: () => void
   savedProjects?: SavedProject[]
-  onNavigate?: (tab: string) => void
-  chatOpen?: boolean
 }
 
 type View = 'select-project' | 'browse' | 'checkout'
@@ -332,7 +330,7 @@ function EmbeddedBrowser({ url, storeName, storeColor, onClose }: {
 /* ================================================================
    Main ShopPage
    ================================================================ */
-export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCart, onUpdateQuantity, onClearCart, savedProjects, onNavigate, chatOpen }: Props) {
+export default function ShopPage({ state, cartItems, onAddToCart, onRemoveFromCart, onUpdateQuantity, onClearCart, savedProjects }: Props) {
   const { t } = useI18n()
   const [view, setView] = useState<View>(state.projectName ? 'browse' : 'select-project')
   const [selectedCat, setSelectedCat] = useState<ShopCategory | 'all'>('all')
