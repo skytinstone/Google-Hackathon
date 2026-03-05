@@ -453,8 +453,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
             {/* Bottom label */}
             <div className="flex items-center justify-between mt-3 px-1">
-              <span className="font-mono text-xs text-secondary/50">Developed by Minseok Shin</span>
-              <span className="font-mono text-xs text-secondary/50">Google Hackathon 2026</span>
+              <span className="font-mono text-xs text-secondary/50">© 2026 Horcrux Technology</span>
+              <span className="font-mono text-xs text-secondary/50">Founder Minseok Shin</span>
             </div>
           </div>
         )}
