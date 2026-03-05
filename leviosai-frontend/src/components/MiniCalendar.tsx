@@ -8,7 +8,8 @@ interface Props {
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 export default function MiniCalendar({ chatOpen }: Props) {
-  const { pos, onMouseDown } = useDraggable('Calendar', window.innerWidth - 400, 110)
+  const zoom = parseFloat(document.documentElement.style.zoom || '1') || 1
+  const { pos, onMouseDown } = useDraggable('Calendar', window.innerWidth / zoom - 400, 110)
   const [collapsed, setCollapsed] = useState(false)
   const [userCollapsed, setUserCollapsed] = useState(false)
   const [now, setNow] = useState(new Date())

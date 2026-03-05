@@ -111,7 +111,8 @@ interface Props {
 }
 
 export default function CommandTerminal({ onNavigate, currentTab, chatOpen }: Props) {
-  const { pos, onMouseDown: onDragStart } = useDraggable('Terminal', window.innerWidth - 400, 760)
+  const zoom = parseFloat(document.documentElement.style.zoom || '1') || 1
+  const { pos, onMouseDown: onDragStart } = useDraggable('Terminal', window.innerWidth / zoom - 400, 760)
   const [collapsed, setCollapsed] = useState(false)
   const [userCollapsed, setUserCollapsed] = useState(false)
   const [lines, setLines] = useState<TerminalLine[]>([

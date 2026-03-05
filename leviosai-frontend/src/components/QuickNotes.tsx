@@ -20,7 +20,8 @@ interface Props {
 }
 
 export default function QuickNotes({ chatOpen }: Props) {
-  const { pos, onMouseDown } = useDraggable('QuickNotes', window.innerWidth - 400, 556)
+  const zoom = parseFloat(document.documentElement.style.zoom || '1') || 1
+  const { pos, onMouseDown } = useDraggable('QuickNotes', window.innerWidth / zoom - 400, 556)
   const [collapsed, setCollapsed] = useState(false)
   const [userCollapsed, setUserCollapsed] = useState(false)
   const [notes, setNotes] = useState(() => localStorage.getItem(STORAGE_KEY) ?? '')

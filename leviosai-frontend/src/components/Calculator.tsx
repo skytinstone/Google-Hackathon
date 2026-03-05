@@ -6,7 +6,8 @@ interface Props {
 }
 
 export default function Calculator({ chatOpen }: Props) {
-  const { pos, onMouseDown } = useDraggable('Calculator', window.innerWidth - 400, 320)
+  const zoom = parseFloat(document.documentElement.style.zoom || '1') || 1
+  const { pos, onMouseDown } = useDraggable('Calculator', window.innerWidth / zoom - 400, 320)
   const [collapsed, setCollapsed] = useState(false)
   const [userCollapsed, setUserCollapsed] = useState(false)
   const [display, setDisplay] = useState('0')
