@@ -42,7 +42,7 @@ export default function MiniCalendar({ chatOpen }: Props) {
     <div
       className="fixed select-none"
       style={{
-        right: 120, top: 110, zIndex: 10, width: 280,
+        right: 120, top: 120, zIndex: 10, width: 280,
         opacity: chatOpen ? 0 : 1,
         pointerEvents: chatOpen ? 'none' : 'auto',
         transition: 'opacity 0.4s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s ease',

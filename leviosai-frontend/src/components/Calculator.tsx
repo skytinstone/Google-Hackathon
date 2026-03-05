@@ -99,7 +99,7 @@ export default function Calculator({ chatOpen }: Props) {
     <div
       className="fixed select-none"
       style={{
-        right: 120, top: 370, zIndex: 10, width: 280,
+        right: 120, top: 380, zIndex: 10, width: 280,
         opacity: chatOpen ? 0 : 1,
         pointerEvents: chatOpen ? 'none' : 'auto',
         transition: 'opacity 0.4s ease 0.05s, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.05s, filter 0.4s ease 0.05s',

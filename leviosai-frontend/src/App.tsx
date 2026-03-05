@@ -393,7 +393,7 @@ function MainPage({
           className="fixed pointer-events-none"
           style={{
             right: 100,
-            top: 86,
+            top: 96,
             width: 320,
             bottom: 40,
             zIndex: 9,

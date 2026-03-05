@@ -82,7 +82,7 @@ export default function QuickNotes({ chatOpen }: Props) {
     <div
       className="fixed select-none"
       style={{
-        right: 120, top: 630, zIndex: 10, width: 280,
+        right: 120, top: 640, zIndex: 10, width: 280,
         opacity: chatOpen ? 0 : 1,
         pointerEvents: chatOpen ? 'none' : 'auto',
         transition: 'opacity 0.4s ease 0.1s, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s, filter 0.4s ease 0.1s',
