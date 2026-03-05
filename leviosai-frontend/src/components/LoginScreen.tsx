@@ -310,8 +310,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         <CornerDecor position="bottom-right" />
       </div>
 
-      {/* Ambient glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-accent/5 blur-3xl pointer-events-none transition-opacity duration-700" style={{ opacity: phase >= 1 ? 1 : 0 }} />
 
       {/* ── Language toggle — top-right ── */}
       <div className="fixed top-6 right-6 z-40 flex items-center gap-2 pointer-events-auto" onClick={e => e.stopPropagation()}>
@@ -393,7 +391,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             </div>
 
             {/* Card */}
-            <div className="bg-[#13131a]/90 backdrop-blur-sm border border-white/8 rounded-2xl p-8 glow-accent">
+            <div className="bg-[#13131a]/90 backdrop-blur-sm border border-white/8 rounded-2xl p-8">
               {/* Tagline — larger, i18n */}
               <p className="text-center font-mono text-sm text-secondary/70 leading-relaxed mb-1">
                 {t('login.tagline1')}
