@@ -458,8 +458,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         )}
       </div>
 
-      {/* Navigate Log — bottom-left on login */}
-      <SystemLog position="bottom-left" />
+      {/* Navigate Log — same position as Dashboard */}
+      <SystemLog position="top-right" />
     </div>
   )
 }
