@@ -78,6 +78,9 @@ function applyFontSize() {
 }
 
 function applyZoom() {
+  // Skip zoom on mobile — prevents layout issues with MobileGuard
+  if (screen.width < 768) return
+
   let zoomValue: string
   if (currentZoom === 'auto') {
     computedAutoZoom = computeAutoZoom()
