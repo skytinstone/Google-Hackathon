@@ -59,7 +59,7 @@ export default function SettingsPage() {
 
   function handleZoomChange(level: ZoomLevel) {
     applyZoom(level)
-    addLog(`Display zoom updated · ${level}%`, 'ACT')
+    addLog(`Display zoom updated · ${level === 'auto' ? 'Auto' : level + '"'}`, 'ACT')
   }
 
   function handleThemeChange(mode: ThemeMode) {
@@ -278,22 +278,31 @@ export default function SettingsPage() {
         <div className="p-5 rounded-2xl border border-white/8 bg-component">
           <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Appearance</p>
           <p className="text-sm font-bold text-primary mt-0.5 font-mono">Display Zoom</p>
-          <p className="text-[10px] text-secondary/40 font-mono mt-1">Auto mode adapts to your screen size (32&quot; QHD baseline)</p>
+          <p className="text-[10px] text-secondary/40 font-mono mt-1">Select your monitor size for optimal layout</p>
           <div className="mt-4 flex items-center gap-2 flex-wrap">
-            {(['auto', '90', '100', '110', '120', '130'] as ZoomLevel[]).map(level => (
-              <button
-                key={level}
-                onClick={() => handleZoomChange(level)}
-                className={[
-                  'px-3 py-2 rounded-xl border transition-all text-xs font-mono font-bold',
-                  zoom === level
-                    ? 'border-accent/50 bg-accent/10 text-accent'
-                    : 'border-white/8 text-secondary hover:border-white/20',
-                ].join(' ')}
-              >
-                {level === 'auto' ? `Auto (${autoZoomPercent}%)` : `${level}%`}
-              </button>
-            ))}
+            {(['auto', '14', '27', '32', '60'] as ZoomLevel[]).map(level => {
+              const labels: Record<string, string> = {
+                auto: `Auto (${autoZoomPercent}%)`,
+                '14': '13-14"',
+                '27': '27"',
+                '32': '32"',
+                '60': '60"',
+              }
+              return (
+                <button
+                  key={level}
+                  onClick={() => handleZoomChange(level)}
+                  className={[
+                    'px-3 py-2 rounded-xl border transition-all text-xs font-mono font-bold',
+                    zoom === level
+                      ? 'border-accent/50 bg-accent/10 text-accent'
+                      : 'border-white/8 text-secondary hover:border-white/20',
+                  ].join(' ')}
+                >
+                  {labels[level]}
+                </button>
+              )
+            })}
           </div>
         </div>
 

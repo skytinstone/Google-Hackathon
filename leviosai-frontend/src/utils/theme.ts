@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 
 export type ThemeMode = 'dark' | 'light'
 export type FontSize = 'small' | 'medium' | 'large'
-export type ZoomLevel = 'auto' | '90' | '100' | '110' | '120' | '130'
+export type ZoomLevel = 'auto' | '14' | '27' | '32' | '60'
 
 const FONT_SIZE_MAP: Record<FontSize, string> = {
   small:  '15px',
@@ -14,11 +14,10 @@ const FONT_SIZE_MAP: Record<FontSize, string> = {
 }
 
 const ZOOM_MAP: Record<Exclude<ZoomLevel, 'auto'>, string> = {
-  '90':  '0.9',
-  '100': '1',
-  '110': '1.1',
-  '120': '1.2',
-  '130': '1.3',
+  '14': '0.7',
+  '27': '1',
+  '32': '1.1',
+  '60': '1.5',
 }
 
 // ── Auto-zoom baseline: 32" QHD (2560x1440) at zoom 1.1 ──
@@ -52,10 +51,14 @@ function computeAutoZoom(): number {
 
 type Listener = () => void
 
-// ── One-time migration: old default '110' → new default 'auto' ──
-const ZOOM_MIGRATED_KEY = 'leviosai_zoom_v2'
+// ── Migration: old percentage zoom → new monitor-size zoom ──
+const ZOOM_MIGRATED_KEY = 'leviosai_zoom_v3'
 if (!localStorage.getItem(ZOOM_MIGRATED_KEY)) {
-  localStorage.setItem('leviosai_zoom', 'auto')
+  const old = localStorage.getItem('leviosai_zoom')
+  const migrateMap: Record<string, ZoomLevel> = {
+    '90': '14', '100': '27', '110': '32', '120': '60', '130': '60',
+  }
+  localStorage.setItem('leviosai_zoom', (old && migrateMap[old]) || 'auto')
   localStorage.setItem(ZOOM_MIGRATED_KEY, '1')
 }
 
