@@ -173,6 +173,10 @@ const translations: Record<Locale, Record<string, string>> = {
     'login.clickToContinue': 'Click anywhere to continue',
     'login.tagline1': 'Create your own Edge AI device.',
     'login.tagline2': 'Integrate. Build. Deploy.',
+    'login.google': 'Continue with Google',
+    'login.apple': 'Continue with Apple',
+    'login.kakao': 'Continue with Kakao',
+    'login.notice': 'If you would like to experience this platform, please email stevenshin16@gmail.com.',
 
     // Contact
     'contact.title': 'Contact',
@@ -512,6 +516,10 @@ const translations: Record<Locale, Record<string, string>> = {
     'login.clickToContinue': '계속하려면 화면을 클릭하세요',
     'login.tagline1': 'Edge AI Foundary Platform으로,',
     'login.tagline2': '무엇이든.',
+    'login.google': 'Google 계정으로 로그인',
+    'login.apple': 'Apple 계정으로 로그인',
+    'login.kakao': 'Kakao 계정으로 로그인',
+    'login.notice': '해당 플랫폼을 경험하고 싶다면 stevenshin16@gmail.com으로 메일 주시기 바랍니다.',
 
     // Contact — 제목 영어, 설명 한국어
     'contact.title': 'Contact',

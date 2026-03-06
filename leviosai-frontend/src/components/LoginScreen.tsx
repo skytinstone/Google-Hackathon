@@ -219,6 +219,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [showPw, setShowPw]     = useState(false)
   const [phase, setPhase]       = useState(0)
   const [clicked, setClicked]   = useState(false)
+  const [socialPopup, setSocialPopup] = useState(false)
 
   // Typewriter state
   const BRAND = 'LEVIOSAI'
@@ -310,6 +311,14 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         <CornerDecor position="bottom-right" />
       </div>
 
+
+      {/* ── Notice banner — top center ── */}
+      <div className="fixed top-3 left-0 right-0 z-30 text-center pointer-events-none">
+        <p className="text-white/70 text-xs font-mono">
+          <span className="font-bold tracking-wider mr-2">Notice :</span>
+          {t('login.notice')}
+        </p>
+      </div>
 
       {/* ── Language toggle — top-right ── */}
       <div className="fixed top-6 right-6 z-40 flex items-center gap-2 pointer-events-auto" onClick={e => e.stopPropagation()}>
@@ -449,6 +458,55 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   )}
                 </button>
               </form>
+
+              {/* Social login divider */}
+              <div className="flex items-center gap-3 my-5">
+                <div className="flex-1 h-px bg-white/8" />
+                <span className="font-mono text-[10px] text-secondary/50 uppercase tracking-widest">OR</span>
+                <div className="flex-1 h-px bg-white/8" />
+              </div>
+
+              {/* Social login buttons */}
+              <div className="space-y-2.5">
+                {/* Google */}
+                <button
+                  type="button"
+                  onClick={() => { addLog('Google OAuth initiated', 'AUTH'); setSocialPopup(true); setTimeout(() => setSocialPopup(false), 2500) }}
+                  className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/20 transition-all text-sm font-mono"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  <span className="text-primary/80">{t('login.google')}</span>
+                </button>
+
+                {/* Apple */}
+                <button
+                  type="button"
+                  onClick={() => { addLog('Apple OAuth initiated', 'AUTH'); setSocialPopup(true); setTimeout(() => setSocialPopup(false), 2500) }}
+                  className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/20 transition-all text-sm font-mono"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                  </svg>
+                  <span className="text-primary/80">{t('login.apple')}</span>
+                </button>
+
+                {/* Kakao */}
+                <button
+                  type="button"
+                  onClick={() => { addLog('Kakao OAuth initiated', 'AUTH'); setSocialPopup(true); setTimeout(() => setSocialPopup(false), 2500) }}
+                  className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-[#FEE500]/20 bg-[#FEE500]/[0.06] hover:bg-[#FEE500]/[0.12] hover:border-[#FEE500]/30 transition-all text-sm font-mono"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#FEE500">
+                    <path d="M12 3C6.48 3 2 6.36 2 10.44c0 2.62 1.75 4.93 4.37 6.24-.19.7-.68 2.53-.78 2.93-.12.49.18.49.38.36.15-.1 2.44-1.66 3.43-2.34.85.12 1.72.18 2.6.18 5.52 0 10-3.36 10-7.44S17.52 3 12 3z"/>
+                  </svg>
+                  <span className="text-[#FEE500]/80">{t('login.kakao')}</span>
+                </button>
+              </div>
             </div>
 
             {/* Bottom label */}
@@ -462,6 +520,92 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
       {/* Navigate Log — same position as Dashboard */}
       <SystemLog position="top-right" />
+
+      {/* Social login "coming soon" popup */}
+      {socialPopup && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          onClick={() => setSocialPopup(false)}
+          style={{ animation: 'socialBgIn 0.4s ease-out both' }}
+        >
+          <div
+            className="relative flex flex-col items-center gap-5 px-14 py-10 rounded-3xl border border-accent/20 bg-[#0b0c14]/95 shadow-[0_0_80px_rgba(107,150,190,0.15),0_0_30px_rgba(107,150,190,0.1)]"
+            style={{ animation: 'socialCardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Glow ring behind logo */}
+            <div
+              className="absolute top-6 w-20 h-20 rounded-full"
+              style={{
+                background: 'radial-gradient(circle, rgba(107,150,190,0.15) 0%, transparent 70%)',
+                animation: 'socialGlow 2s ease-in-out infinite',
+              }}
+            />
+
+            {/* Logo with entrance */}
+            <div
+              className="relative flex items-center gap-3"
+              style={{ animation: 'socialLogoIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both' }}
+            >
+              <img src="/leviosai.png" alt="LeviosAI" className="w-12 h-12 object-contain drop-shadow-[0_0_12px_rgba(107,150,190,0.3)]" />
+              <span className="text-primary font-bold text-2xl font-mono tracking-tight">LeviosAI</span>
+            </div>
+
+            {/* Animated divider line */}
+            <div
+              className="h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent"
+              style={{ animation: 'socialLineIn 0.5s ease-out 0.4s both', width: '120px' }}
+            />
+
+            {/* Message with stagger */}
+            <p
+              className="text-secondary/80 font-mono text-sm tracking-widest uppercase"
+              style={{ animation: 'socialTextIn 0.5s ease-out 0.55s both' }}
+            >
+              It will be updated soon
+            </p>
+
+            {/* Progress bar at bottom */}
+            <div className="w-32 h-0.5 bg-white/5 rounded-full overflow-hidden mt-1">
+              <div
+                className="h-full bg-accent/40 rounded-full"
+                style={{ animation: 'socialProgress 2.5s linear' }}
+              />
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes socialBgIn {
+              from { background: rgba(0,0,0,0); backdrop-filter: blur(0px); }
+              to   { background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); }
+            }
+            @keyframes socialCardIn {
+              from { opacity: 0; transform: translateY(30px) scale(0.9); }
+              to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            @keyframes socialLogoIn {
+              from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+              to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            @keyframes socialLineIn {
+              from { opacity: 0; width: 0px; }
+              to   { opacity: 1; width: 120px; }
+            }
+            @keyframes socialTextIn {
+              from { opacity: 0; transform: translateY(8px); letter-spacing: 0.5em; }
+              to   { opacity: 1; transform: translateY(0); letter-spacing: 0.15em; }
+            }
+            @keyframes socialGlow {
+              0%, 100% { opacity: 0.5; transform: scale(1); }
+              50%      { opacity: 1; transform: scale(1.2); }
+            }
+            @keyframes socialProgress {
+              from { width: 0%; }
+              to   { width: 100%; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   )
 }
