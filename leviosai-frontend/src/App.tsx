@@ -513,7 +513,7 @@ function MainPage({
 // ── Mobile Guard ─────────────────────────────────────────────
 function MobileGuard() {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-8 text-center">
+    <div className="h-screen overflow-hidden bg-background flex flex-col items-center justify-center px-8 text-center">
       <img src="/leviosai.png" alt="LeviosAI" className="w-20 h-20 object-contain mb-6 opacity-80" />
       <h1 className="text-2xl font-bold font-mono text-primary tracking-tight mb-2">LeviosAI</h1>
       <p className="text-xs font-mono text-accent/70 uppercase tracking-widest mb-6">Edge AI Optimization Platform</p>
@@ -523,7 +523,7 @@ function MobileGuard() {
           LeviosAI is optimized for larger screens. Please access from a tablet (iPad) or desktop browser for the full experience.
         </p>
       </div>
-      <p className="text-[10px] font-mono text-secondary/30 mt-8">Google AI Hackathon 2026</p>
+      <p className="text-[10px] font-mono text-secondary/30 mt-8">&copy; Horcrux Technologies</p>
     </div>
   )
 }
