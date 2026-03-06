@@ -435,7 +435,7 @@ export default function DashboardPage({ projects, onOpenProject, onNewProject, o
               <SectionHeader tag="Actions" title={t('dashboard.quickActions')} />
               <div className="grid grid-cols-2 gap-3">
                 <QuickActionCard icon="+" label={t('dashboard.createPipeline')} onClick={onNewProject} />
-                <QuickActionCard icon="⚙" label={t('dashboard.goToBuild')} onClick={() => onNavigate('deploy')} />
+                <QuickActionCard icon="*" label={t('dashboard.goToBuild')} onClick={() => onNavigate('deploy')} />
                 <QuickActionCard icon="▶" label={t('dashboard.goToLaunch')} onClick={() => onNavigate('launch')} />
                 <QuickActionCard icon="◈" label={t('dashboard.goToShop')} onClick={() => onNavigate('shop')} />
               </div>

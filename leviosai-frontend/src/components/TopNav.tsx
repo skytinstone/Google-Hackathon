@@ -72,7 +72,7 @@ export default function TopNav({ activeTab, onTabChange, isAdmin, loggedInUser, 
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-component/95 backdrop-blur-md border-b border-white/8 flex items-center px-8">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0a0a0a] backdrop-blur-md border-b border-white/8 flex items-center px-8">
 
       {/* Brand */}
       <div className="flex items-center gap-3 flex-shrink-0">

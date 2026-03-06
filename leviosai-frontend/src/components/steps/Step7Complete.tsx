@@ -1,114 +1,9 @@
-import { useState } from 'react'
-import type { StepProps, SavedProject, SelectedSensor, WizardState } from '../../types'
+import { useState, useRef, useCallback } from 'react'
+import type { StepProps, SavedProject, WizardState } from '../../types'
 import TypewriterText from '../TypewriterText'
+import ResizableSplit from '../ResizableSplit'
+import PipelineGraph3D from '../PipelineGraph3D'
 
-const SENSOR_ICONS: Record<string, string> = {
-  Vision: 'CAM', Depth: 'LDR', RF: 'RF', Audio: 'MIC',
-  Motion: 'IMU', Thermal: 'THM', Proximity: 'PRX', Location: 'GPS',
-}
-
-// ── ERD Pipeline diagram (read-only preview) ─────────────────
-function PipelineDiagram({
-  sensors, hardware, model,
-}: {
-  sensors: SelectedSensor[]
-  hardware: { device: string; specs: string } | null
-  model: { name: string; params?: string } | null
-}) {
-  if (!hardware) return null
-  const N = sensors.length
-  const NODE_H = 58
-  const GAP = 8
-  const totalH = N > 0 ? N * NODE_H + (N - 1) * GAP : NODE_H
-  const centerY = totalH / 2
-
-  return (
-    <div className="flex items-center gap-0 overflow-x-auto py-1">
-      {/* Sensor nodes */}
-      {N > 0 && (
-        <div className="flex flex-col flex-shrink-0" style={{ gap: GAP }}>
-          {sensors.map(s => (
-            <div
-              key={s.id}
-              className="relative px-3 py-2 rounded-xl border border-white/15 bg-[#0e1017] flex items-center gap-2"
-              style={{ minWidth: 118, height: NODE_H }}
-            >
-              <span className="text-[9px] font-bold font-mono text-accent/80 bg-accent/10 px-1 py-0.5 rounded flex-shrink-0">
-                {SENSOR_ICONS[s.type] ?? 'SEN'}
-              </span>
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold text-primary truncate">{s.name}</p>
-                <p className="text-[9px] font-mono text-accent/60">{s.type}</p>
-                <p className="text-[9px] text-secondary/50 font-mono leading-tight truncate">{s.specs}</p>
-              </div>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2 h-2 rounded-full bg-accent border border-[#0e1017] shadow-[0_0_6px_rgba(107,150,190,0.6)]" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* SVG connector: sensors → HW */}
-      {N > 0 && (
-        <svg width="56" height={totalH} className="flex-shrink-0">
-          <defs>
-            <linearGradient id="s7grad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#6b96be" stopOpacity="0.7" />
-              <stop offset="100%" stopColor="#6b96be" stopOpacity="0.3" />
-            </linearGradient>
-          </defs>
-          {sensors.map((_, i) => {
-            const y = i * (NODE_H + GAP) + NODE_H / 2
-            return (
-              <line key={i} x1="2" y1={y} x2="52" y2={centerY}
-                stroke="url(#s7grad)" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.8" />
-            )
-          })}
-          <circle cx="52" cy={centerY} r="3" fill="#6b96be" opacity="0.8" />
-        </svg>
-      )}
-      {N === 0 && <div className="w-6 flex-shrink-0" />}
-
-      {/* Hardware node */}
-      <div
-        className="relative px-4 py-3 rounded-2xl border-2 border-accent/60 bg-accent/10 shadow-[0_0_20px_rgba(107,150,190,0.18)] flex-shrink-0 text-center"
-        style={{ minWidth: 136 }}
-      >
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-accent border-2 border-[#0e1017] shadow-[0_0_8px_rgba(107,150,190,0.8)]" />
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-[#0e1017] shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
-        <div className="w-8 h-8 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mx-auto mb-1.5">
-          <span className="text-base">⬡</span>
-        </div>
-        <p className="text-primary font-bold text-xs">{hardware.device}</p>
-        <p className="text-[9px] font-mono text-accent/70 mt-0.5">Main Compute</p>
-        <p className="text-[9px] text-secondary/50 font-mono mt-0.5 leading-tight">{hardware.specs}</p>
-      </div>
-
-      {/* Arrow HW → AI */}
-      {model && (
-        <div className="flex items-center mx-2 flex-shrink-0">
-          <div className="w-8 h-px bg-gradient-to-r from-accent/60 to-green-400/60" />
-          <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[7px] border-l-green-400/60 border-b-[4px] border-b-transparent" />
-        </div>
-      )}
-
-      {/* AI Model node */}
-      {model && (
-        <div
-          className="relative px-4 py-3 rounded-xl border border-green-400/30 bg-green-400/5 flex-shrink-0 text-center"
-          style={{ minWidth: 128 }}
-        >
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-green-400 border-2 border-[#0e1017]" />
-          <div className="w-7 h-7 rounded-lg bg-green-400/15 border border-green-400/25 flex items-center justify-center mx-auto mb-1.5">
-            <span className="text-sm">◈</span>
-          </div>
-          <p className="text-green-400 font-semibold text-xs">{model.name}</p>
-          {model.params && <p className="text-[9px] font-mono text-green-400/60 mt-0.5">{model.params}</p>}
-          <p className="text-[9px] font-mono text-green-400/40 mt-0.5">AI Model</p>
-        </div>
-      )}
-    </div>
-  )
-}
 
 // ── Deployment Guide ──────────────────────────────────────────
 function getDeploymentSteps(state: WizardState) {
@@ -216,7 +111,55 @@ function DeploymentGuide({ state }: { state: WizardState }) {
   )
 }
 
-export default function Step7Complete({ state, updateState, goToStep, onAddProject, onGoToShop }: StepProps) {
+// ── Vertically resizable 3D graph ────────────────────────────
+function ResizableGraph({ state }: { state: WizardState }) {
+  const [height, setHeight] = useState(340)
+  const dragging = useRef(false)
+  const startY = useRef(0)
+  const startH = useRef(0)
+
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    dragging.current = true
+    startY.current = e.clientY
+    startH.current = height
+
+    const onMove = (ev: MouseEvent) => {
+      if (!dragging.current) return
+      const delta = ev.clientY - startY.current
+      setHeight(Math.max(200, Math.min(800, startH.current + delta)))
+    }
+    const onUp = () => {
+      dragging.current = false
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [height])
+
+  return (
+    <div className="mb-5 relative">
+      <div
+        className="rounded-2xl border border-white/8 overflow-hidden"
+        style={{ height, background: '#09090f' }}
+      >
+        <PipelineGraph3D state={state} />
+      </div>
+      {/* Resize handle */}
+      <div
+        onMouseDown={onDragStart}
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10 cursor-ns-resize group flex flex-col items-center"
+      >
+        <div className="w-12 h-3 rounded-full bg-white/8 border border-white/10 group-hover:bg-accent/20 group-hover:border-accent/30 transition-colors flex items-center justify-center">
+          <div className="w-6 h-px bg-white/20 group-hover:bg-accent/50 transition-colors" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function Step7Complete({ state, updateState, goToStep, onAddProject, onGoToShop, onReturnToManage }: StepProps) {
   const [projectName, setProjectName] = useState(state.projectName || '')
   const [added, setAdded] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
@@ -250,12 +193,12 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
   }
 
   const summary = [
-    { label: 'Domain',      value: state.domain,                   icon: '◈' },
-    { label: 'Hardware',    value: state.hardware?.device,          icon: '⬡' },
-    { label: 'Sensors',     value: state.sensors.length > 0 ? state.sensors.map(s => s.name).join(', ') : null, icon: '◎' },
-    { label: 'AI Model',    value: state.model ? `${state.model.name} (${state.model.params})` : null, icon: '◈' },
-    { label: 'Techniques',  value: state.techniques.length > 0 ? state.techniques.map(t => t.subtype ? `${t.name} · ${t.subtype.toUpperCase()}` : t.name).join(', ') : null, icon: '⬡' },
-    { label: 'Language',    value: state.language,                  icon: '⌨' },
+    { label: 'Domain',      value: state.domain,                   icon: '◈', step: 1 },
+    { label: 'Hardware',    value: state.hardware?.device,          icon: '⬡', step: 2 },
+    { label: 'Sensors',     value: state.sensors.length > 0 ? state.sensors.map(s => s.name).join(', ') : null, icon: '◎', step: 3 },
+    { label: 'AI Model',    value: state.model ? `${state.model.name} (${state.model.params})` : null, icon: '◈', step: 4 },
+    { label: 'Techniques',  value: state.techniques.length > 0 ? state.techniques.map(t => t.subtype ? `${t.name} · ${t.subtype.toUpperCase()}` : t.name).join(', ') : null, icon: '⬡', step: 5 },
+    { label: 'Language',    value: state.language,                  icon: '⌨', step: 6 },
   ]
 
   return (
@@ -267,9 +210,11 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
         <p className="text-secondary mt-2">Review your Edge AI pipeline and save it to your Dashboard</p>
       </div>
 
-      <div className="flex gap-6 flex-1 min-h-0">
-        {/* Left — Summary */}
-        <div className="flex-1 min-w-0 overflow-y-auto">
+      <ResizableSplit
+        className="mr-[360px]"
+        defaultLeftPercent={65}
+        left={
+        <div>
           {/* Success banner */}
           <div className="mb-5 p-5 rounded-2xl border border-green-500/25 bg-green-500/5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center flex-shrink-0">
@@ -283,42 +228,36 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
 
           {/* Configuration summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-            {summary.map(item => item.value && (
-              <div key={item.label} className="p-4 rounded-xl border border-white/8 bg-component">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-secondary/60 text-xs font-mono">{item.icon}</span>
-                  <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-widest">{item.label}</p>
+            {summary.map(item => (
+              <div
+                key={item.label}
+                onClick={() => goToStep(item.step)}
+                className={[
+                  'p-4 rounded-xl border bg-component cursor-pointer transition-all group',
+                  item.value
+                    ? 'border-white/8 hover:border-accent/40 hover:bg-white/[0.03]'
+                    : 'border-dashed border-white/10 hover:border-accent/30',
+                ].join(' ')}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-secondary/60 text-xs font-mono">{item.icon}</span>
+                    <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-widest">{item.label}</p>
+                  </div>
+                  <span className="text-[10px] font-mono text-accent/0 group-hover:text-accent/60 transition-colors">Edit →</span>
                 </div>
-                <p className="text-sm text-primary font-medium leading-snug">{item.value}</p>
+                <p className={[
+                  'text-sm font-medium leading-snug',
+                  item.value ? 'text-primary' : 'text-secondary/30 italic',
+                ].join(' ')}>
+                  {item.value || 'Not configured'}
+                </p>
               </div>
             ))}
           </div>
 
-          {/* Hardware Pipeline ERD */}
-          {state.hardware && (
-            <div className="p-4 rounded-xl border border-white/8 bg-component mb-5">
-              <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-widest mb-4">Hardware Pipeline</p>
-              <PipelineDiagram
-                sensors={state.sensors}
-                hardware={state.hardware}
-                model={state.model}
-              />
-              <div className="mt-3 flex items-center gap-4 text-[9px] font-mono text-secondary/40">
-                {state.sensors.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-px border-t border-dashed border-accent/50" />
-                    <span>Sensor → Compute</span>
-                  </div>
-                )}
-                {state.model && (
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-px bg-gradient-to-r from-accent/50 to-green-400/50" />
-                    <span>Compute → AI</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* 3D Pipeline Graph — vertically resizable */}
+          <ResizableGraph state={state} />
 
           {/* Deployment Guide */}
           <DeploymentGuide state={state} />
@@ -347,9 +286,9 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
             </div>
           )}
         </div>
-
-        {/* Right — Save to Dashboard */}
-        <div className="w-72 flex-shrink-0">
+        }
+        right={
+        <div>
           <div className="rounded-2xl border border-white/10 bg-component overflow-hidden">
             <div className="px-5 py-4 border-b border-white/6 bg-white/2">
               <p className="text-xs font-mono text-secondary/60 uppercase tracking-widest mb-0.5">Save Project</p>
@@ -435,7 +374,17 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
               onClick={onGoToShop}
               className="mt-3 w-full py-2 border border-accent/30 text-accent text-xs font-mono font-semibold rounded-lg hover:bg-accent/10 hover:border-accent/50 transition-colors flex items-center justify-center gap-2"
             >
-              🛒 Shop Components
+              Shop Components
+            </button>
+          )}
+
+          {/* Back to manage */}
+          {onReturnToManage && (
+            <button
+              onClick={onReturnToManage}
+              className="mt-3 w-full py-2 border border-accent/20 text-accent text-xs font-mono font-semibold rounded-lg hover:bg-accent/10 hover:border-accent/40 transition-colors"
+            >
+              ← Back to Pipelines
             </button>
           )}
 
@@ -447,7 +396,8 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
             ↺ Start New Pipeline
           </button>
         </div>
-      </div>
+        }
+      />
 
       {/* Navigation */}
       <div className="flex justify-between mt-6 flex-shrink-0">
@@ -494,7 +444,7 @@ export default function Step7Complete({ state, updateState, goToStep, onAddProje
               "{projectName}" has been saved successfully
             </p>
             <p className="text-xs text-secondary/50 mt-6 font-mono" style={{ animation: 'popIn 0.3s 0.7s ease-out both' }}>
-              Redirecting to Dashboard...
+              Redirecting to Pipeline Manager...
             </p>
             <div className="mt-3 flex justify-center">
               <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">

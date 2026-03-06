@@ -211,7 +211,7 @@ function CheckoutPanel({ cartItems, onBack, onClearCart }: {
           <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'redirect', label: 'Open in Store', desc: 'Redirect to each store', icon: '↗' },
-              { id: 'quote', label: 'Request Quote', desc: 'Send procurement request', icon: '✉' },
+              { id: 'quote', label: 'Request Quote', desc: 'Send procurement request', icon: '>' },
             ].map(m => (
               <button key={m.id} onClick={() => {
                 if (m.id === 'redirect') {

@@ -64,7 +64,7 @@ function ProjectSelector({ projects, onSelect, onGoToProject }: {
   if (projects.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
-        <span className="text-4xl mb-4 opacity-20">🚀</span>
+        <span className="text-4xl mb-4 opacity-20">▸</span>
         <p className="text-sm font-mono text-secondary/50 mb-4">No saved pipelines yet</p>
         <button onClick={onGoToProject}
           className="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-accent/20 text-accent border border-accent/30 hover:bg-accent/30 transition-colors">

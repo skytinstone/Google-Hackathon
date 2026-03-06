@@ -45,7 +45,7 @@ export default function FloatingChatButton({ isOpen, onToggle }: Props) {
         dragging ? 'cursor-grabbing scale-110' : 'cursor-grab hover:scale-110',
         isOpen
           ? 'bg-accent border-2 border-accent/60 shadow-[0_0_24px_rgba(107,150,190,0.4)]'
-          : 'bg-component border-2 border-white/15 hover:border-accent/40 shadow-[0_0_20px_rgba(0,0,0,0.5)]',
+          : 'bg-[#0a0a0a] border-2 border-white/15 hover:border-accent/40 shadow-[0_0_20px_rgba(0,0,0,0.5)]',
       ].join(' ')}
       style={{
         right: `${(isOpen ? 384 : 24) - pos.x}px`,

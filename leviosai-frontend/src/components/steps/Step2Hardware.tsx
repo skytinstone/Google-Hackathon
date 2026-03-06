@@ -3,6 +3,7 @@ import type { StepProps, SelectedSensor } from '../../types'
 import { HARDWARE, HARDWARE_DETAILS, SENSORS, analyzeHardwarePdf, hasApiKey } from '../../api/api'
 import TypewriterText from '../TypewriterText'
 import HardwareBenchmark from '../HardwareBenchmark'
+import ResizableSplit from '../ResizableSplit'
 
 type HardwareMap = typeof HARDWARE
 
@@ -14,12 +15,13 @@ const SENSOR_ICONS: Record<string, string> = {
 
 // ── Hardware Right Panel ──────────────────────────────────────
 function HardwareRightPanel({
-  hardware, deviceId, sensors, onSensorToggle,
+  hardware, deviceId, sensors, onSensorToggle, onSensorQuantity,
 }: {
   hardware: { device: string; specs: string } | null
   deviceId: string
   sensors: SelectedSensor[]
   onSensorToggle: (s: SelectedSensor) => void
+  onSensorQuantity: (id: string, delta: number) => void
 }) {
   const details = deviceId ? HARDWARE_DETAILS[deviceId] : null
 
@@ -94,7 +96,7 @@ function HardwareRightPanel({
           </div>
           {sensors.length > 0 && (
             <span className="text-[10px] font-mono text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full">
-              {sensors.length} selected
+              {sensors.length} type{sensors.length !== 1 ? 's' : ''} · {sensors.reduce((s, x) => s + (x.quantity ?? 1), 0)} unit{sensors.reduce((s, x) => s + (x.quantity ?? 1), 0) !== 1 ? 's' : ''}
             </span>
           )}
         </div>
@@ -134,11 +136,24 @@ function HardwareRightPanel({
         </div>
 
         {sensors.length > 0 && (
-          <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+          <div className="px-4 pb-3 space-y-1.5">
             {sensors.map(s => (
-              <span key={s.id} className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 bg-accent/10 border border-accent/20 text-accent rounded-full">
-                {SENSOR_ICONS[s.type] ?? '◎'} {s.name}
-              </span>
+              <div key={s.id} className="flex items-center gap-2 text-[10px] font-mono px-2.5 py-1.5 bg-accent/5 border border-accent/15 text-accent rounded-lg">
+                <span className="font-bold">{SENSOR_ICONS[s.type] ?? '◎'}</span>
+                <span className="flex-1 truncate">{s.name}</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={e => { e.stopPropagation(); onSensorQuantity(s.id, -1) }}
+                    disabled={(s.quantity ?? 1) <= 1}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-accent/10 hover:bg-accent/20 text-accent/70 hover:text-accent disabled:opacity-20 transition-colors cursor-pointer"
+                  >−</button>
+                  <span className="w-5 text-center font-bold tabular-nums">{s.quantity ?? 1}</span>
+                  <button
+                    onClick={e => { e.stopPropagation(); onSensorQuantity(s.id, 1) }}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-accent/10 hover:bg-accent/20 text-accent/70 hover:text-accent transition-colors cursor-pointer"
+                  >+</button>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -167,7 +182,15 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
 
   function toggleSensor(sensor: SelectedSensor) {
     const has = state.sensors.some(s => s.id === sensor.id)
-    updateState({ sensors: has ? state.sensors.filter(s => s.id !== sensor.id) : [...state.sensors, sensor] })
+    updateState({ sensors: has ? state.sensors.filter(s => s.id !== sensor.id) : [...state.sensors, { ...sensor, quantity: 1 }] })
+  }
+
+  function changeSensorQuantity(id: string, delta: number) {
+    updateState({
+      sensors: state.sensors.map(s =>
+        s.id === id ? { ...s, quantity: Math.max(1, Math.min(99, (s.quantity ?? 1) + delta)) } : s
+      ),
+    })
   }
 
   async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -211,16 +234,18 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
         <button
           onClick={() => goToStep(3)}
           disabled={!state.hardware}
-          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors mr-[610px] mt-[60px]"
         >
           Next: HW Config →
         </button>
       </div>
 
       {/* Split layout */}
-      <div className="flex gap-6 flex-1 min-h-0">
-        {/* Left — Hardware category accordion */}
-        <div className="w-1/2 flex flex-col gap-3 overflow-y-auto pr-1">
+      <ResizableSplit
+        className="mr-[360px]"
+        defaultLeftPercent={50}
+        left={
+          <div className="flex flex-col gap-3">
           <div className="space-y-2">
             {Object.entries(hardware).map(([category, data]) => {
               const isOpen = openCategory === category
@@ -294,23 +319,25 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
             )}
           </div>
         </div>
-
-        {/* Right — Hardware info + Sensor selection */}
-        <div className="flex-1 min-w-0">
+        }
+        right={
           <HardwareRightPanel
             hardware={state.hardware}
             deviceId={selectedDeviceId}
             sensors={state.sensors}
             onSensorToggle={toggleSensor}
+            onSensorQuantity={changeSensorQuantity}
           />
-        </div>
-      </div>
+        }
+      />
 
       {/* Hardware Benchmark */}
-      <HardwareBenchmark selectedDevice={state.hardware?.device} />
+      <div className="mr-[360px]">
+        <HardwareBenchmark selectedDevice={state.hardware?.device} />
+      </div>
 
       {/* Navigation */}
-      <div className="flex mt-6 flex-shrink-0">
+      <div className="flex mt-6 flex-shrink-0 mr-[360px]">
         <button
           onClick={() => goToStep(1)}
           className="px-6 py-2.5 border border-white/10 text-secondary font-semibold rounded-lg hover:border-white/20 hover:text-primary transition-colors"

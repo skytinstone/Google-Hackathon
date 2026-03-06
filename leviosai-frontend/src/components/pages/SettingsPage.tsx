@@ -311,7 +311,7 @@ export default function SettingsPage() {
           <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Appearance</p>
           <p className="text-sm font-bold text-primary mt-0.5 font-mono">{t('settings.theme')}</p>
           <div className="mt-4 flex items-center gap-3">
-            {([['dark', 'settings.themeDark', '◐'], ['light', 'settings.themeLight', '☀']] as const).map(([mode, key, icon]) => (
+            {([['dark', 'settings.themeDark', 'D'], ['light', 'settings.themeLight', 'L']] as const).map(([mode, key, icon]) => (
               <button
                 key={mode}
                 onClick={() => handleThemeChange(mode)}

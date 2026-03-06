@@ -424,7 +424,7 @@ export default function ProfileModal({ username, location, onClose, onLogout }: 
                 </InfoRow>
 
                 {/* Preferred Framework */}
-                <InfoRow icon="⚙" label="Preferred Framework">
+                <InfoRow icon="*" label="Preferred Framework">
                   {editing ? (
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {FRAMEWORK_OPTIONS.map(opt => {

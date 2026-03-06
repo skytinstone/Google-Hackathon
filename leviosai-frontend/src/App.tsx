@@ -17,6 +17,7 @@ import AdminMainPage from './components/pages/AdminMainPage'
 import ShopPage from './components/pages/ShopPage'
 import DeployPage from './components/pages/DeployPage'
 import LaunchPage from './components/pages/LaunchPage'
+import PipelineManagePage from './components/pages/PipelineManagePage'
 import Toast from './components/Toast'
 import ProjectDetailModal from './components/ProjectDetailModal'
 import ProfileModal from './components/ProfileModal'
@@ -130,6 +131,8 @@ function MainPage({
   const [chatOpen, setChatOpen]           = useState(false)
   const [pendingLogout, setPendingLogout] = useState(false)
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
+  const [pipelineMode, setPipelineMode]   = useState<'manage' | 'wizard'>('manage')
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
   const [detailProject, setDetailProject] = useState<SavedProject | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
@@ -216,11 +219,20 @@ function MainPage({
   const isAdmin = loggedInUser === 'admin'
 
   function addProject(project: SavedProject) {
-    setSavedProjects(prev => [project, ...prev])
-    navigate(TAB_TO_PATH.dashboard)
-    addLog(`Project "${project.name}" committed · dashboard updated`, 'OK')
-    addNotification(`Project "${project.name}" saved to dashboard`, 'project')
-    showToast('Project saved to dashboard', 'success')
+    if (editingProjectId) {
+      // Update existing project
+      setSavedProjects(prev => prev.map(p => p.id === editingProjectId ? project : p))
+      setEditingProjectId(null)
+      addLog(`Project "${project.name}" updated`, 'OK')
+      showToast('Pipeline updated', 'success')
+    } else {
+      setSavedProjects(prev => [project, ...prev])
+      addLog(`Project "${project.name}" committed`, 'OK')
+      showToast('Pipeline saved', 'success')
+    }
+    setPipelineMode('manage')
+    setState(initialState)
+    addNotification(`Project "${project.name}" saved`, 'project')
   }
 
   function handleNewProject() {
@@ -244,16 +256,52 @@ function MainPage({
       ...(t ? { domain: t.domain } : {}),
     })
     setShowNewProjectModal(false)
+    setEditingProjectId(null)
+    setPipelineMode('wizard')
     navigate(TAB_TO_PATH.project)
     addLog(`Pipeline initialized · "${data.name}"${t ? ` · template: ${t.name}` : ''}`, 'INIT')
     addNotification(`New pipeline "${data.name}" created`, 'project')
     if (t) showToast(`Template "${t.name}" applied`, 'info')
   }
 
+  function handleEditPipeline(project: SavedProject) {
+    // Load saved project back into wizard state — go to Step 7 (Complete) for overview
+    setEditingProjectId(project.id)
+    setState({
+      ...initialState,
+      currentStep: 7,
+      projectName: project.name,
+      projectNo: project.projectNo,
+      projectAuthor: project.author,
+      projectCcAuthors: project.ccAuthors || [],
+      projectDescription: project.description || '',
+      projectCustomDate: project.customDate || '',
+      domain: project.domain,
+      language: project.language || 'Python',
+    })
+    setPipelineMode('wizard')
+    addLog(`Editing pipeline · "${project.name}"`, 'NAV')
+  }
+
+  function handleDeletePipeline(id: string) {
+    const project = savedProjects.find(p => p.id === id)
+    setSavedProjects(prev => prev.filter(p => p.id !== id))
+    addLog(`Pipeline "${project?.name ?? id}" deleted`, 'ACT')
+    showToast('Pipeline deleted', 'info')
+  }
+
+  function handleReturnToManage() {
+    setPipelineMode('manage')
+    setEditingProjectId(null)
+    setState(initialState)
+  }
+
   function handleTabChange(tab: ActiveTab) {
-    if (tab === 'project' && !state.projectName) {
-      setShowNewProjectModal(true)
-      return
+    if (tab === 'project' && pipelineMode === 'wizard') {
+      // Clicking Pipeline tab always returns to manage page
+      setPipelineMode('manage')
+      setEditingProjectId(null)
+      setState(initialState)
     }
     navigate(TAB_TO_PATH[tab])
     if (tab === 'project') setChatOpen(false)
@@ -295,12 +343,13 @@ function MainPage({
     showToast('Cart cleared', 'info')
   }
 
-  const sidebarVisible = activeTab === 'project'
+  const sidebarVisible = activeTab === 'project' && pipelineMode === 'wizard'
   const stepProps = {
     state, updateState, goToStep,
     onApiKeyNeeded: () => setShowApiModal(true),
     onAddProject: addProject,
     onGoToShop: () => handleTabChange('shop'),
+    onReturnToManage: handleReturnToManage,
   }
 
   function renderStep() {
@@ -353,6 +402,17 @@ function MainPage({
     if (activeTab === 'contact') return <ContactPage />
     if (activeTab === 'settings') return <SettingsPage />
     if (activeTab === 'admin' && isAdmin) return <AdminPage />
+    // Pipeline: show manage page or wizard
+    if (activeTab === 'project' && pipelineMode === 'manage') {
+      return (
+        <PipelineManagePage
+          projects={savedProjects}
+          onNewPipeline={handleNewProject}
+          onEditPipeline={handleEditPipeline}
+          onDeletePipeline={handleDeletePipeline}
+        />
+      )
+    }
     return renderStep()
   }
 
@@ -375,7 +435,7 @@ function MainPage({
 
         <div
           className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out"
-          style={{ marginRight: chatOpen ? '360px' : '0px' }}
+          style={{ marginRight: '0px' }}
         >
           <main
             className="flex-1 overflow-y-auto p-8 relative"
@@ -388,7 +448,7 @@ function MainPage({
           </main>
         </div>
 
-        {/* Widget area — scrollable container */}
+        {/* Widget area — scrollable container (hidden on pipeline page) */}
         <div
           className="fixed"
           style={{
@@ -398,10 +458,10 @@ function MainPage({
             bottom: 0,
             zIndex: 9,
             transition: 'opacity 0.5s ease, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s ease',
-            opacity: chatOpen ? 0 : 1,
-            transform: chatOpen ? 'translateX(80px) scaleX(0.9)' : 'translateX(0) scaleX(1)',
-            filter: chatOpen ? 'blur(8px)' : 'blur(0px)',
-            pointerEvents: chatOpen ? 'none' : 'auto',
+            opacity: (chatOpen || sidebarVisible) ? 0 : 1,
+            transform: (chatOpen || sidebarVisible) ? 'translateX(80px) scaleX(0.9)' : 'translateX(0) scaleX(1)',
+            filter: (chatOpen || sidebarVisible) ? 'blur(8px)' : 'blur(0px)',
+            pointerEvents: (chatOpen || sidebarVisible) ? 'none' : 'auto',
           }}
         >
           <span className="text-xs font-mono font-bold text-white/30 uppercase tracking-widest mb-1.5 block">Widget</span>
@@ -456,7 +516,7 @@ function MainPage({
         )}
       </div>
 
-      <RotatingGlobe chatOpen={chatOpen} />
+      <RotatingGlobe chatOpen={chatOpen} isPipeline={sidebarVisible} />
 
 
       {transitioning && (
@@ -471,11 +531,11 @@ function MainPage({
       <ChatBot
         isOpen={chatOpen}
         onToggle={() => setChatOpen(v => !v)}
-        currentStep={activeTab === 'project' ? state.currentStep : 0}
+        currentStep={sidebarVisible ? state.currentStep : 0}
         state={state}
       />
 
-      <SystemLog position="top-right" />
+      {!sidebarVisible && <SystemLog position="top-right" />}
 
       {showShortcuts && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center" onClick={() => setShowShortcuts(false)}>

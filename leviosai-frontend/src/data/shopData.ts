@@ -27,7 +27,7 @@ export const SHOP_CATEGORIES: Record<ShopCategory, { label: string; labelKo: str
   cable:      { label: 'Cables & Connectors', labelKo: '케이블/커넥터',   icon: '⌁' },
   wiring:     { label: 'Wiring & Terminals',  labelKo: '배선/터미널',     icon: '⏚' },
   fastener:   { label: 'Nuts & Bolts',        labelKo: '너트/볼트',      icon: '⊛' },
-  power:      { label: 'Power Supply',        labelKo: '전원 공급',      icon: '⚡' },
+  power:      { label: 'Power Supply',        labelKo: '전원 공급',      icon: 'PWR' },
   frame:      { label: 'Frame & Chassis',     labelKo: '프레임/케이스',   icon: '▣' },
   accessory:  { label: 'Accessories',         labelKo: '액세서리',       icon: '◈' },
 }

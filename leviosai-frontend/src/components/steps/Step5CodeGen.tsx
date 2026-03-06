@@ -3,6 +3,7 @@ import type { StepProps, SelectedTechnique } from '../../types'
 import { api, FILE_FORMATS, DOMAINS, HARDWARE, MODELS, TECHNIQUES_BY_DOMAIN, TECHNIQUES, hasApiKey, callGeminiDirect } from '../../api/api'
 import TypewriterText from '../TypewriterText'
 import { addLog } from '../../utils/syslog'
+import ResizableSplit from '../ResizableSplit'
 
 interface FileFormat { lang: string; ext: string; label: string }
 type EditSection = 'domain' | 'hardware' | 'model' | 'techniques' | null
@@ -286,16 +287,18 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
         <button
           onClick={() => goToStep(7)}
           disabled={!state.generatedCode}
-          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors mr-[610px] mt-[60px]"
         >
           Next: Complete →
         </button>
       </div>
 
       {/* Split layout */}
-      <div className="flex gap-6 flex-1 min-h-0">
-        {/* Left — controls panel */}
-        <div className="w-2/5 flex flex-col overflow-y-auto pr-1">
+      <ResizableSplit
+        className="mr-[360px]"
+        defaultLeftPercent={40}
+        left={
+        <div className="flex flex-col">
           <ConfigEditor state={state} updateState={updateState} goToStep={goToStep} />
 
           <FormatSelect value={format} onChange={f => { setFormat(f); updateState({ generatedCode: null }) }} />
@@ -314,9 +317,9 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
             <p className="mt-3 text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2.5 rounded-lg">{error}</p>
           )}
         </div>
-
-        {/* Right — code display */}
-        <div className="flex-1 min-w-0 flex flex-col">
+        }
+        right={
+        <div className="flex flex-col h-full">
           {state.generatedCode ? (
             <div className="flex flex-col h-full animate-fade-in">
               {/* Code block */}
@@ -371,7 +374,8 @@ export default function Step5CodeGen({ state, updateState, goToStep }: StepProps
             </div>
           )}
         </div>
-      </div>
+        }
+      />
 
       {/* Navigation */}
       <div className="flex mt-4 flex-shrink-0">

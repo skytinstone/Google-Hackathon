@@ -1,6 +1,7 @@
 import type { StepProps } from '../../types'
 import { DOMAINS, DOMAIN_DETAILS } from '../../api/api'
 import TypewriterText from '../TypewriterText'
+import ResizableSplit from '../ResizableSplit'
 
 export default function Step1Domain({ state, updateState, goToStep }: StepProps) {
   function select(name: string) {
@@ -29,16 +30,18 @@ export default function Step1Domain({ state, updateState, goToStep }: StepProps)
         <button
           onClick={() => goToStep(2)}
           disabled={!state.domain}
-          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors mr-[610px] mt-[60px]"
         >
           Next: Hardware →
         </button>
       </div>
 
       {/* Split layout */}
-      <div className="flex gap-6 flex-1 min-h-0">
-        {/* Left — Domain selection list */}
-        <div className="w-2/5 flex flex-col gap-3 overflow-y-auto pr-1">
+      <ResizableSplit
+        className="mr-[360px]"
+        defaultLeftPercent={40}
+        left={
+          <div className="flex flex-col gap-3">
           {DOMAINS.map(domain => {
             const selected = state.domain === domain.name
             return (
@@ -70,9 +73,9 @@ export default function Step1Domain({ state, updateState, goToStep }: StepProps)
             )
           })}
         </div>
-
-        {/* Right — Domain detail panel (70% scale to avoid overlap with decorative elements) */}
-        <div className="flex-1 min-w-0" style={{ transform: 'scale(0.7)', transformOrigin: 'top left' }}>
+        }
+        right={
+        <div style={{ transform: 'scale(0.7)', transformOrigin: 'top left' }}>
           {!selectedDetail ? (
             <div className="h-full flex flex-col items-center justify-center text-center rounded-2xl border border-dashed border-white/10 bg-white/2 p-8">
               <div className="w-12 h-12 rounded-full bg-white/6 border border-white/10 flex items-center justify-center mb-4">
@@ -131,7 +134,8 @@ export default function Step1Domain({ state, updateState, goToStep }: StepProps)
             </div>
           )}
         </div>
-      </div>
+        }
+      />
 
     </div>
   )

@@ -60,7 +60,7 @@ export default function Sidebar({ state, goToStep }: SidebarProps) {
           {/* Step list with vertical connector line */}
           <nav>
             <ul className="relative">
-              <div className="absolute left-[18px] top-5 bottom-5 w-px bg-white/5 pointer-events-none" />
+              <div className="absolute left-[24px] top-5 bottom-5 w-px bg-white/5 pointer-events-none" />
               {STEPS.map((step, idx) => {
                 const completed = isCompleted(step.num)
                 const active    = step.num === state.currentStep

@@ -64,7 +64,7 @@ export default function ApiKeyScreen({ onSaved }: ApiKeyScreenProps) {
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent font-mono text-sm select-none">
-                  🔑
+                  &gt;_
                 </span>
                 <input
                   type={show ? 'text' : 'password'}

@@ -49,6 +49,7 @@ export interface SelectedSensor {
   name: string
   type: string
   specs: string
+  quantity?: number
 }
 
 export interface SavedProject {
@@ -105,6 +106,7 @@ export interface StepProps {
   onApiKeyNeeded: () => void
   onAddProject?: (project: SavedProject) => void
   onGoToShop?: () => void
+  onReturnToManage?: () => void
 }
 
 // ── Shop Types ──────────────────────────────────────────────

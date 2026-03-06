@@ -5,7 +5,7 @@ const ICONS: Record<ToastType, string> = {
   success: '✓',
   error:   '✕',
   info:    'ℹ',
-  warning: '⚠',
+  warning: '!',
 }
 
 const COLORS: Record<ToastType, { border: string; icon: string }> = {

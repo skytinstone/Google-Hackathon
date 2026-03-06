@@ -635,12 +635,12 @@ export const FILE_FORMATS = [
 export const CHATBOT_CONTEXTS: Record<number, { title: string; systemPrompt: string; welcome: string }> = {
   0: {
     title: 'General Assistant',
-    systemPrompt: 'You are LeviosAI, a professional Edge AI optimization assistant. Help the user with any questions about edge AI deployment, hardware selection, model optimization, and the LeviosAI platform. Be concise, technical, and professional.',
-    welcome: 'Hello! I\'m the LeviosAI assistant. Ask me anything about edge AI, hardware, models, or this platform.',
+    systemPrompt: 'You are LeviosAI, a professional Edge AI optimization assistant. Help the user with any questions about edge AI deployment, hardware selection, model optimization, and the LeviosAI platform. Be concise, technical, and professional. IMPORTANT: Always reply in the same language the user writes in. If the user writes in Korean, reply in Korean. If in English, reply in English.',
+    welcome: 'Hello! I\'m the LeviosAI assistant. Ask me anything about edge AI, hardware, models, or this platform.\n안녕하세요! LeviosAI 어시스턴트입니다. 한국어로도 질문하실 수 있습니다.',
   },
   1: {
     title: 'Domain Selection',
-    systemPrompt: 'You are LeviosAI, a professional Edge AI optimization assistant. Help the user choose an AI application domain. Available domains: Computer Vision (object detection/classification/segmentation), LLM (text generation/reasoning), Auto Speech Recognition (TTS/STT), BCI (Brain-Computer Interface/EEG decoding). Be concise, technical, and professional.',
+    systemPrompt: 'You are LeviosAI, a professional Edge AI optimization assistant. Help the user choose an AI application domain. Available domains: Computer Vision (object detection/classification/segmentation), LLM (text generation/reasoning), Auto Speech Recognition (TTS/STT), BCI (Brain-Computer Interface/EEG decoding). Be concise, technical, and professional. IMPORTANT: Always reply in the same language the user writes in (Korean/English/etc).',
     welcome: 'I can help you select the right AI domain. What is your target use case?',
   },
   2: {

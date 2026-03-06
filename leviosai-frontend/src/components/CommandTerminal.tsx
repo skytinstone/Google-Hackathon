@@ -377,12 +377,12 @@ export default function CommandTerminal({ onNavigate, currentTab, chatOpen }: Pr
                   .then(r => r.json())
                   .then((w: { current: { temperature_2m: number; weather_code: number } }) => {
                     const code = w.current.weather_code
-                    let desc = 'Clear', icon = '☀'
-                    if (code >= 1 && code <= 3) { desc = 'Cloudy'; icon = '⛅' }
-                    else if (code >= 45 && code <= 48) { desc = 'Foggy'; icon = '🌫' }
-                    else if (code >= 51 && code <= 67) { desc = 'Rainy'; icon = '🌧' }
-                    else if (code >= 71 && code <= 77) { desc = 'Snowy'; icon = '❄' }
-                    else if (code >= 80 && code <= 99) { desc = 'Stormy'; icon = '⛈' }
+                    let desc = 'Clear', icon = '--'
+                    if (code >= 1 && code <= 3) { desc = 'Cloudy'; icon = 'CL' }
+                    else if (code >= 45 && code <= 48) { desc = 'Foggy'; icon = 'FG' }
+                    else if (code >= 51 && code <= 67) { desc = 'Rainy'; icon = 'RN' }
+                    else if (code >= 71 && code <= 77) { desc = 'Snowy'; icon = 'SN' }
+                    else if (code >= 80 && code <= 99) { desc = 'Stormy'; icon = 'ST' }
                     const result = { icon, temp: `${w.current.temperature_2m}°C`, desc, city: d.city }
                     localStorage.setItem('leviosai_weather_cache', JSON.stringify(result))
                     setLines(prev => [...prev,

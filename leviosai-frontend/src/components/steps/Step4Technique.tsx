@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { StepProps, SelectedTechnique } from '../../types'
 import { TECHNIQUES, TECHNIQUES_BY_DOMAIN, callGeminiDirect, hasApiKey } from '../../api/api'
 import TypewriterText from '../TypewriterText'
+import ResizableSplit from '../ResizableSplit'
+import PipelineGraph3D from '../PipelineGraph3D'
 
 // Domain-specific recommended technique IDs
 const DOMAIN_RECOMMENDATIONS: Record<string, string[]> = {
@@ -63,9 +65,9 @@ export default function Step4Technique({ state, updateState, goToStep, onApiKeyN
   const canProceed = state.techniques.length > 0
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* Header + Next button */}
-      <div className="mb-8 flex items-start justify-between">
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="mb-1 flex-shrink-0 flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold text-accent uppercase tracking-widest mb-1">Step 5 of 7</p>
           <h2 className="text-3xl font-bold text-primary font-mono tracking-tight"><TypewriterText text="Optimization Techniques" speed={40} /></h2>
@@ -76,126 +78,147 @@ export default function Step4Technique({ state, updateState, goToStep, onApiKeyN
             }
           </p>
         </div>
-        <button
-          onClick={() => goToStep(6)}
-          disabled={!canProceed}
-          className="flex-shrink-0 px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
-        >
-          Next: Generate Code →
-        </button>
       </div>
 
-      {/* Recommend button */}
-      <button
-        onClick={handleRecommend}
-        disabled={recommending}
-        className="w-full mb-4 flex items-center justify-center gap-2 py-2.5 border border-accent/30 text-accent text-xs font-mono rounded-lg hover:bg-accent/10 transition-colors disabled:opacity-50"
-      >
-        {recommending ? (
-          <><span className="animate-spin">⟳</span> Analyzing best techniques...</>
-        ) : (
-          <><span>⟳</span> AI Recommend Techniques</>
-        )}
-      </button>
-
-      {/* Technique Cards */}
-      <div className="space-y-4 mb-10">
-        {availableTechs.map(tech => {
-          const enabled = isTechEnabled(tech.id)
-          const selectedSubtype = getSelectedSubtype(tech.id)
-          const isRecommended = recommendedIds.includes(tech.id)
-
-          return (
-            <div
-              key={tech.id}
-              className={[
-                'rounded-xl border transition-all duration-150 relative',
-                enabled
-                  ? 'bg-accent/8 border-accent/30'
-                  : isRecommended
-                    ? 'bg-green-500/5 border-green-500/30 shadow-[0_0_12px_rgba(74,222,128,0.1)]'
-                    : 'bg-component border-white/8',
-              ].join(' ')}
+      {/* Split layout */}
+      <ResizableSplit
+        className="mr-[360px]"
+        defaultLeftPercent={45}
+        left={
+          <div>
+            {/* Recommend button */}
+            <button
+              onClick={handleRecommend}
+              disabled={recommending}
+              className="w-full mb-4 flex items-center justify-center gap-2 py-2.5 border border-accent/30 text-accent text-xs font-mono rounded-lg hover:bg-accent/10 transition-colors disabled:opacity-50"
             >
-              {isRecommended && !enabled && (
-                <span className="absolute -top-2 right-4 text-[9px] font-bold font-mono bg-green-500 text-white px-2 py-0.5 rounded-full">
-                  RECOMMENDED
-                </span>
+              {recommending ? (
+                <><span className="animate-spin">⟳</span> Analyzing best techniques...</>
+              ) : (
+                <><span>⟳</span> AI Recommend Techniques</>
               )}
-              {/* Technique Header */}
-              <div className="flex items-center gap-4 px-5 py-4">
-                {/* Toggle */}
-                <button
-                  onClick={() => toggleTech(tech.id, tech.name)}
-                  className={[
-                    'relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0',
-                    enabled ? 'bg-accent' : 'bg-white/15',
-                  ].join(' ')}
-                  aria-label={`Toggle ${tech.name}`}
-                >
-                  <span
-                    className={[
-                      'absolute top-1 left-0 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
-                      enabled ? 'translate-x-6' : 'translate-x-1',
-                    ].join(' ')}
-                  />
-                </button>
+            </button>
 
-                <div className="flex-1 min-w-0">
-                  <p className={['font-semibold', enabled ? 'text-primary' : isRecommended ? 'text-green-400' : 'text-secondary'].join(' ')}>
-                    {tech.name}
-                  </p>
-                  <p className="text-xs text-secondary mt-0.5">{tech.description}</p>
+            {/* Technique Cards */}
+            <div className="space-y-4">
+              {availableTechs.map(tech => {
+                const enabled = isTechEnabled(tech.id)
+                const selectedSubtype = getSelectedSubtype(tech.id)
+                const isRecommended = recommendedIds.includes(tech.id)
+
+                return (
+                  <div
+                    key={tech.id}
+                    className={[
+                      'rounded-xl border transition-all duration-150 relative',
+                      enabled
+                        ? 'bg-accent/8 border-accent/30'
+                        : isRecommended
+                          ? 'bg-green-500/5 border-green-500/30 shadow-[0_0_12px_rgba(74,222,128,0.1)]'
+                          : 'bg-component border-white/8',
+                    ].join(' ')}
+                  >
+                    {isRecommended && !enabled && (
+                      <span className="absolute -top-2 right-4 text-[9px] font-bold font-mono bg-green-500 text-white px-2 py-0.5 rounded-full">
+                        RECOMMENDED
+                      </span>
+                    )}
+                    {/* Technique Header */}
+                    <div className="flex items-center gap-4 px-5 py-4">
+                      {/* Toggle */}
+                      <button
+                        onClick={() => toggleTech(tech.id, tech.name)}
+                        className={[
+                          'relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0',
+                          enabled ? 'bg-accent' : 'bg-white/15',
+                        ].join(' ')}
+                        aria-label={`Toggle ${tech.name}`}
+                      >
+                        <span
+                          className={[
+                            'absolute top-1 left-0 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
+                            enabled ? 'translate-x-6' : 'translate-x-1',
+                          ].join(' ')}
+                        />
+                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        <p className={['font-semibold', enabled ? 'text-primary' : isRecommended ? 'text-green-400' : 'text-secondary'].join(' ')}>
+                          {tech.name}
+                        </p>
+                        <p className="text-xs text-secondary mt-0.5">{tech.description}</p>
+                      </div>
+                    </div>
+
+                    {/* Subtype Selection */}
+                    {enabled && (
+                      <div className="px-5 pb-4">
+                        <p className="text-xs text-secondary uppercase tracking-wider font-semibold mb-2">Select Variant</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {tech.subtypes.map(sub => {
+                            const active = selectedSubtype === sub.id
+                            return (
+                              <button
+                                key={sub.id}
+                                onClick={() => selectSubtype(tech.id, active ? null : sub.id)}
+                                className={[
+                                  'text-left px-4 py-3 rounded-lg border text-sm transition-all duration-150',
+                                  active
+                                    ? 'bg-accent/15 border-accent text-primary'
+                                    : 'bg-background/50 border-white/8 text-secondary hover:border-accent/40 hover:text-primary',
+                                ].join(' ')}
+                              >
+                                <p className="font-semibold">{sub.name}</p>
+                                <p className="text-xs text-secondary mt-0.5">{sub.description}</p>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Selection Summary */}
+            {state.techniques.length > 0 && (
+              <div className="mt-4 px-4 py-3 bg-component rounded-lg border border-white/8">
+                <p className="text-xs text-secondary uppercase tracking-wider font-semibold mb-2">Selected Techniques</p>
+                <div className="flex flex-wrap gap-2">
+                  {state.techniques.map(t => (
+                    <span key={t.id} className="text-xs px-3 py-1 bg-accent/15 text-accent border border-accent/20 rounded-full">
+                      {t.name}{t.subtype ? ` · ${t.subtype.toUpperCase()}` : ''}
+                    </span>
+                  ))}
                 </div>
               </div>
-
-              {/* Subtype Selection */}
-              {enabled && (
-                <div className="px-5 pb-4">
-                  <p className="text-xs text-secondary uppercase tracking-wider font-semibold mb-2">Select Variant</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {tech.subtypes.map(sub => {
-                      const active = selectedSubtype === sub.id
-                      return (
-                        <button
-                          key={sub.id}
-                          onClick={() => selectSubtype(tech.id, active ? null : sub.id)}
-                          className={[
-                            'text-left px-4 py-3 rounded-lg border text-sm transition-all duration-150',
-                            active
-                              ? 'bg-accent/15 border-accent text-primary'
-                              : 'bg-background/50 border-white/8 text-secondary hover:border-accent/40 hover:text-primary',
-                          ].join(' ')}
-                        >
-                          <p className="font-semibold">{sub.name}</p>
-                          <p className="text-xs text-secondary mt-0.5">{sub.description}</p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Selection Summary */}
-      {state.techniques.length > 0 && (
-        <div className="mb-6 px-4 py-3 bg-component rounded-lg border border-white/8">
-          <p className="text-xs text-secondary uppercase tracking-wider font-semibold mb-2">Selected Techniques</p>
-          <div className="flex flex-wrap gap-2">
-            {state.techniques.map(t => (
-              <span key={t.id} className="text-xs px-3 py-1 bg-accent/15 text-accent border border-accent/20 rounded-full">
-                {t.name}{t.subtype ? ` · ${t.subtype.toUpperCase()}` : ''}
-              </span>
-            ))}
+            )}
           </div>
-        </div>
-      )}
+        }
+        right={
+          <div className="flex flex-col h-full min-h-0">
+            {/* Next button */}
+            <div className="flex justify-end mb-3 flex-shrink-0">
+              <button
+                onClick={() => goToStep(6)}
+                disabled={!canProceed}
+                className="px-6 py-2.5 bg-primary text-background font-semibold rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/85 transition-colors"
+              >
+                Next: Generate Code →
+              </button>
+            </div>
+
+            {/* Pipeline ERD Graph — fills remaining height */}
+            <div className="flex-1 min-h-0 rounded-2xl border border-white/8 overflow-hidden" style={{ background: '#09090f' }}>
+              <PipelineGraph3D state={state} />
+            </div>
+          </div>
+        }
+      />
 
       {/* Navigation */}
-      <div className="flex">
+      <div className="flex mt-2 flex-shrink-0 mr-[360px]">
         <button
           onClick={() => goToStep(4)}
           className="px-6 py-2.5 border border-white/10 text-secondary font-semibold rounded-lg hover:border-white/20 hover:text-primary transition-colors"
