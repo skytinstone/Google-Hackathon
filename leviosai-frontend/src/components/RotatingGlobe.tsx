@@ -2,11 +2,10 @@ import { useEffect, useRef } from 'react'
 
 interface Props {
   size?: number
-  chatOpen?: boolean
   isPipeline?: boolean
 }
 
-export default function RotatingGlobe({ size = 220, chatOpen, isPipeline }: Props) {
+export default function RotatingGlobe({ size = 220, isPipeline }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const frameRef = useRef(0)
   const angleRef = useRef(0)

@@ -516,7 +516,7 @@ function MainPage({
         )}
       </div>
 
-      <RotatingGlobe chatOpen={chatOpen} isPipeline={sidebarVisible} />
+      <RotatingGlobe isPipeline={sidebarVisible} />
 
 
       {transitioning && (
