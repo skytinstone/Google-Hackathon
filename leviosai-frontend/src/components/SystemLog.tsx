@@ -25,13 +25,13 @@ const TYPE_COLOR_LIGHT: Record<LogType, string> = {
 }
 
 interface Props {
-  position?: 'left' | 'right' | 'top-right'
+  position?: 'left' | 'right' | 'top-right' | 'bottom-left'
   sidebarVisible?: boolean
 }
 
 export default function SystemLog({ position = 'left', sidebarVisible }: Props) {
   const [entries, setEntries] = useState<LogEntry[]>([])
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(false)
   const { theme } = useTheme()
 
   useEffect(() => subscribe(setEntries), [])
@@ -40,15 +40,18 @@ export default function SystemLog({ position = 'left', sidebarVisible }: Props) 
 
   const isRight = position === 'right'
   const isTopRight = position === 'top-right'
+  const isBottomLeft = position === 'bottom-left'
   const isLight = theme === 'light'
   const TYPE_COLOR = isLight ? TYPE_COLOR_LIGHT : TYPE_COLOR_DARK
 
-  const posStyle: React.CSSProperties = (isTopRight || isRight)
+  const posStyle: React.CSSProperties = isBottomLeft
+    ? { left: '24px', bottom: '40px' }
+    : (isTopRight || isRight)
     ? { left: '4px', bottom: '500px' }
     : { left: sidebarVisible ? '272px' : '100px' }
 
-  const shown = expanded ? entries.slice(0, 10) : entries.slice(0, 2)
-  const hasMore = entries.length > 2
+  const shown = expanded ? entries.slice(0, 10) : entries.slice(0, 4)
+  const hasMore = entries.length > 4
 
   return (
     <div

@@ -3,3 +3,8 @@ uvicorn>=0.20.0
 google-genai>=1.0.0
 python-dotenv>=1.0.0
 python-multipart>=0.0.7
+# LangChain 1.2 + RAG
+langchain>=1.2.0,<1.3.0
+langchain-google-genai>=4.0.0
+langchain-chroma>=1.0.0
+langchain-text-splitters>=0.3.0

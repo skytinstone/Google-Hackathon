@@ -24,7 +24,7 @@ const FONT_SIZE_PRESETS: { label: string; key: string; value: FontSize }[] = [
 
 export default function SettingsPage() {
   const { t } = useI18n()
-  const { theme, fontSize, zoom, setTheme: applyTheme, setFontSize: applyFontSize, setZoom: applyZoom } = useTheme()
+  const { theme, fontSize, zoom, autoZoomPercent, setTheme: applyTheme, setFontSize: applyFontSize, setZoom: applyZoom } = useTheme()
   const [apiKey, setApiKey] = useState('')
   const [apiKeyMasked, setApiKeyMasked] = useState('')
   const [apiKeyInput, setApiKeyInput] = useState('')
@@ -278,9 +278,9 @@ export default function SettingsPage() {
         <div className="p-5 rounded-2xl border border-white/8 bg-component">
           <p className="text-[10px] font-mono text-secondary/40 uppercase tracking-widest">Appearance</p>
           <p className="text-sm font-bold text-primary mt-0.5 font-mono">Display Zoom</p>
-          <p className="text-[10px] text-secondary/40 font-mono mt-1">Scale the entire UI for better visibility on large monitors</p>
-          <div className="mt-4 flex items-center gap-2">
-            {(['90', '100', '110', '120', '130'] as ZoomLevel[]).map(level => (
+          <p className="text-[10px] text-secondary/40 font-mono mt-1">Auto mode adapts to your screen size (32&quot; QHD baseline)</p>
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            {(['auto', '90', '100', '110', '120', '130'] as ZoomLevel[]).map(level => (
               <button
                 key={level}
                 onClick={() => handleZoomChange(level)}
@@ -291,7 +291,7 @@ export default function SettingsPage() {
                     : 'border-white/8 text-secondary hover:border-white/20',
                 ].join(' ')}
               >
-                {level}%
+                {level === 'auto' ? `Auto (${autoZoomPercent}%)` : `${level}%`}
               </button>
             ))}
           </div>

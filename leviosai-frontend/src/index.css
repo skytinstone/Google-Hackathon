@@ -13,8 +13,28 @@
   --font-size-base: 17px;
 }
 
+/* ── Viewport fill: CSS zoom on <html> scales rendered size.
+   100vh * zoom < viewport when zoom < 1, leaving a gap.
+   --zoom is set by theme.ts. We compensate all vh-based heights. ── */
 html {
   font-size: var(--font-size-base);
+}
+
+body {
+  min-height: calc(100vh / var(--zoom, 1));
+  background-color: var(--color-background);
+}
+
+#root {
+  min-height: calc(100vh / var(--zoom, 1));
+}
+
+/* Override Tailwind h-screen / min-h-screen to be zoom-aware */
+.h-screen {
+  height: calc(100vh / var(--zoom, 1)) !important;
+}
+.min-h-screen {
+  min-height: calc(100vh / var(--zoom, 1)) !important;
 }
 
 /* ── Light theme override ─────────────────────────────────── */

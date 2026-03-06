@@ -67,6 +67,65 @@ export async function callGeminiDirect(
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 }
 
+// ── RAG Chat ─────────────────────────────────────────────────
+export interface RAGChatResponse {
+  answer: string
+  sources: Array<{ type: string; category: string }>
+  rag_enabled: boolean
+}
+
+export interface RAGStatusResponse {
+  initialized: boolean
+  document_count: number
+  engine?: string
+  error?: string
+}
+
+export async function ragChat(
+  message: string,
+  step: number = 0,
+  chatHistory: Array<{ role: string; content: string }> = [],
+  temperature = 0.7,
+): Promise<RAGChatResponse> {
+  const apiKey = getApiKey()
+  if (!apiKey) throw new Error('API key not set.')
+
+  // Try RAG endpoint first, fallback to direct Gemini
+  if (API_BASE) {
+    try {
+      const res = await fetch(`${API_BASE}/api/rag/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey ? { 'X-Gemini-Api-Key': apiKey } : {}),
+        },
+        body: JSON.stringify({ message, step, chat_history: chatHistory, temperature }),
+      })
+      if (res.ok) {
+        return res.json() as Promise<RAGChatResponse>
+      }
+    } catch {
+      // Fallback to direct Gemini if RAG endpoint unavailable
+    }
+  }
+
+  // Fallback: direct Gemini call (no RAG)
+  const ctx = CHATBOT_CONTEXTS[step] ?? CHATBOT_CONTEXTS[0]
+  const answer = await callGeminiDirect(ctx.systemPrompt, message, temperature)
+  return { answer, sources: [], rag_enabled: false }
+}
+
+export async function ragStatus(): Promise<RAGStatusResponse> {
+  const apiKey = getApiKey()
+  try {
+    const res = await fetch(`${API_BASE}/api/rag/status`, {
+      headers: apiKey ? { 'X-Gemini-Api-Key': apiKey } : {},
+    })
+    if (res.ok) return res.json() as Promise<RAGStatusResponse>
+  } catch { /* ignore */ }
+  return { initialized: false, document_count: 0 }
+}
+
 // ── Types ────────────────────────────────────────────────────
 export interface LoginResult { message: string }
 export interface CompatibilityRequest {

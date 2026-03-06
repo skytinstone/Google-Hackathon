@@ -118,6 +118,7 @@ export default function RotatingGlobe({ size = 220, chatOpen }: Props) {
         left: 110, bottom: 150, zIndex: 15,
         opacity: chatOpen ? 0 : 0.7,
         transform: chatOpen ? 'scale(0.3) rotate(-30deg)' : 'scale(1) rotate(0deg)',
+        transformOrigin: 'bottom left',
         filter: chatOpen ? 'blur(10px)' : 'blur(0px)',
         transition: 'opacity 0.6s ease, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), filter 0.6s ease',
       }}

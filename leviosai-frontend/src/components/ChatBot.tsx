@@ -1,8 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { callGeminiDirect, hasApiKey, CHATBOT_CONTEXTS } from '../api/api'
+import { ragChat, hasApiKey, CHATBOT_CONTEXTS } from '../api/api'
 import type { WizardState } from '../types'
 
-interface ChatMsg { role: 'user' | 'bot'; text: string }
+interface ChatMsg {
+  role: 'user' | 'bot'
+  text: string
+  sources?: Array<{ type: string; category: string }>
+  ragEnabled?: boolean
+}
 
 interface Props {
   isOpen: boolean
@@ -32,8 +37,16 @@ export default function ChatBot({ isOpen, onToggle: _onToggle, currentStep, stat
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [msgs])
 
-  // Build context string for the system prompt
-  const buildContext = useCallback((): string => {
+  // Build chat history for RAG context
+  const buildChatHistory = useCallback(() => {
+    return msgs.slice(-10).map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.text,
+    }))
+  }, [msgs])
+
+  // Build context suffix from wizard state
+  const _buildContext = useCallback((): string => {
     const parts: string[] = []
     if (state.domain)    parts.push(`Domain: ${state.domain}`)
     if (state.hardware)  parts.push(`Hardware: ${state.hardware.device} (${state.hardware.specs})`)
@@ -57,9 +70,17 @@ export default function ChatBot({ isOpen, onToggle: _onToggle, currentStep, stat
     setLoading(true)
 
     try {
-      const systemPrompt = ctx.systemPrompt + buildContext()
-      const response = await callGeminiDirect(systemPrompt, text, 0.7)
-      setMsgs(m => [...m, { role: 'bot', text: response.trim() }])
+      // Append wizard state context to the question
+      const contextSuffix = _buildContext()
+      const fullMessage = contextSuffix ? `${text}${contextSuffix}` : text
+
+      const result = await ragChat(fullMessage, currentStep, buildChatHistory(), 0.7)
+      setMsgs(m => [...m, {
+        role: 'bot',
+        text: result.answer.trim(),
+        sources: result.sources,
+        ragEnabled: result.rag_enabled,
+      }])
     } catch (e) {
       setMsgs(m => [...m, { role: 'bot', text: e instanceof Error ? e.message : 'An error occurred. Please check your API key.' }])
     } finally {
@@ -85,7 +106,8 @@ export default function ChatBot({ isOpen, onToggle: _onToggle, currentStep, stat
             <p className="text-primary font-bold text-sm font-mono">LeviosAI Assistant</p>
             <p className="text-secondary text-[10px] font-mono uppercase tracking-wider truncate">{ctx.title}</p>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] font-mono text-accent/60 bg-accent/8 px-1.5 py-0.5 rounded">RAG</span>
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
             <span className="text-[10px] text-green-400 font-mono">Live</span>
           </div>
@@ -116,6 +138,18 @@ export default function ChatBot({ isOpen, onToggle: _onToggle, currentStep, stat
                   : 'bg-white/10 border border-white/15 text-primary',
               ].join(' ')}>
                 {m.text}
+                {m.role === 'bot' && m.sources && m.sources.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-white/6 flex flex-wrap gap-1">
+                    {m.sources.map((s, si) => (
+                      <span key={si} className="text-[9px] font-mono text-accent/50 bg-accent/5 px-1.5 py-0.5 rounded">
+                        {s.type}{s.category ? `: ${s.category}` : ''}
+                      </span>
+                    ))}
+                    {m.ragEnabled && (
+                      <span className="text-[9px] font-mono text-green-400/50 bg-green-400/5 px-1.5 py-0.5 rounded">RAG</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -176,7 +210,7 @@ export default function ChatBot({ isOpen, onToggle: _onToggle, currentStep, stat
 
         {/* Branding footer */}
         <div className="px-5 py-2 border-t border-white/4 flex-shrink-0">
-          <p className="text-[10px] text-secondary/30 font-mono text-center">LeviosAI Assistant</p>
+          <p className="text-[10px] text-secondary/30 font-mono text-center">LeviosAI RAG Assistant — LangChain + Gemini</p>
         </div>
       </div>
     </>

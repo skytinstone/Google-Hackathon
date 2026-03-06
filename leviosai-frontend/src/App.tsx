@@ -388,23 +388,34 @@ function MainPage({
           </main>
         </div>
 
-        {/* Widget area background panel */}
+        {/* Widget area — scrollable container */}
         <div
-          className="fixed pointer-events-none"
+          className="fixed"
           style={{
-            right: 100,
-            top: 96,
+            right: 70,
+            top: 86,
             width: 320,
-            bottom: 40,
+            bottom: 0,
             zIndex: 9,
             transition: 'opacity 0.5s ease, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s ease',
             opacity: chatOpen ? 0 : 1,
             transform: chatOpen ? 'translateX(80px) scaleX(0.9)' : 'translateX(0) scaleX(1)',
             filter: chatOpen ? 'blur(8px)' : 'blur(0px)',
+            pointerEvents: chatOpen ? 'none' : 'auto',
           }}
         >
           <span className="text-xs font-mono font-bold text-white/30 uppercase tracking-widest mb-1.5 block">Widget</span>
-          <div className="rounded-xl border border-white/6 bg-[#0a0c14]/85 backdrop-blur-sm h-full" />
+          <div
+            className="rounded-xl border border-white/6 bg-[#0a0c14]/85 backdrop-blur-sm overflow-y-auto"
+            style={{ height: 'calc(100% - 24px)', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}
+          >
+            <div className="p-4 space-y-4 flex flex-col items-center">
+              <MiniCalendar chatOpen={chatOpen} />
+              <Calculator chatOpen={chatOpen} />
+              <QuickNotes chatOpen={chatOpen} />
+              <CommandTerminal onNavigate={handleTabChange} currentTab={activeTab} chatOpen={chatOpen} />
+            </div>
+          </div>
         </div>
 
         {showApiModal && <ApiKeyModal onClose={() => setShowApiModal(false)} />}
@@ -447,11 +458,6 @@ function MainPage({
 
       <RotatingGlobe chatOpen={chatOpen} />
 
-      {/* Widgets — rendered outside overflow-hidden container for proper fixed positioning */}
-      <MiniCalendar chatOpen={chatOpen} />
-      <Calculator chatOpen={chatOpen} />
-      <CommandTerminal onNavigate={handleTabChange} currentTab={activeTab} chatOpen={chatOpen} />
-      <QuickNotes chatOpen={chatOpen} />
 
       {transitioning && (
         <LoadingScreen onComplete={handleTransitionComplete} duration={700} hasBackdrop />

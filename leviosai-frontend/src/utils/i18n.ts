@@ -502,16 +502,16 @@ const translations: Record<Locale, Record<string, string>> = {
 
     // Login — 한국어
     'login.systemOnline': '시스템 온라인',
-    'login.authenticate': '인증',
+    'login.authenticate': 'AUTHENTICATE',
     'login.username': 'User ID',
     'login.password': 'Password',
     'login.submit': '세션 시작',
     'login.enterUsername': 'ID를 입력하세요',
     'login.enterPassword': '비밀번호를 입력하세요',
-    'login.authenticating': '인증 중...',
+    'login.authenticating': 'Authenticating...',
     'login.clickToContinue': '계속하려면 화면을 클릭하세요',
-    'login.tagline1': '나만의 Edge AI 디바이스를 만들어보세요.',
-    'login.tagline2': '통합. 빌드. 배포.',
+    'login.tagline1': 'Edge AI Foundary Platform으로,',
+    'login.tagline2': '무엇이든.',
 
     // Contact — 제목 영어, 설명 한국어
     'contact.title': 'Contact',

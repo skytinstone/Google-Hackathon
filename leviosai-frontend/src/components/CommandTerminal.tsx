@@ -531,15 +531,8 @@ export default function CommandTerminal({ onNavigate, currentTab, chatOpen }: Pr
 
   return (
     <div
-      className="fixed select-none"
-      style={{
-        right: 120, top: 900, zIndex: 10, width: 280,
-        opacity: chatOpen ? 0 : 1,
-        pointerEvents: chatOpen ? 'none' : 'auto',
-        transition: 'opacity 0.4s ease 0.15s, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.15s, filter 0.4s ease 0.15s',
-        transform: chatOpen ? 'translateX(80px) scale(0.95)' : 'translateX(0) scale(1)',
-        filter: chatOpen ? 'blur(6px)' : 'blur(0px)',
-      }}
+      className="select-none"
+      style={{ width: 280 }}
     >
       {/* Header */}
       <div

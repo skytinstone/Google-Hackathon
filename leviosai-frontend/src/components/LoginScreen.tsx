@@ -110,7 +110,7 @@ function LoginInfoPanel() {
   return (
     <>
       {/* Top-left: System info (IP, Location, Weather, Time) */}
-      <div className="fixed left-6 top-10 pointer-events-none select-none z-0">
+      <div className="fixed left-6 top-10 pointer-events-none select-none z-0" style={{}}>
         <div className="space-y-3">
           <div>
             <p className={`${L} ${D} uppercase tracking-widest mb-0.5`}>Network</p>
@@ -137,7 +137,7 @@ function LoginInfoPanel() {
 
       {/* Top-right vertical: IP · Country (decorative) */}
       {geo && (
-        <div className="fixed right-4 top-28 pointer-events-none select-none z-0">
+        <div className="fixed right-4 top-28 pointer-events-none select-none z-0" style={{}}>
           <p className="text-[20px] font-mono font-bold tracking-[0.18em] text-white/[0.12] leading-tight" style={{ writingMode: 'vertical-rl' }}>{geo.ip} · {geo.country}</p>
         </div>
       )}
@@ -147,7 +147,7 @@ function LoginInfoPanel() {
 
 function VersionDisplay() {
   return (
-    <div className="fixed right-6 bottom-6 pointer-events-none select-none z-0 text-right">
+    <div className="fixed right-6 bottom-6 pointer-events-none select-none z-0 text-right" style={{}}>
       <p className="text-[20px] font-mono font-bold tracking-[0.15em] text-white/[0.12] leading-relaxed">Version 0.9</p>
       <p className="text-[20px] font-mono font-bold tracking-[0.15em] text-white/[0.12] leading-relaxed">Updated 2026.03.05</p>
     </div>
@@ -295,7 +295,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   return (
     <div
-      className="bg-tech-grid min-h-screen flex items-center justify-center relative overflow-hidden"
+      className="bg-tech-grid h-screen flex items-center justify-center relative overflow-hidden"
       onClick={handleScreenClick}
     >
       {/* Background layers */}
@@ -458,8 +458,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         )}
       </div>
 
-      {/* Navigate Log — right side */}
-      <SystemLog position="right" />
+      {/* Navigate Log — bottom-left on login */}
+      <SystemLog position="bottom-left" />
     </div>
   )
 }
