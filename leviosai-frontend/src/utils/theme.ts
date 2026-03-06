@@ -91,6 +91,11 @@ function applyZoom() {
   // Compensate by making html taller so rendered height fills the viewport.
   root.style.setProperty('--zoom', zoomValue)
   root.style.minHeight = `calc(100vh / ${zoomValue})`
+  // Widget container offset — shift left on 14" and 32"
+  const widgetRight = currentZoom === '14' ? '100' : currentZoom === '32' ? '80' : '70'
+  root.style.setProperty('--widget-right', widgetRight)
+  // Login screen scale — shrink on 14"
+  root.style.setProperty('--login-scale', currentZoom === '14' ? '0.8' : '1')
 }
 
 export function setTheme(mode: ThemeMode): void {

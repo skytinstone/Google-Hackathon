@@ -392,7 +392,7 @@ function MainPage({
         <div
           className="fixed"
           style={{
-            right: 70,
+            right: 'calc(var(--widget-right, 70) * 1px)',
             top: 86,
             width: 320,
             bottom: 0,
@@ -539,11 +539,13 @@ function App() {
   useEffect(() => { initTheme() }, [])
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    setIsMobile(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
+    // Use screen.width to detect mobile reliably (unaffected by CSS zoom)
+    function check() {
+      setIsMobile(screen.width < 768)
+    }
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
   }, [])
 
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>(() => {

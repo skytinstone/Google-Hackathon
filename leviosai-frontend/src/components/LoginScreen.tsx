@@ -334,6 +334,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         className="relative z-20 flex items-center justify-center gap-16 w-full px-8"
         style={{
           transition: phase >= 3 ? 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
+          transform: 'scale(var(--login-scale, 1))',
+          transformOrigin: 'center center',
         }}
       >
         {/* ── Brand (LEVIOSAI typewriter) ── */}
