@@ -9,6 +9,7 @@ import re
 import sqlite3
 import logging
 from dotenv import load_dotenv
+from knowledge_graph import recommend_hardware, recommend_models, analyze_techniques, compute_model_score
 
 logging.basicConfig(level=logging.INFO)
 
@@ -268,6 +269,12 @@ class CodeGenRequest(BaseModel):
     language: str
 
 
+class TechniqueAnalysisRequest(BaseModel):
+    techniques: List[str]
+    domain: Optional[str] = None
+    hardware_id: Optional[str] = None
+
+
 class ModelInfoRequest(BaseModel):
     model_name: str
     domain: str
@@ -381,6 +388,29 @@ def extract_json(text: str) -> dict:
     if obj_match:
         return json.loads(obj_match.group())
     raise ValueError("No valid JSON found in response")
+
+
+# ============================================================
+# Routes — Knowledge Graph
+# ============================================================
+
+
+@app.get("/api/graph/hardware-recommend")
+def graph_hardware_recommend(domain: str):
+    results = recommend_hardware(domain)
+    return {"domain": domain, "recommendations": results}
+
+
+@app.get("/api/graph/model-recommend")
+def graph_model_recommend(domain: str, hardware_id: str):
+    results = recommend_models(domain, hardware_id)
+    return {"domain": domain, "hardware_id": hardware_id, "recommendations": results}
+
+
+@app.post("/api/graph/technique-analysis")
+def graph_technique_analysis(req: TechniqueAnalysisRequest):
+    result = analyze_techniques(req.techniques, req.domain, req.hardware_id)
+    return result
 
 
 # ============================================================

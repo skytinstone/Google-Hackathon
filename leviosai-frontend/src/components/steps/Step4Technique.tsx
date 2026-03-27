@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { StepProps, SelectedTechnique } from '../../types'
-import { TECHNIQUES, TECHNIQUES_BY_DOMAIN, callGeminiDirect, hasApiKey } from '../../api/api'
+import { TECHNIQUES, TECHNIQUES_BY_DOMAIN, HARDWARE, callGeminiDirect, hasApiKey } from '../../api/api'
+import { analyzeTechniques, type TechniqueAnalysis } from '../../utils/knowledgeGraph'
 import TypewriterText from '../TypewriterText'
 import ResizableSplit from '../ResizableSplit'
 import PipelineGraph3D from '../PipelineGraph3D'
@@ -20,6 +21,19 @@ export default function Step4Technique({ state, updateState, goToStep, onApiKeyN
     state.domain ? (DOMAIN_RECOMMENDATIONS[state.domain] ?? ['quantization']) : ['quantization']
   )
   const [recommending, setRecommending] = useState(false)
+
+  // Knowledge Graph technique analysis
+  const techAnalysis = useMemo<TechniqueAnalysis | null>(() => {
+    if (state.techniques.length === 0) return null
+    const hwId = state.hardware
+      ? Object.values(HARDWARE).flatMap(c => c.devices).find(d => d.name === state.hardware?.device)?.id
+      : undefined
+    return analyzeTechniques(
+      state.techniques.map(t => t.id),
+      state.domain ?? undefined,
+      hwId,
+    )
+  }, [state.techniques, state.domain, state.hardware?.device])
 
   async function handleRecommend() {
     if (!state.domain || !state.model) return
@@ -192,6 +206,64 @@ export default function Step4Technique({ state, updateState, goToStep, onApiKeyN
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Knowledge Graph Analysis */}
+            {techAnalysis && (techAnalysis.synergies.length > 0 || techAnalysis.warnings.length > 0 || techAnalysis.suggestions.length > 0) && (
+              <div className="mt-3 space-y-2">
+                {/* Synergies */}
+                {techAnalysis.synergies.map((syn, i) => (
+                  <div key={i} className="px-4 py-2.5 rounded-lg border border-green-500/20 bg-green-500/5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[9px] font-bold font-mono bg-green-500 text-white px-1.5 py-0.5 rounded-full leading-none">{syn.score}</span>
+                      <span className="text-xs font-semibold text-green-400">{syn.label}</span>
+                      <span className="text-[10px] font-mono text-green-400/60 ml-auto">{syn.pair.join(' + ')}</span>
+                    </div>
+                    <p className="text-[11px] text-secondary">{syn.description}</p>
+                    <p className="text-[10px] text-green-400/70 font-mono mt-1">
+                      Recommended order: {syn.recommendedOrder.join(' → ')}
+                    </p>
+                  </div>
+                ))}
+
+                {/* Warnings */}
+                {techAnalysis.warnings.map((w, i) => (
+                  <div key={i} className="px-4 py-2.5 rounded-lg border border-yellow-500/20 bg-yellow-500/5 flex items-start gap-2">
+                    <span className="text-yellow-400 text-xs mt-0.5 flex-shrink-0">!</span>
+                    <p className="text-[11px] text-yellow-300/80">{w.message}</p>
+                  </div>
+                ))}
+
+                {/* Suggestions */}
+                {techAnalysis.suggestions.map((s, i) => (
+                  <div key={i} className="px-4 py-2.5 rounded-lg border border-accent/20 bg-accent/5 flex items-start gap-2">
+                    <span className="text-accent text-xs mt-0.5 flex-shrink-0">+</span>
+                    <p className="text-[11px] text-secondary">
+                      <span className="text-accent font-semibold">{s.techniqueId}</span> — {s.reason}
+                    </p>
+                  </div>
+                ))}
+
+                {/* Recommended Order */}
+                {techAnalysis.recommendedOrder.length > 1 && (
+                  <div className="px-4 py-2 rounded-lg border border-white/8 bg-white/3">
+                    <p className="text-[10px] font-mono text-secondary/60 uppercase tracking-widest mb-1">Recommended Application Order</p>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {techAnalysis.recommendedOrder.map((tid, i) => {
+                        const tech = state.techniques.find(t => t.id === tid)
+                        return (
+                          <span key={tid} className="flex items-center gap-1">
+                            {i > 0 && <span className="text-accent/50 text-xs">→</span>}
+                            <span className="text-[11px] px-2 py-0.5 bg-accent/10 text-accent border border-accent/15 rounded font-mono">
+                              {i + 1}. {tech?.name ?? tid}
+                            </span>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

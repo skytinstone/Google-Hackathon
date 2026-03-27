@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import type { StepProps, SelectedSensor } from '../../types'
 import { HARDWARE, HARDWARE_DETAILS, SENSORS, analyzeHardwarePdf, hasApiKey } from '../../api/api'
+import { getHardwareScores, type HardwareScore } from '../../utils/knowledgeGraph'
 import TypewriterText from '../TypewriterText'
 import HardwareBenchmark from '../HardwareBenchmark'
 import ResizableSplit from '../ResizableSplit'
@@ -173,6 +174,15 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Knowledge Graph scores
+  const hwScoreMap = useMemo<Record<string, HardwareScore>>(() => {
+    if (!state.domain) return {}
+    const scores = getHardwareScores(state.domain)
+    const map: Record<string, HardwareScore> = {}
+    for (const s of scores) map[s.deviceId] = s
+    return map
+  }, [state.domain])
+
   function selectDevice(category: string, device: { id: string; name: string; specs: string }) {
     updateState({
       hardware: { category, device: device.name, specs: device.specs },
@@ -275,19 +285,51 @@ export default function Step2Hardware({ state, updateState, goToStep, onApiKeyNe
                     <div className="px-4 pb-3 grid grid-cols-1 gap-2">
                       {data.devices.map(device => {
                         const selected = state.hardware?.device === device.name
+                        const gs = hwScoreMap[device.id]
+                        const isBest = gs && gs.score >= 85
                         return (
                           <button
                             key={device.id}
                             onClick={() => selectDevice(category, device)}
                             className={[
-                              'text-left px-3 py-2.5 rounded-lg border transition-all duration-150',
+                              'text-left px-3 py-2.5 rounded-lg border transition-all duration-150 relative',
                               selected
                                 ? 'bg-accent/15 border-accent text-primary'
-                                : 'bg-background/50 border-white/8 text-secondary hover:border-accent/40 hover:text-primary',
+                                : isBest
+                                  ? 'bg-green-500/5 border-green-500/25 text-secondary hover:border-green-500/50 hover:text-primary'
+                                  : 'bg-background/50 border-white/8 text-secondary hover:border-accent/40 hover:text-primary',
                             ].join(' ')}
                           >
-                            <p className="font-medium text-sm">{device.name}</p>
-                            <p className="text-xs text-secondary mt-0.5">{device.specs}</p>
+                            {isBest && !selected && (
+                              <span className="absolute -top-1.5 -right-1.5 text-[8px] font-bold font-mono bg-green-500 text-white px-1.5 py-0.5 rounded-full leading-none">
+                                BEST
+                              </span>
+                            )}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm">{device.name}</p>
+                                <p className="text-xs text-secondary mt-0.5">{device.specs}</p>
+                              </div>
+                              {gs && (
+                                <div className="flex-shrink-0 flex flex-col items-center gap-0.5" title={gs.reason}>
+                                  <span className={[
+                                    'text-xs font-bold font-mono tabular-nums',
+                                    gs.score >= 80 ? 'text-green-400' : gs.score >= 55 ? 'text-yellow-400' : 'text-red-400',
+                                  ].join(' ')}>
+                                    {gs.score}
+                                  </span>
+                                  <div className="w-8 h-1 bg-white/10 rounded-full overflow-hidden">
+                                    <div
+                                      className={[
+                                        'h-full rounded-full',
+                                        gs.score >= 80 ? 'bg-green-500' : gs.score >= 55 ? 'bg-yellow-500' : 'bg-red-500',
+                                      ].join(' ')}
+                                      style={{ width: `${gs.score}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </button>
                         )
                       })}

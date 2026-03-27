@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { StepProps, CompatibilityResult } from '../../types'
-import { MODELS, api, hasApiKey, callGeminiDirect } from '../../api/api'
+import { MODELS, HARDWARE, api, hasApiKey, callGeminiDirect } from '../../api/api'
 import type { ModelInfoResult } from '../../api/api'
+import { getModelScores, type ModelScore } from '../../utils/knowledgeGraph'
 import TypewriterText from '../TypewriterText'
 import ResizableSplit from '../ResizableSplit'
 
@@ -55,6 +56,20 @@ export default function Step3Model({ state, updateState, goToStep, onApiKeyNeede
   const [recommending, setRecommending] = useState(false)
 
   const domainModels = state.domain ? (MODELS[state.domain] ?? []) : []
+
+  // Knowledge Graph scores — instant hardware×model compatibility
+  const graphScoreMap = useMemo<Record<string, ModelScore>>(() => {
+    if (!state.domain || !state.hardware) return {}
+    // Find hardware device ID from name
+    const hwId = Object.values(HARDWARE)
+      .flatMap(cat => cat.devices)
+      .find(d => d.name === state.hardware?.device)?.id
+    if (!hwId) return {}
+    const scores = getModelScores(state.domain, hwId)
+    const map: Record<string, ModelScore> = {}
+    for (const s of scores) map[s.modelId] = s
+    return map
+  }, [state.domain, state.hardware?.device])
 
   async function handleRecommend() {
     if (!state.domain || !state.hardware) return
@@ -245,6 +260,7 @@ export default function Step3Model({ state, updateState, goToStep, onApiKeyNeede
               const selected = state.model?.id === model.id
               const rank = topModels.findIndex(n => model.name.toLowerCase().includes(n.toLowerCase()) || n.toLowerCase().includes(model.name.toLowerCase()))
               const isTop = rank !== -1
+              const gs = graphScoreMap[model.id]
               return (
                 <button
                   key={model.id}
@@ -267,11 +283,40 @@ export default function Step3Model({ state, updateState, goToStep, onApiKeyNeede
                     <p className={['font-semibold text-sm', selected ? 'text-accent' : isTop ? 'text-green-400' : 'text-primary'].join(' ')}>
                       {model.name}
                     </p>
-                    <span className="text-xs px-2 py-0.5 bg-white/8 text-secondary rounded-full flex-shrink-0">
-                      {model.params}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {gs && (
+                        <span
+                          className={[
+                            'text-[10px] font-bold font-mono px-1.5 py-0.5 rounded border',
+                            gs.score >= 80 ? 'text-green-400 border-green-500/30 bg-green-500/10'
+                              : gs.score >= 55 ? 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10'
+                              : 'text-red-400 border-red-500/30 bg-red-500/10',
+                          ].join(' ')}
+                          title={gs.reason}
+                        >
+                          {gs.score}
+                        </span>
+                      )}
+                      <span className="text-xs px-2 py-0.5 bg-white/8 text-secondary rounded-full">
+                        {model.params}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-xs text-secondary mt-1">{model.description}</p>
+                  {gs && (
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex-1 h-1 bg-white/8 rounded-full overflow-hidden">
+                        <div
+                          className={[
+                            'h-full rounded-full transition-all duration-500',
+                            gs.score >= 80 ? 'bg-green-500' : gs.score >= 55 ? 'bg-yellow-500' : 'bg-red-500',
+                          ].join(' ')}
+                          style={{ width: `${gs.score}%` }}
+                        />
+                      </div>
+                      <span className="text-[9px] font-mono text-secondary/60">{gs.reason}</span>
+                    </div>
+                  )}
                 </button>
               )
             })}
